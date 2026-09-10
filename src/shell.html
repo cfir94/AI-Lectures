@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="carbon">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="מצ׳אטבוט לסוכן — הרצאה אינטראקטיבית עם דוגמאות ניתנות לעריכה וגרסה עצמאית למחשב.">
+  <title>מצ׳אטבוט לסוכן · הרצאה חיה</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%230d1319'/%3E%3Cpath d='M24 7 28 20 41 24 28 28 24 41 20 28 7 24 20 20Z' fill='%237de1ee'/%3E%3C/svg%3E">
+  <style id="app-style">/*__CSS__*/</style>
+</head>
+<body>
+  <a href="#stage" class="skip">דילוג למצגת</a>
+  <main class="theater" id="theater">
+    <div class="stage" id="stage" tabindex="-1" aria-label="במת ההרצאה">
+      <div id="slide-root"></div>
+      <footer class="stage-footer">
+        <div class="slide-dots" aria-label="בחירת שקף"><button data-slide="0" aria-label="שקף 1: פתיחה" aria-current="step">01</button><span></span><button data-slide="1" aria-label="שקף 2: ניסוי">02</button></div>
+      </footer>
+    </div>
+    <nav class="toolbar" id="toolbar" aria-label="שליטה במצגת">
+      <div class="tool-group nav-group"><button id="prev" class="icon-button" aria-label="צעד קודם" title="צעד קודם · חץ ימינה"></button><span id="position" class="position" dir="ltr">01 / 02</span><button id="next" class="icon-button" aria-label="צעד הבא" title="צעד הבא · רווח"></button></div>
+      <span class="toolbar-divider"></span>
+      <button id="edit" class="tool-button" title="עריכת התוכן"><span data-icon="edit"></span><span>עריכה</span></button>
+      <button id="appearance" class="tool-button" title="בחירת צבעים"><span data-icon="palette"></span><span>עיצוב</span></button>
+      <span class="toolbar-divider"></span>
+      <button id="fullscreen" class="icon-button" aria-label="מסך מלא" title="מסך מלא · F"><span data-icon="expand"></span></button>
+      <button id="help" class="icon-button" aria-label="מקשי קיצור ועזרה" title="מקשי קיצור"><span data-icon="keyboard"></span></button>
+    </nav>
+    <p class="keyboard-hint" id="keyboard-hint">רווח להתקדמות</p>
+  </main>
+  <dialog id="editor" class="editor" aria-labelledby="editor-title">
+    <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">מאחורי הקלעים</h2></div><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div>
+    <div class="editor-scroll" id="editor-fields"></div>
+    <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden></div>
+  </dialog>
+  <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options"><button data-theme-choice="carbon"><span class="theme-preview carbon-preview"><i>Aa</i><b>✳</b></span><span>פחם ותכלת</span><small>עמוק · טכנולוגי</small></button><button data-theme-choice="paper"><span class="theme-preview paper-preview"><i>Aa</i><b>✳</b></span><span>לבן וכחול</span><small>בהיר · מדויק</small></button><button data-theme-choice="wine"><span class="theme-preview wine-preview"><i>Aa</i><b>✳</b></span><span>בורדו ולבן</span><small>חם · דרמטי</small></button></div></dialog>
+  <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
+  <script id="deck-data" type="application/json">__DECK_JSON__</script>
+  <script id="core-script">/*__CORE__*/</script>
+  <script id="app-script">/*__APP__*/</script>
+</body>
+</html>
