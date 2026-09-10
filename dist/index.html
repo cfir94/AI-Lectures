@@ -2216,6 +2216,47 @@ h1 {
   border-radius: 8px;
   white-space: nowrap;
 }
+a.quiet-button {
+  text-decoration: none;
+  border: 1px solid var(--line);
+}
+a.quiet-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.quiet-button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+/* A linked object opens its tool while presenting; while editing it only says
+   that it is linked, so the click still belongs to the editor. */
+.object-link {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+}
+.object-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.free-object.is-linked .object-link-badge {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--surface);
+  background: var(--accent);
+  opacity: 0.85;
+}
+.free-object.is-linked .object-link-badge svg {
+  width: 13px;
+  height: 13px;
+}
 .mode-switch {
   display: flex;
   align-items: center;
@@ -3310,7 +3351,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","textStyle":"solid","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","textStyle":"solid","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","textStyle":"solid","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","textStyle":"solid","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","link":"","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","link":"","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","textStyle":"solid","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","textStyle":"solid","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","link":"","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","textStyle":"solid","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","textStyle":"solid","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -3402,6 +3443,13 @@ kbd {
   const digits = (max) => ({ max, required: true, digits: true });
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
+  const link = () => ({ max: 300, required: false, link: true });
+  /* A link is opened by the presenter mid-talk, so only https is accepted:
+     never javascript:, data: or file:, and never a document's idea of a local
+     path. Empty means the slide simply has no link. */
+  const LINK = /^https:\/\/[^\s<>"'`\\]{4,299}$/;
+  const safeLink = (value) =>
+    typeof value === "string" && LINK.test(value.trim()) ? value.trim() : "";
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
   const OBJECT_TYPES = {
     text: "טקסט",
@@ -3527,6 +3575,7 @@ kbd {
       fields: {
         title: text(40),
         tool: text(30),
+        link: link(),
         caption: text(150, false),
         prompt: text(800, false),
       },
@@ -3635,7 +3684,13 @@ kbd {
   }
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
-    demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
+    demo: {
+      title: "הדגמה חדשה.",
+      tool: "הכלי",
+      link: "",
+      caption: "",
+      prompt: "",
+    },
     reveal: {
       title: "",
       items: [
@@ -3694,6 +3749,7 @@ kbd {
       return {
         ...base,
         text: "טקסט חופשי",
+        link: "",
         fontSize: "64",
         weight: "400",
         align: "center",
@@ -3711,6 +3767,7 @@ kbd {
         focusX: "50",
         focusY: "50",
         alt: "",
+        link: "",
       };
     if (type === "visual")
       return {
@@ -3797,6 +3854,12 @@ kbd {
         }
         return value;
       }
+      if (spec.link) {
+        const value = (v ?? "").trim();
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        if (value && !LINK.test(value)) fail();
+        return value;
+      }
       if (spec.video) {
         const value = v ?? "";
         if (typeof value !== "string" || value.length > spec.max) fail();
@@ -3868,6 +3931,7 @@ kbd {
           align: ownChoice(item.align, ALIGNS),
           color: colour(item.color),
           style: ownChoice(item.style, TEXT_STYLES),
+          link: str(item.link ?? "", link()),
           bind: str(item.bind, text(80, false)),
         };
       if (item.type === "image")
@@ -3883,6 +3947,7 @@ kbd {
           focusY:
             item.focusY === undefined ? "50" : number(item.focusY, 0, 100),
           alt: str(item.alt, text(120, false)),
+          link: str(item.link ?? "", link()),
         };
       if (item.type === "visual")
         return {
@@ -4158,6 +4223,7 @@ kbd {
     blankItem,
     blankObject,
     safeJSON,
+    safeLink,
     validate,
     createHistory,
     portableHTML,
@@ -4260,6 +4326,7 @@ kbd {
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    open: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',
     present:
       '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
     layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
@@ -4465,7 +4532,15 @@ kbd {
     else body = shapeMarkup(object, index);
     const handles =
       '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>';
-    return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
+    const link = C.safeLink(object.link);
+    // While editing, a link must not swallow the click that selects the box.
+    const linked =
+      link && !editing
+        ? `<a class="object-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(object.type === "image" ? object.alt || "פתיחת הקישור" : object.text)}"></a>`
+        : link
+          ? `<span class="object-link-badge" title="${esc(link)}" aria-hidden="true">${icon("open")}</span>`
+          : "";
+    return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""} ${link ? "is-linked" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${linked}${handles}</div>`;
   };
   const freeObjects = (slide) =>
     slide.objects?.length
@@ -4728,15 +4803,19 @@ kbd {
     const title = visibleText(slide, "title");
     const tool = visibleText(slide, "tool");
     const size = Math.min(9.5, 340 / (slide.title.length + 2));
-    const copy = slide.prompt
-      ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
+    const open = C.safeLink(slide.link)
+      ? `<a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת ${esc(slide.tool || "הכלי")}</a>`
       : "";
+    const controls =
+      slide.prompt || open
+        ? `<div class="scene-controls demo-controls">${open}${slide.prompt ? `<button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button>` : ""}</div>`
+        : "";
     return frame(
       slide,
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${controls}`,
     );
   }
   function revealSlide(slide, index, step) {
@@ -5485,6 +5564,7 @@ kbd {
     unit: "יחידה",
     picture: "התמונה",
     url: "קישור לסרטון",
+    link: "קישור — נפתח בלשונית חדשה",
     poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",
     alt: "תיאור לקורא מסך",
@@ -5546,6 +5626,18 @@ kbd {
     const note = videoNote(value);
     return `<div class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><div class="picture-actions"><button class="duplicate-button" data-pick-video="${path}">${icon("play")}בחירת קובץ מהמחשב</button></div><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></div>`;
   };
+  const linkNote = (value) => {
+    const clean = value.trim();
+    if (!clean)
+      return { text: "אפשר להדביק כתובת של הכלי, למשל https://claude.ai", bad: false };
+    return C.safeLink(clean)
+      ? { text: "הקישור ייפתח בלשונית חדשה ולא יעזוב את המצגת.", bad: false }
+      : { text: "צריכה להיות כתובת שמתחילה ב־https:// ובלי רווחים.", bad: true };
+  };
+  const linkField = (label, path, value, max) => {
+    const note = linkNote(value);
+    return `<label class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></label>`;
+  };
   const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
   const pictureField = (label, path, value) =>
     `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
@@ -5560,7 +5652,14 @@ kbd {
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.video
+        spec.link
+          ? linkField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+            )
+          : spec.video
           ? videoField(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -5632,9 +5731,9 @@ kbd {
     let specific = "";
     if (object.type === "text") {
       const limit = C.textLimit(deck.slides[slideIndex], object);
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}${linkField("קישור — נפתח בלשונית חדשה", `slides.${slideIndex}.objects.${objectIndex}.link`, object.link, 300)}`;
     } else if (object.type === "image")
-      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}${objectInput("הגדלה לחיתוך", slideIndex, object, "zoom", 100, 400)}${objectInput("מוקד אופקי", slideIndex, object, "focusX", 0, 100)}${objectInput("מוקד אנכי", slideIndex, object, "focusY", 0, 100)}</div>`;
+      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}${linkField("קישור — נפתח בלשונית חדשה", `slides.${slideIndex}.objects.${objectIndex}.link`, object.link, 300)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}${objectInput("הגדלה לחיתוך", slideIndex, object, "zoom", 100, 400)}${objectInput("מוקד אופקי", slideIndex, object, "focusX", 0, 100)}${objectInput("מוקד אנכי", slideIndex, object, "focusY", 0, 100)}</div>`;
     else if (object.type === "visual")
       specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}${objectPicker("מראה", slideIndex, object, "style", C.VISUAL_STYLES)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
     else
@@ -5863,8 +5962,24 @@ kbd {
       return;
     }
     const path = input.dataset.field.split(".");
-    if (path[0] === "slides" && path.length === 3) {
-      const spec = C.fieldSpec(deck.slides[+path[1]], path[2]);
+    if (path.at(-1) === "link" || (path[0] === "slides" && path.length === 3)) {
+      const spec =
+        path.at(-1) === "link"
+          ? { link: true }
+          : C.fieldSpec(deck.slides[+path[1]], path[2]);
+      if (spec?.link) {
+        const note = linkNote(input.value);
+        const line = input.closest(".field")?.querySelector(".field-note");
+        if (line) {
+          line.textContent = note.text;
+          line.classList.toggle("bad", note.bad);
+        }
+        if (note.bad) {
+          input.setCustomValidity("כתובת צריכה להתחיל ב־https:// ובלי רווחים.");
+          $("#save-status").textContent = "הקישור עדיין לא נשמר.";
+          return;
+        }
+      }
       if (spec?.video) {
         const note = videoNote(input.value);
         const line = input.closest(".field")?.querySelector(".field-note");
@@ -7254,7 +7369,7 @@ kbd {
       e.target.closest('input,textarea,select,[contenteditable="true"]')
     )
       return;
-    if (e.key === " " && e.target.closest("button")) return;
+    if (e.key === " " && e.target.closest("button, a")) return;
     if ([" ", "PageDown", "ArrowLeft"].includes(e.key)) {
       e.preventDefault();
       act("next");

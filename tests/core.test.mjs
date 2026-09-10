@@ -260,6 +260,46 @@ test("a picture carries a crop, defaulted and bounded", () => {
   }
 });
 
+test("a link is https or it is nothing, on slides and on objects", () => {
+  for (const good of [
+    "https://claude.ai",
+    "https://chatgpt.com/?model=gpt-5",
+    "https://gemini.google.com/app",
+  ])
+    assert.equal(C.safeLink(good), good);
+  for (const bad of [
+    "javascript:alert(1)",
+    "data:text/html,<script>",
+    "file:///c:/passwords.txt",
+    "http://insecure.example",
+    "https://has space.example",
+    "",
+    null,
+    undefined,
+  ])
+    assert.equal(C.safeLink(bad), "");
+
+  const document = C.clone(seed);
+  const demo = document.slides.find((slide) => slide.type === "demo");
+  demo.link = "https://claude.ai";
+  const box = C.blankObject("text");
+  box.link = "https://claude.ai";
+  const logo = C.blankObject("image");
+  logo.picture = tinyPng;
+  delete logo.link;
+  document.slides[0].objects = [box, logo];
+  const valid = C.validate(document);
+  assert.equal(valid.slides.find((s) => s.type === "demo").link, "https://claude.ai");
+  assert.equal(valid.slides[0].objects[0].link, "https://claude.ai");
+  // Absent in documents written before links existed.
+  assert.equal(valid.slides[0].objects[1].link, "");
+  for (const bad of ["javascript:alert(1)", "http://x.example"]) {
+    const wrong = C.clone(document);
+    wrong.slides[0].objects[0].link = bad;
+    assert.throws(() => C.validate(wrong));
+  }
+});
+
 test("a video link is only ever an ID from a known source", () => {
   const good = {
     "https://www.youtube.com/watch?v=dQw4w9WgXcQ": "youtube",

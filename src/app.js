@@ -89,6 +89,7 @@
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    open: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',
     present:
       '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
     layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
@@ -294,7 +295,15 @@
     else body = shapeMarkup(object, index);
     const handles =
       '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>';
-    return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
+    const link = C.safeLink(object.link);
+    // While editing, a link must not swallow the click that selects the box.
+    const linked =
+      link && !editing
+        ? `<a class="object-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(object.type === "image" ? object.alt || "פתיחת הקישור" : object.text)}"></a>`
+        : link
+          ? `<span class="object-link-badge" title="${esc(link)}" aria-hidden="true">${icon("open")}</span>`
+          : "";
+    return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""} ${link ? "is-linked" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${linked}${handles}</div>`;
   };
   const freeObjects = (slide) =>
     slide.objects?.length
@@ -557,15 +566,19 @@
     const title = visibleText(slide, "title");
     const tool = visibleText(slide, "tool");
     const size = Math.min(9.5, 340 / (slide.title.length + 2));
-    const copy = slide.prompt
-      ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
+    const open = C.safeLink(slide.link)
+      ? `<a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת ${esc(slide.tool || "הכלי")}</a>`
       : "";
+    const controls =
+      slide.prompt || open
+        ? `<div class="scene-controls demo-controls">${open}${slide.prompt ? `<button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button>` : ""}</div>`
+        : "";
     return frame(
       slide,
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${controls}`,
     );
   }
   function revealSlide(slide, index, step) {
@@ -1314,6 +1327,7 @@
     unit: "יחידה",
     picture: "התמונה",
     url: "קישור לסרטון",
+    link: "קישור — נפתח בלשונית חדשה",
     poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",
     alt: "תיאור לקורא מסך",
@@ -1375,6 +1389,18 @@
     const note = videoNote(value);
     return `<div class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><div class="picture-actions"><button class="duplicate-button" data-pick-video="${path}">${icon("play")}בחירת קובץ מהמחשב</button></div><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></div>`;
   };
+  const linkNote = (value) => {
+    const clean = value.trim();
+    if (!clean)
+      return { text: "אפשר להדביק כתובת של הכלי, למשל https://claude.ai", bad: false };
+    return C.safeLink(clean)
+      ? { text: "הקישור ייפתח בלשונית חדשה ולא יעזוב את המצגת.", bad: false }
+      : { text: "צריכה להיות כתובת שמתחילה ב־https:// ובלי רווחים.", bad: true };
+  };
+  const linkField = (label, path, value, max) => {
+    const note = linkNote(value);
+    return `<label class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></label>`;
+  };
   const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
   const pictureField = (label, path, value) =>
     `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
@@ -1389,7 +1415,14 @@
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.video
+        spec.link
+          ? linkField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+            )
+          : spec.video
           ? videoField(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -1461,9 +1494,9 @@
     let specific = "";
     if (object.type === "text") {
       const limit = C.textLimit(deck.slides[slideIndex], object);
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}${linkField("קישור — נפתח בלשונית חדשה", `slides.${slideIndex}.objects.${objectIndex}.link`, object.link, 300)}`;
     } else if (object.type === "image")
-      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}${objectInput("הגדלה לחיתוך", slideIndex, object, "zoom", 100, 400)}${objectInput("מוקד אופקי", slideIndex, object, "focusX", 0, 100)}${objectInput("מוקד אנכי", slideIndex, object, "focusY", 0, 100)}</div>`;
+      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}${linkField("קישור — נפתח בלשונית חדשה", `slides.${slideIndex}.objects.${objectIndex}.link`, object.link, 300)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}${objectInput("הגדלה לחיתוך", slideIndex, object, "zoom", 100, 400)}${objectInput("מוקד אופקי", slideIndex, object, "focusX", 0, 100)}${objectInput("מוקד אנכי", slideIndex, object, "focusY", 0, 100)}</div>`;
     else if (object.type === "visual")
       specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}${objectPicker("מראה", slideIndex, object, "style", C.VISUAL_STYLES)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
     else
@@ -1692,8 +1725,24 @@
       return;
     }
     const path = input.dataset.field.split(".");
-    if (path[0] === "slides" && path.length === 3) {
-      const spec = C.fieldSpec(deck.slides[+path[1]], path[2]);
+    if (path.at(-1) === "link" || (path[0] === "slides" && path.length === 3)) {
+      const spec =
+        path.at(-1) === "link"
+          ? { link: true }
+          : C.fieldSpec(deck.slides[+path[1]], path[2]);
+      if (spec?.link) {
+        const note = linkNote(input.value);
+        const line = input.closest(".field")?.querySelector(".field-note");
+        if (line) {
+          line.textContent = note.text;
+          line.classList.toggle("bad", note.bad);
+        }
+        if (note.bad) {
+          input.setCustomValidity("כתובת צריכה להתחיל ב־https:// ובלי רווחים.");
+          $("#save-status").textContent = "הקישור עדיין לא נשמר.";
+          return;
+        }
+      }
       if (spec?.video) {
         const note = videoNote(input.value);
         const line = input.closest(".field")?.querySelector(".field-note");
@@ -3083,7 +3132,7 @@
       e.target.closest('input,textarea,select,[contenteditable="true"]')
     )
       return;
-    if (e.key === " " && e.target.closest("button")) return;
+    if (e.key === " " && e.target.closest("button, a")) return;
     if ([" ", "PageDown", "ArrowLeft"].includes(e.key)) {
       e.preventDefault();
       act("next");

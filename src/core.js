@@ -89,6 +89,13 @@
   const digits = (max) => ({ max, required: true, digits: true });
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
+  const link = () => ({ max: 300, required: false, link: true });
+  /* A link is opened by the presenter mid-talk, so only https is accepted:
+     never javascript:, data: or file:, and never a document's idea of a local
+     path. Empty means the slide simply has no link. */
+  const LINK = /^https:\/\/[^\s<>"'`\\]{4,299}$/;
+  const safeLink = (value) =>
+    typeof value === "string" && LINK.test(value.trim()) ? value.trim() : "";
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
   const OBJECT_TYPES = {
     text: "טקסט",
@@ -214,6 +221,7 @@
       fields: {
         title: text(40),
         tool: text(30),
+        link: link(),
         caption: text(150, false),
         prompt: text(800, false),
       },
@@ -322,7 +330,13 @@
   }
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
-    demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
+    demo: {
+      title: "הדגמה חדשה.",
+      tool: "הכלי",
+      link: "",
+      caption: "",
+      prompt: "",
+    },
     reveal: {
       title: "",
       items: [
@@ -381,6 +395,7 @@
       return {
         ...base,
         text: "טקסט חופשי",
+        link: "",
         fontSize: "64",
         weight: "400",
         align: "center",
@@ -398,6 +413,7 @@
         focusX: "50",
         focusY: "50",
         alt: "",
+        link: "",
       };
     if (type === "visual")
       return {
@@ -484,6 +500,12 @@
         }
         return value;
       }
+      if (spec.link) {
+        const value = (v ?? "").trim();
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        if (value && !LINK.test(value)) fail();
+        return value;
+      }
       if (spec.video) {
         const value = v ?? "";
         if (typeof value !== "string" || value.length > spec.max) fail();
@@ -555,6 +577,7 @@
           align: ownChoice(item.align, ALIGNS),
           color: colour(item.color),
           style: ownChoice(item.style, TEXT_STYLES),
+          link: str(item.link ?? "", link()),
           bind: str(item.bind, text(80, false)),
         };
       if (item.type === "image")
@@ -570,6 +593,7 @@
           focusY:
             item.focusY === undefined ? "50" : number(item.focusY, 0, 100),
           alt: str(item.alt, text(120, false)),
+          link: str(item.link ?? "", link()),
         };
       if (item.type === "visual")
         return {
@@ -845,6 +869,7 @@
     blankItem,
     blankObject,
     safeJSON,
+    safeLink,
     validate,
     createHistory,
     portableHTML,

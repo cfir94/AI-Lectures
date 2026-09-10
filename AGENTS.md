@@ -8,6 +8,19 @@ Live demos happen in the real tools during the talk, not in this app. A slide ca
 
 The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: a single dominant word, phrase or number; large empty areas; restrained perimeter light; sequential replacement of ideas. Do not restore dashboard cards, node networks, persistent branding, step tracks, or multiple simultaneous explanations. Show only the current action and its short result. Detailed explanations are presenter notes in the editor.
 
+## The look this deck is held to
+
+The presenter asked for this in their own words, and it governs every slide you build or touch: **minimal, futuristic, beautiful, hi-tech** — the feel of a good product keynote, not a corporate deck. Treat it as a requirement, the same as any rule in Architecture below. Concretely:
+
+- **One idea per slide, enormous.** A headline, a number or a single word owns the frame; everything else is small, quiet and secondary. Empty space is the design, not a gap waiting to be filled. If a slide needs a second explanation, it is two slides or a presenter note.
+- **Motion is chosen, never sprinkled.** Every slide picks a `transition` for how it arrives and a `motion` for how its content enters, and the choice should mean something: `cut` for a hard turn in the argument, `fade` for a continuation, `push` for a sequence, `zoom` for an arrival. Beats reveal an argument in the order it is made. Slow and confident beats fast and busy; if an effect draws attention to itself rather than to the sentence, it is wrong.
+- **Emphasis follows the content.** The dominant word on a slide is the one the sentence turns on — that is what `accent`, the `spectrum` text look and the biggest size are for. Never emphasise everything: on a slide where three things shout, nothing is heard.
+- **Reach for the platform on purpose.** The tables are there to be used, and an option is chosen because it carries the idea, not because it is pretty: the `orb` for the model itself; `bars` for weights, probabilities or attention; `window` for a tool without a screenshot of one; the `tokens` slide for how language is broken up; `number` for a statistic that must stay in the head; `split` for a comparison; `stars`, `mesh` or `aurora` when a slide should feel like space rather than a page; `plain` when the words need silence around them. A slide left on defaults when a chosen element would have carried the idea is an unfinished slide.
+- **Real material beats drawings of it.** Screenshots of the actual tools, the tools' own logos, and the presenter's own video files are what make this deck feel current: pictures ride inside the document as raster data URIs, and videos live beside it under `videos/`. Prefer a real frame of the real product over an illustration of one. Keep logos small, cropped clean, and on a background that lets them breathe.
+- **Restraint is the style.** Futuristic here means depth, light and space — not neon, not gradients on everything, not five colours on one slide. Pick one accent moment per slide and let the theme carry the rest.
+
+When nothing in the tables fits the idea, add an option as a table row plus a CSS block (see Architecture) rather than bending a slide into something it is not.
+
 ## Architecture
 
 - Edit `src` and the build scripts, then regenerate `dist/index.html`; do not hand-edit generated output.
@@ -39,6 +52,7 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Avoid adding dependencies for capabilities already supported by the browser. There are currently no runtime or build dependencies.
 - Use real buttons, labels and dialogs. Preserve RTL key mappings, keyboard focus and reduced-motion behavior.
 - Preserve content-length limits and the 2–6 steps / 20 examples limits unless explicitly changed. Never silently truncate imported content.
+- A link is `https://` or it does not exist: never `javascript:`, `data:`, `file:` or a bare host, on a slide field or on an object. Open it in a new tab with `rel="noopener noreferrer"` so the deck survives behind it, and keep an object's link inert while editing — the click there belongs to the editor, and the object shows a badge instead.
 - Pictures, including free image objects, live inside the document as raster data URIs so the standalone file stays standalone. Shrink on upload, accept only `data:image/(png|jpeg|webp|gif);base64,`, and never accept SVG — it can carry script.
 - Enforce the aggregate portable-document budget on import, image upload, duplication and export. Check Base64 structure and raster signatures in core, then decode every imported picture in the browser before replacing the active document.
 - Slides must stay opaque and occlude each other; a transparent slide makes any crossfade show two headlines at once.
