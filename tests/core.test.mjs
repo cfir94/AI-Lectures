@@ -58,14 +58,20 @@ test("look presets fall back when absent and are rejected when wrong", () => {
   delete partial.transition;
   delete partial.slides[0].motion;
   delete partial.slides[0].backdrop;
+  delete partial.slides[0].transition;
   const document = C.validate(partial);
   assert.equal(document.transition, Object.keys(C.TRANSITIONS)[0]);
   assert.equal(document.slides[0].motion, Object.keys(C.MOTIONS)[0]);
   assert.equal(document.slides[0].backdrop, Object.keys(C.BACKDROPS)[0]);
+  assert.equal(
+    document.slides[0].transition,
+    Object.keys(C.TRANSITIONS)[0],
+  );
   for (const modify of [
     (d) => (d.transition = "swirl"),
     (d) => (d.slides[0].motion = "explode"),
     (d) => (d.slides[0].backdrop = "lava"),
+    (d) => (d.slides[0].transition = "spin"),
     (d) => (d.slides[0].motion = 7),
   ]) {
     const bad = C.clone(seed);
@@ -105,17 +111,32 @@ test("free objects validate on every slide and reject unsafe values", () => {
     const image = C.blankObject("image");
     const shape = C.blankObject("shape");
     shape.shape = "arrow";
-    slide.objects = [text, image, shape];
+    const visual = C.blankObject("visual");
+    visual.visual = "stars";
+    slide.objects = [text, image, shape, visual];
   }
   const valid = C.validate(document);
   assert.ok(
     valid.slides.every(
       (slide) =>
         slide.objects.map((object) => object.type).join() ===
-        "text,image,shape",
+        "text,image,shape,visual",
     ),
   );
   assert.equal(valid.slides[0].objects[0].style, "spectrum");
+  assert.equal(valid.slides[0].objects[0].snap, "on");
+  assert.equal(valid.slides[0].objects[0].entrance, "fade");
+  assert.equal(valid.slides[0].objects[0].exit, "fade");
+  const legacyObject = C.clone(document);
+  delete legacyObject.slides[0].objects[0].snap;
+  delete legacyObject.slides[0].objects[0].entrance;
+  delete legacyObject.slides[0].objects[0].exit;
+  assert.deepEqual(
+    (({ snap, entrance, exit }) => ({ snap, entrance, exit }))(
+      C.validate(legacyObject).slides[0].objects[0],
+    ),
+    { snap: "on", entrance: "fade", exit: "fade" },
+  );
   for (const modify of [
     (object) => (object.type = "video"),
     (object) => (object.x = "101"),
@@ -131,6 +152,9 @@ test("free objects validate on every slide and reject unsafe values", () => {
     (object) => (object.opacity = "NaN"),
     (object) => (object.color = "red"),
     (object) => (object.style = "constructor"),
+    (object) => (object.snap = "sometimes"),
+    (object) => (object.entrance = "explode"),
+    (object) => (object.exit = "vanish"),
   ]) {
     const bad = C.clone(document);
     modify(bad.slides[0].objects[0]);
@@ -143,6 +167,9 @@ test("free objects validate on every slide and reject unsafe values", () => {
   duplicateAcrossSlides.slides[1].objects[0].id =
     duplicateAcrossSlides.slides[0].objects[0].id;
   assert.throws(() => C.validate(duplicateAcrossSlides));
+  const badVisual = C.clone(document);
+  badVisual.slides[0].objects[3].visual = "laser";
+  assert.throws(() => C.validate(badVisual));
   const fractional = C.clone(document);
   fractional.slides[0].objects[0].x = "0.04";
   fractional.slides[0].objects[0].width = "99.96";
@@ -150,6 +177,29 @@ test("free objects validate on every slide and reject unsafe values", () => {
   assert.equal(normalized.x, "0");
   assert.equal(normalized.width, "100");
   assert.equal(Number(normalized.x) + Number(normalized.width), 100);
+});
+test("structured slide text can bind to one movable text object", () => {
+  const document = C.clone(seed);
+  const object = C.blankObject("text");
+  object.bind = "title";
+  object.text = document.slides[0].title;
+  document.slides[0].objects = [object];
+  assert.equal(C.validate(document).slides[0].objects[0].bind, "title");
+
+  const mismatch = C.clone(document);
+  mismatch.slides[0].objects[0].text = "טקסט אחר";
+  assert.throws(() => C.validate(mismatch));
+
+  const unsupported = C.clone(document);
+  unsupported.slides[0].objects[0].bind = "motion";
+  unsupported.slides[0].objects[0].text = unsupported.slides[0].motion;
+  assert.throws(() => C.validate(unsupported));
+
+  const duplicateBinding = C.clone(document);
+  const copy = C.clone(duplicateBinding.slides[0].objects[0]);
+  copy.id = C.newId("object");
+  duplicateBinding.slides[0].objects.push(copy);
+  assert.throws(() => C.validate(duplicateBinding));
 });
 test("the full portable document stays within the shared size budget", () => {
   const oversized = C.clone(seed);

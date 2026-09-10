@@ -44,6 +44,7 @@
     text: "טקסט",
     image: "תמונה",
     shape: "צורה",
+    visual: "רכיב חזותי",
   };
   const SHAPES = {
     rectangle: "מלבן",
@@ -59,6 +60,27 @@
     spectrum: "צבעוני",
     outline: "קו מתאר",
   };
+  const VISUALS = {
+    accordion: "כרטיס אקורדיון",
+    glass: "זכוכית נוזלית",
+    stars: "שדה כוכבים",
+  };
+  const OBJECT_ENTRANCES = {
+    none: "בלי כניסה",
+    fade: "הופעה",
+    rise: "עלייה",
+    zoom: "התקרבות",
+    wipe: "חשיפה",
+    pop: "קפיצה רכה",
+  };
+  const OBJECT_EXITS = {
+    none: "בלי יציאה",
+    fade: "היעלמות",
+    fall: "ירידה",
+    shrink: "התרחקות",
+    wipe: "סגירה",
+  };
+  const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
   const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
@@ -95,6 +117,7 @@
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
     backdropPicture: picture(),
+    transition: choice(TRANSITIONS),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -247,6 +270,7 @@
     motion: "rise",
     backdrop: "arcs",
     backdropPicture: "",
+    transition: "fade",
     objects: [],
     note: "",
   });
@@ -262,6 +286,9 @@
       height: type === "text" ? "22" : "45",
       rotation: "0",
       opacity: "100",
+      snap: "on",
+      entrance: "fade",
+      exit: "fade",
     };
     if (type === "text")
       return {
@@ -272,9 +299,20 @@
         align: "center",
         color: "#f6f7f8",
         style: "solid",
+        bind: "",
       };
     if (type === "image")
       return { ...base, picture: "", fit: "contain", radius: "0", alt: "" };
+    if (type === "visual")
+      return {
+        ...base,
+        visual: "accordion",
+        color: "#ff5a91",
+        secondary: "#212121",
+        label1: "רעיון",
+        label2: "פעולה",
+        label3: "תוצאה",
+      };
     return {
       ...base,
       shape: "rectangle",
@@ -352,6 +390,16 @@
         height: number(item.height, 2, 100),
         rotation: number(item.rotation, -180, 180),
         opacity: number(item.opacity, 0, 100),
+        snap:
+          item.snap === undefined ? "on" : ownChoice(item.snap, SNAP_MODES),
+        entrance:
+          item.entrance === undefined
+            ? "fade"
+            : ownChoice(item.entrance, OBJECT_ENTRANCES),
+        exit:
+          item.exit === undefined
+            ? "fade"
+            : ownChoice(item.exit, OBJECT_EXITS),
       };
       if (
         Number(base.x) + Number(base.width) > 100 ||
@@ -367,6 +415,7 @@
           align: ownChoice(item.align, ALIGNS),
           color: colour(item.color),
           style: ownChoice(item.style, TEXT_STYLES),
+          bind: str(item.bind, text(80, false)),
         };
       if (item.type === "image")
         return {
@@ -375,6 +424,16 @@
           fit: ownChoice(item.fit, FITS),
           radius: number(item.radius, 0, 50),
           alt: str(item.alt, text(120, false)),
+        };
+      if (item.type === "visual")
+        return {
+          ...base,
+          visual: ownChoice(item.visual, VISUALS),
+          color: colour(item.color),
+          secondary: colour(item.secondary),
+          label1: str(item.label1, text(40, false)),
+          label2: str(item.label2, text(40, false)),
+          label3: str(item.label3, text(40, false)),
         };
       return {
         ...base,
@@ -419,7 +478,10 @@
         const slide = {
           id: str(s.id, text(100)),
           type: s.type,
-          ...group(s, type.fields),
+          ...group(
+            { ...s, transition: s.transition ?? raw.transition },
+            type.fields,
+          ),
           note: str(s.note, text(LIMITS.note, false)),
         };
         if (type.list) {
@@ -441,6 +503,22 @@
             slide.objects.length
           )
             fail();
+          const bindings = new Set();
+          for (const item of slide.objects) {
+            if (!item.bind) continue;
+            const spec = type.fields[item.bind];
+            if (
+              item.type !== "text" ||
+              !spec ||
+              spec.choice ||
+              spec.picture ||
+              spec.digits ||
+              bindings.has(item.bind) ||
+              slide[item.bind] !== item.text
+            )
+              fail();
+            bindings.add(item.bind);
+          }
         }
         return slide;
       }),
@@ -539,6 +617,10 @@
     OBJECT_TYPES,
     SHAPES,
     TEXT_STYLES,
+    VISUALS,
+    OBJECT_ENTRANCES,
+    OBJECT_EXITS,
+    SNAP_MODES,
     ALIGNS,
     clone,
     serializedBytes,

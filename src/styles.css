@@ -213,19 +213,168 @@ p {
   width: 20%;
   height: 20%;
   z-index: 1;
-  opacity: 1;
-  transform: none;
+  opacity: var(--object-opacity, 1);
+  transform: rotate(var(--object-rotation, 0deg));
   transform-origin: center;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
 }
+.free-object:not(.object-enter-none) {
+  animation-duration: 0.72s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
+  animation-delay: var(--enter-delay, 0s);
+}
+.object-enter-fade { animation-name: object-fade-in; }
+.object-enter-rise { animation-name: object-rise-in; }
+.object-enter-zoom { animation-name: object-zoom-in; }
+.object-enter-wipe { animation-name: object-wipe-in; }
+.object-enter-pop { animation-name: object-pop-in; }
+.slide.leaving .free-object:not(.object-exit-none) {
+  animation-duration: 0.52s;
+  animation-delay: 0s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+.slide.leaving .object-exit-fade { animation-name: object-fade-out; }
+.slide.leaving .object-exit-fall { animation-name: object-fall-out; }
+.slide.leaving .object-exit-shrink { animation-name: object-shrink-out; }
+.slide.leaving .object-exit-wipe { animation-name: object-wipe-out; }
+.slide.object-exits-only {
+  background: transparent;
+}
+.slide.object-exits-only > :not(.free-object-layer) {
+  visibility: hidden;
+}
 .free-object > svg,
 .object-image {
   display: block;
   width: 100%;
   height: 100%;
+}
+.free-object-visual {
+  pointer-events: auto;
+}
+.visual-component {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.visual-accordion {
+  display: flex;
+  gap: 2%;
+  padding: 2%;
+  border-radius: 4%;
+  background: var(--visual-secondary);
+}
+.visual-accordion p {
+  height: 100%;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--visual-colour);
+  border-radius: 3%;
+  background: var(--visual-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: flex 0.5s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+.visual-accordion p:hover {
+  flex: 4;
+}
+.visual-accordion span {
+  min-width: 9em;
+  padding: 0.5em;
+  text-align: center;
+  transform: rotate(-90deg);
+  color: var(--visual-colour);
+  letter-spacing: 0.08em;
+  transition: transform 0.5s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+.visual-accordion p:hover span {
+  transform: rotate(0);
+}
+.editing .visual-accordion p:hover {
+  flex: 1;
+}
+.visual-glass {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 8%;
+  border: 1px solid color-mix(in srgb, var(--visual-colour) 50%, white);
+  border-radius: 999px;
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--visual-colour) 20%, transparent), transparent 45%),
+    color-mix(in srgb, var(--visual-secondary) 16%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.45);
+  backdrop-filter: blur(18px) saturate(1.45);
+  box-shadow:
+    inset 0 1px 2px #fff9,
+    inset 0 -8px 24px color-mix(in srgb, var(--visual-colour) 18%, transparent),
+    0 18px 55px #0004;
+}
+.visual-glass::before {
+  content: "";
+  position: absolute;
+  inset: 5% 10% auto;
+  height: 28%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff8, transparent);
+  filter: blur(2px);
+}
+.visual-glass i {
+  position: absolute;
+  width: 30%;
+  aspect-ratio: 1;
+  left: 8%;
+  bottom: -45%;
+  border-radius: 50%;
+  background: var(--visual-colour);
+  filter: blur(18px);
+  opacity: 0.45;
+}
+.visual-glass span {
+  position: relative;
+  z-index: 1;
+  color: color-mix(in srgb, var(--visual-colour) 45%, white);
+  font-size: clamp(0.75rem, 2.2cqw, 2rem);
+  font-weight: 550;
+  text-align: center;
+  text-wrap: balance;
+}
+.visual-stars {
+  position: relative;
+  border-radius: 4%;
+  background: radial-gradient(ellipse at bottom, color-mix(in srgb, var(--visual-colour) 28%, var(--visual-secondary)) 0%, var(--visual-secondary) 72%);
+}
+.visual-stars i {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: var(--ss);
+  height: var(--ss);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--visual-colour) 65%, white);
+  box-shadow: 0 0 calc(var(--ss) * 3) var(--visual-colour);
+  animation: visual-star-drift 8s ease-in-out infinite alternate;
+  animation-delay: var(--sd);
+}
+.visual-stars span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: clamp(0.8rem, 2.5cqw, 2.4rem);
+  text-shadow: 0 2px 18px #000;
+}
+@keyframes visual-star-drift {
+  to { transform: translateY(-18px); opacity: 0.35; }
 }
 .object-text {
   width: 100%;
@@ -250,6 +399,14 @@ p {
   color: transparent;
   -webkit-text-stroke: max(1px, 0.025em) var(--object-colour);
 }
+.object-text.is-editing {
+  cursor: text;
+  user-select: text;
+  overflow: auto;
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
 .object-placeholder {
   width: 100%;
   height: 100%;
@@ -268,6 +425,7 @@ p {
   cursor: move;
   outline: 1px dashed rgba(var(--accent-rgb), 0.42);
   touch-action: none;
+  animation: none !important;
 }
 .editing .free-object.selected {
   outline: 2px solid var(--accent);
@@ -286,6 +444,96 @@ p {
 .object-dragging,
 .object-dragging * {
   cursor: grabbing !important;
+}
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(var(--accent-rgb), 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.13) 1px, transparent 1px);
+  background-size: 5% 5%;
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.28);
+}
+.snap-guide {
+  position: absolute;
+  display: none;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.7);
+}
+.snap-guide-x {
+  top: 0;
+  bottom: 0;
+  left: var(--snap-x);
+  width: 2px;
+}
+.snap-guide-y {
+  right: 0;
+  left: 0;
+  top: var(--snap-y);
+  height: 2px;
+}
+.stage-grid.has-x-guide .snap-guide-x,
+.stage-grid.has-y-guide .snap-guide-y {
+  display: block;
+}
+.object-toolbar {
+  position: absolute;
+  z-index: 8;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  max-width: calc(100% - 24px);
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--raised) 94%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+.object-toolbar button,
+.object-toolbar label {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.75rem;
+}
+.object-toolbar button {
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.object-toolbar button[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.object-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  white-space: nowrap;
+}
+.object-toolbar select {
+  min-width: 92px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+.stage-colour input {
+  width: 31px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 .canvas-empty {
   color: var(--muted);
@@ -508,7 +756,8 @@ h1 span {
   opacity: 1;
 }
 .no-motion .scene *,
-.no-motion .light-arc {
+.no-motion .light-arc,
+.no-motion:not(.leaving) .free-object {
   animation: none !important;
 }
 /* Entrance presets. The motion class is stripped on a beat-only re-render,
@@ -590,6 +839,39 @@ h1 span {
   from {
     opacity: 0;
   }
+}
+@keyframes object-fade-in {
+  from { opacity: 0; }
+  to { opacity: var(--object-opacity, 1); }
+}
+@keyframes object-rise-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(28px); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-zoom-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.78); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-wipe-in {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: var(--object-opacity, 1); clip-path: inset(0); }
+}
+@keyframes object-pop-in {
+  0% { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.72); }
+  72% { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)) scale(1.05); }
+  100% { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-fade-out {
+  to { opacity: 0; }
+}
+@keyframes object-fall-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(34px); }
+}
+@keyframes object-shrink-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.72); }
+}
+@keyframes object-wipe-out {
+  to { opacity: 0; clip-path: inset(0 0 0 100%); }
 }
 
 /* Slide-to-slide transitions. --dir is 1 forward, -1 back. */
@@ -1351,6 +1633,39 @@ summary small {
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
+.projectable-text {
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(var(--accent-rgb), 0.04);
+}
+.projectable-text strong,
+.projectable-text small {
+  display: block;
+}
+.projectable-text strong {
+  font-size: 0.86rem;
+}
+.projectable-text small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+.projectable-text > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.projectable-text button {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--raised);
+  font-size: 0.74rem;
+}
 .objects-panel-head {
   display: flex;
   align-items: flex-start;
@@ -1373,7 +1688,7 @@ summary small {
 }
 .object-add-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 7px;
   margin-top: 12px;
 }
@@ -1443,6 +1758,17 @@ summary small {
   gap: 9px;
   margin-top: 12px;
 }
+.object-animation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.object-animation-grid .object-field:last-child {
+  grid-column: 1 / -1;
+}
 .object-field {
   display: block;
   min-width: 0;
@@ -1466,6 +1792,43 @@ summary small {
 .object-field input[type="color"] {
   min-height: 37px;
   padding: 3px;
+}
+.colour-field {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.colour-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.colour-picker input[type="color"] {
+  width: 54px;
+  height: 42px;
+  flex: none;
+  padding: 2px;
+  border-radius: 7px;
+}
+.colour-picker output {
+  direction: ltr;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+.colour-swatches {
+  display: flex;
+  gap: 7px;
+  margin-top: 9px;
+}
+.colour-swatches button {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
 }
 .object-editor > .field,
 .object-editor > .picture-field {
@@ -1522,6 +1885,9 @@ summary small {
 }
 .look-row .field {
   margin-top: 0;
+}
+.look-row .field:nth-child(3) {
+  grid-column: 1 / -1;
 }
 .dialog-subhead {
   font-size: 0.95rem;
@@ -1806,6 +2172,12 @@ kbd {
   }
 }
 @media (max-width: 950px) {
+  .object-toolbar {
+    top: 8px;
+    width: calc(100% - 16px);
+    max-width: none;
+    flex-wrap: wrap;
+  }
   .editor-stage-button {
     display: block;
   }
@@ -1965,6 +2337,18 @@ kbd {
   }
 }
 @media (max-width: 420px) {
+  .object-toolbar {
+    gap: 5px;
+    padding: 6px;
+  }
+  .object-toolbar button,
+  .object-toolbar label {
+    min-height: 32px;
+    font-size: 0.7rem;
+  }
+  .object-toolbar select {
+    min-width: 76px;
+  }
   .toolbar .icon-button {
     width: 32px;
   }

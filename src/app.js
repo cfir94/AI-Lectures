@@ -30,6 +30,7 @@
     pendingOpenId = null,
     pendingPicturePath = null,
     selectedObjectId = null,
+    editingObjectTextId = null,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -139,30 +140,86 @@
       return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="43" ry="43" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(3, Number(object.strokeWidth))}" vector-effect="non-scaling-stroke"/></svg>`;
     return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="8" ${common}/></svg>`;
   };
+  const visualMarkup = (object) => {
+    const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)}`;
+    const labels = [object.label1, object.label2, object.label3];
+    if (object.visual === "glass")
+      return `<div class="visual-component visual-glass" style="${style}" role="img" aria-label="משטח זכוכית נוזלית"><i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span></div>`;
+    if (object.visual === "stars") {
+      const random = seeded(object.id);
+      const stars = Array.from({ length: 54 }, () =>
+        `<i style="--sx:${(random() * 100).toFixed(1)}%;--sy:${(random() * 100).toFixed(1)}%;--ss:${(0.7 + random() * 2.1).toFixed(1)}px;--sd:${(-random() * 8).toFixed(1)}s"></i>`,
+      ).join("");
+      return `<div class="visual-component visual-stars" style="${style}" role="img" aria-label="שדה כוכבים מונפש">${stars}<span>${esc(object.label1)}</span></div>`;
+    }
+    return `<div class="visual-component visual-accordion" style="${style}" aria-label="כרטיס אקורדיון אינטראקטיבי">${labels.map((label) => `<p><span>${esc(label)}</span></p>`).join("")}</div>`;
+  };
   const objectMarkup = (object, index) => {
-    const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;transform:rotate(${object.rotation}deg);opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
+    const selected = selectedObjectId === object.id;
+    const editingText =
+      selected &&
+      editingObjectTextId === object.id &&
+      object.type === "text" &&
+      $("#editor")?.open;
+    const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
-      body = `<p class="object-text text-${object.style}" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}">${esc(object.text)}</p>`;
+      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="plaintext-only" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : ""}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<img class="object-image" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
         : '<span class="object-placeholder">תמונה</span>';
+    else if (object.type === "visual") body = visualMarkup(object);
     else body = shapeMarkup(object);
     const handles =
-      selectedObjectId === object.id
+      selected
         ? '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>'
         : "";
-    return `<div class="free-object object-${object.type} ${selectedObjectId === object.id ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
+    return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
   };
   const freeObjects = (slide) =>
     slide.objects?.length
       ? `<div class="free-object-layer">${slide.objects.map(objectMarkup).join("")}</div>`
       : "";
+  const optionMarkup = (options, selected) =>
+    Object.entries(options)
+      .map(
+        ([value, name]) =>
+          `<option value="${value}" ${value === selected ? "selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("");
+  const currentObject = () =>
+    deck.slides[state.slide]?.objects.find(
+      (object) => object.id === selectedObjectId,
+    );
+  function renderObjectToolbar() {
+    const toolbar = $("#object-toolbar");
+    const object = currentObject();
+    if (!$("#editor").open || !object) {
+      toolbar.hidden = true;
+      toolbar.innerHTML = "";
+      return;
+    }
+    const colour =
+      object.type === "text" || object.type === "shape" || object.type === "visual"
+        ? `<label class="stage-colour"><span>${object.type === "text" ? "צבע טקסט" : object.type === "visual" ? "צבע רכיב" : "צבע צורה"}</span><input type="color" value="${esc(object.color)}" data-toolbar-colour aria-label="בחירת צבע"></label>`
+        : "";
+    const textTools =
+      object.type === "text"
+        ? `<button data-toolbar-edit-text aria-pressed="${editingObjectTextId === object.id}">${editingObjectTextId === object.id ? "סיום טקסט" : "עריכת טקסט"}</button><button data-toolbar-spectrum aria-pressed="${object.style === "spectrum"}">צבעוני</button>`
+        : "";
+    toolbar.innerHTML = `${textTools}${colour}<label class="stage-motion"><span>כניסה</span><select data-toolbar-object-prop="entrance">${optionMarkup(C.OBJECT_ENTRANCES, object.entrance)}</select></label><label class="stage-motion"><span>יציאה</span><select data-toolbar-object-prop="exit">${optionMarkup(C.OBJECT_EXITS, object.exit)}</select></label><button data-toolbar-snap aria-pressed="${object.snap === "on"}">${object.snap === "on" ? "גריד פעיל" : "בלי הצמדה"}</button>`;
+    toolbar.hidden = false;
+  }
   const frame = (slide, index, classes, style, body) =>
     `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
-  const caption = (value) =>
-    value ? `<p class="scene-caption">${esc(value)}</p>` : "";
+  const isBound = (slide, key) =>
+    slide.objects?.some((object) => object.bind === key);
+  const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
+  const caption = (slide, value, key = "caption") =>
+    value && !isBound(slide, key)
+      ? `<p class="scene-caption">${esc(value)}</p>`
+      : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
   const headline = (slide, value) =>
     slide.motion === "cascade"
@@ -176,6 +233,8 @@
       : esc(value);
 
   function statementSlide(slide, index) {
+    const title = visibleText(slide, "title");
+    const accent = visibleText(slide, "accent");
     const size = Math.min(
       10.5,
       390 / (slide.title.length + slide.accent.length + 4),
@@ -189,10 +248,12 @@
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1>${headline(slide, slide.title)}${slide.accent ? ` <span>${headline(slide, slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1>${headline(slide, title)}${accent ? ` <span>${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
+    const title = visibleText(slide, "title");
+    const tool = visibleText(slide, "tool");
     const size = Math.min(9.5, 340 / (slide.title.length + 2));
     const copy = slide.prompt
       ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
@@ -202,7 +263,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${headline(slide, slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool">${esc(tool)}</span>` : ""}<h1>${headline(slide, title)}</h1>${caption(slide, slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
@@ -221,7 +282,7 @@
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene reveal-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide.items[step].caption)}</div>`,
+      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, "")}</div>`,
     );
   }
   function tokensSlide(slide, index, step) {
@@ -234,16 +295,18 @@
       index,
       "tokens-slide",
       "",
-      `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
+      `<div class="scene tokens-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}${body}${step === 1 ? caption(slide, slide.caption) : ""}</div>`,
     );
   }
   function imageSlide(slide, index) {
     const media = slide.picture
       ? `<img class="slide-image" src="${esc(slide.picture)}" alt="${esc(slide.alt || slide.title || "תמונה בשקף")}" style="object-fit:${slide.fit}">`
       : `<p class="image-placeholder">עדיין אין תמונה כאן. אפשר להעלות אותה בעורך.</p>`;
+    const imageTitle = visibleText(slide, "title");
+    const imageCaption = visibleText(slide, "caption");
     const overlay =
-      slide.title || slide.caption
-        ? `<div class="scene image-scene"><div class="image-text">${slide.title ? `<h1>${headline(slide, slide.title)}</h1>` : ""}${caption(slide.caption)}</div></div>`
+      imageTitle || imageCaption
+        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1>${headline(slide, imageTitle)}</h1>` : ""}${caption(slide, imageCaption)}</div></div>`
         : "";
     const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
     return frame(
@@ -261,7 +324,7 @@
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${slide.unit ? `<em>${esc(slide.unit)}</em>` : ""}</p>${caption(slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em>${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
@@ -276,7 +339,7 @@
       index,
       "split-slide",
       `--sides:${slide.sides.length}`,
-      `<div class="scene split-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
+      `<div class="scene split-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
   const clockText = (seconds) =>
@@ -302,7 +365,7 @@
       index,
       `timer-slide ${state.running ? "running" : ""} ${left === 0 ? "elapsed" : ""}`,
       "",
-      `<div class="scene timer-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
+      `<div class="scene timer-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide, slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
   function canvasSlide(slide, index) {
@@ -434,19 +497,30 @@
     const slide = deck.slides[state.slide];
     const root = $("#slide-root");
     document.documentElement.dataset.theme = deck.theme;
-    root.dataset.transition = deck.transition;
+    root.dataset.transition = slide.transition;
     const html = SCENES[slide.type](slide, state.slide, state.step);
     const sameSlide = renderedSlide === state.slide;
     const direction = state.slide < renderedSlide ? -1 : 1;
     root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
     const previous = root.lastElementChild;
-    if (previous && !sameSlide && deck.transition !== "cut" && !reducedMotion()) {
+    const hasObjectExits =
+      previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
+    const exitsOnly =
+      previous && !sameSlide && slide.transition === "cut" && hasObjectExits;
+    if (
+      previous &&
+      !sameSlide &&
+      !reducedMotion() &&
+      (slide.transition !== "cut" || exitsOnly)
+    ) {
       previous.classList.add("leaving");
+      if (exitsOnly) previous.classList.add("object-exits-only");
       const drop = () => previous.remove();
       // animationend bubbles, so only the slide's own exit may retire it.
-      previous.addEventListener("animationend", (event) => {
-        if (event.target === previous) drop();
-      });
+      if (!hasObjectExits)
+        previous.addEventListener("animationend", (event) => {
+          if (event.target === previous) drop();
+        });
       setTimeout(drop, 900);
       root.insertAdjacentHTML("beforeend", html);
       root.lastElementChild.classList.add("entering");
@@ -477,14 +551,9 @@
         String(b.dataset.themeChoice === deck.theme),
       ),
     );
-    $$("[data-transition-choice]").forEach((b) =>
-      b.setAttribute(
-        "aria-pressed",
-        String(b.dataset.transitionChoice === deck.transition),
-      ),
-    );
     if (actionFocus)
       $(`[data-action="${actionFocus}"]`)?.focus({ preventScroll: true });
+    renderObjectToolbar();
   }
   function notify(message) {
     clearTimeout(toastTimer);
@@ -596,6 +665,8 @@
     if (dialog.id === "editor") {
       document.body.classList.remove("editing");
       setStageEditing(false);
+      editingObjectTextId = null;
+      render();
     }
     wake();
   }
@@ -616,6 +687,7 @@
     line: "שורה מתחת",
     motion: "תנועת הכניסה",
     backdrop: "רקע הבמה",
+    transition: "מעבר לשקף הזה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -693,11 +765,22 @@
       ? object.text.slice(0, 28)
       : object.type === "image"
         ? "תמונה חופשית"
+        : object.type === "visual"
+          ? C.VISUALS[object.visual]
         : C.SHAPES[object.shape];
   const objectInput = (label, slideIndex, object, key, min, max, step = 1) =>
     `<label class="object-field"><span>${label}</span><input type="number" value="${esc(object[key])}" min="${min}" max="${max}" step="${step}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+  const OBJECT_SWATCHES = [
+    "#f6f7f8",
+    "#202526",
+    "#b5d8fb",
+    "#ff8fab",
+    "#ffd166",
+    "#7fe3b0",
+    "#b9a3ff",
+  ];
   const objectColour = (label, slideIndex, object, key) =>
-    `<label class="object-field colour-field"><span>${label}</span><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+    `<div class="object-field colour-field"><span>${label}</span><label class="colour-picker"><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}" aria-label="${esc(label)}"><output>${esc(object[key])}</output></label><div class="colour-swatches" aria-label="צבעים מהירים">${OBJECT_SWATCHES.map((colour) => `<button type="button" style="--swatch:${colour}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:${colour}" aria-label="${colour}"></button>`).join("")}</div></div>`;
   const objectPicker = (label, slideIndex, object, key, options) =>
     `<label class="object-field"><span>${label}</span><select data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}">${Object.entries(options)
       .map(
@@ -706,20 +789,47 @@
       )
       .join("")}</select></label>`;
   function objectEditor(object, slideIndex, objectIndex) {
-    const common = `<div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
+    const common = `<div class="object-animation-grid">${objectPicker("כניסה", slideIndex, object, "entrance", C.OBJECT_ENTRANCES)}${objectPicker("יציאה", slideIndex, object, "exit", C.OBJECT_EXITS)}${objectPicker("הצמדה", slideIndex, object, "snap", C.SNAP_MODES)}</div><div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
     let specific = "";
     if (object.type === "text")
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה", slideIndex, object, "style", C.TEXT_STYLES)}${objectColour("צבע", slideIndex, object, "color")}</div>`;
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
     else if (object.type === "image")
       specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
+    else if (object.type === "visual")
+      specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
     else
       specific = `<div class="object-transform-grid">${objectPicker("צורה", slideIndex, object, "shape", C.SHAPES)}${objectColour("מילוי", slideIndex, object, "color")}${objectColour("קו", slideIndex, object, "stroke")}${objectInput("עובי קו", slideIndex, object, "strokeWidth", 0, 20)}</div>`;
     return `<section class="object-editor ${selectedObjectId === object.id ? "selected" : ""}" data-object-card="${esc(object.id)}"><div class="object-editor-header"><button class="object-select" data-select-object="${slideIndex}:${esc(object.id)}"><span>${esc(objectName(object))}</span><small>${esc(C.OBJECT_TYPES[object.type])}</small></button><div class="object-editor-actions"><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:1" aria-label="העברה קדימה">${icon("up")}</button><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:-1" aria-label="העברה אחורה">${icon("down")}</button><button class="icon-button" data-duplicate-object="${slideIndex}:${esc(object.id)}" aria-label="שכפול אובייקט">${icon("copy")}</button><button class="icon-button" data-remove-object="${slideIndex}:${esc(object.id)}" aria-label="מחיקת אובייקט">${icon("trash")}</button></div></div>${specific}${common}</section>`;
   }
   function objectTools(slide, index) {
-    return `<section class="objects-panel"><div class="objects-panel-head"><div><strong>אובייקטים חופשיים</strong><small>אפשר לגרור ולשנות גודל ישירות על הבמה כשהעורך פתוח.</small></div><span>${slide.objects.length} / ${C.LIMITS.objects}</span></div><div class="object-add-row"><button data-add-object="${index}:text" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}טקסט</button><button data-add-object="${index}:image" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("image")}תמונה</button><button data-add-object="${index}:shape" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}צורה</button></div>${slide.objects.map((object, objectIndex) => objectEditor(object, index, objectIndex)).join("")}</section>`;
+    return `<section class="objects-panel"><div class="objects-panel-head"><div><strong>אובייקטים חופשיים</strong><small>אפשר לגרור ולשנות גודל ישירות על הבמה כשהעורך פתוח.</small></div><span>${slide.objects.length} / ${C.LIMITS.objects}</span></div><div class="object-add-row"><button data-add-object="${index}:text" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}טקסט</button><button data-add-object="${index}:image" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("image")}תמונה</button><button data-add-object="${index}:shape" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}צורה</button><button data-add-object="${index}:visual" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("agent")}רכיב חזותי</button></div>${slide.objects.map((object, objectIndex) => objectEditor(object, index, objectIndex)).join("")}</section>`;
   }
-  const LOOK_KEYS = new Set(["motion", "backdrop", "backdropPicture"]);
+  const PROJECTABLE_FIELDS = new Set([
+    "title",
+    "accent",
+    "caption",
+    "tool",
+    "unit",
+  ]);
+  function projectableTextTools(slide, index, specs) {
+    if (slide.type === "experiment") return "";
+    const keys = Object.keys(specs).filter(
+      (key) => PROJECTABLE_FIELDS.has(key) && slide[key],
+    );
+    if (!keys.length) return "";
+    return `<section class="projectable-text"><strong>טקסט על הבמה</strong><small>הופך טקסט קיים לתיבה שאפשר לערוך, לגרור ולצבוע ישירות.</small><div>${keys
+      .map((key) => {
+        const bound = slide.objects.some((object) => object.bind === key);
+        return `<button data-${bound ? "unbind" : "convert"}-text="${index}:${key}">${bound ? "החזרה לתבנית" : "הפיכה לתיבה"} · ${esc(FIELD_LABELS[key])}</button>`;
+      })
+      .join("")}</div></section>`;
+  }
+  const LOOK_KEYS = new Set([
+    "motion",
+    "backdrop",
+    "backdropPicture",
+    "transition",
+  ]);
   const splitSpecs = (specs) => {
     const content = {},
       look = {};
@@ -735,9 +845,10 @@
       <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
+      ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -829,6 +940,8 @@
     else if (key === "height")
       value = neat(Math.min(Number(value), 100 - Number(object.y)));
     object[key] = value;
+    if (key === "text" && object.bind) deck.slides[slideIndex][object.bind] = value;
+    if (key === "color" && object.type === "text") object.style = "solid";
     if (!withinDocumentLimit()) {
       object[key] = previous;
       input.value = previous;
@@ -839,6 +952,14 @@
     if (key === "text") {
       input.closest(".field").querySelector("small").textContent =
         `${value.length} / 500`;
+    }
+    if (key === "color") {
+      const output = input.closest(".colour-picker")?.querySelector("output");
+      if (output) output.textContent = value;
+      const style = input
+        .closest(".object-editor")
+        ?.querySelector('select[data-object-prop="style"]');
+      if (style && object.type === "text") style.value = "solid";
     }
     selectedObjectId = object.id;
     if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
@@ -856,6 +977,12 @@
     input.setCustomValidity("");
     const path = input.dataset.field.split(".");
     setPath(input.dataset.field, input.value);
+    if (path[0] === "slides" && path.length === 3) {
+      const bound = deck.slides[+path[1]].objects.find(
+        (object) => object.bind === path[2],
+      );
+      if (bound) bound.text = input.value;
+    }
     save();
     render();
     if (path[0] === "slides" && path[2] === "title") {
@@ -993,6 +1120,38 @@
   }
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const neat = (value) => String(Math.round(value * 10) / 10);
+  const gridGuides = () => Array.from({ length: 21 }, (_, index) => index * 5);
+  function objectGuides(axis, ignoredId) {
+    const guides = gridGuides();
+    for (const object of deck.slides[state.slide].objects) {
+      if (object.id === ignoredId) continue;
+      const start = Number(object[axis]);
+      const size = Number(object[axis === "x" ? "width" : "height"]);
+      guides.push(start, start + size / 2, start + size);
+    }
+    return guides;
+  }
+  function nearestSnap(points, guides, threshold = 1.15) {
+    let best = null;
+    for (const point of points)
+      for (const guide of guides) {
+        const delta = guide - point;
+        if (
+          Math.abs(delta) <= threshold &&
+          (!best || Math.abs(delta) < Math.abs(best.delta))
+        )
+          best = { delta, guide };
+      }
+    return best;
+  }
+  function showSnapGrid(active, x = null, y = null) {
+    const grid = $("#stage-grid");
+    grid.hidden = !active;
+    grid.classList.toggle("has-x-guide", x !== null);
+    grid.classList.toggle("has-y-guide", y !== null);
+    if (x !== null) grid.style.setProperty("--snap-x", `${x}%`);
+    if (y !== null) grid.style.setProperty("--snap-y", `${y}%`);
+  }
   function applyObjectPosition(object) {
     const el = $(`.free-object[data-object-id="${CSS.escape(object.id)}"]`);
     if (!el) return;
@@ -1005,12 +1164,14 @@
     if (!$("#editor").open || event.button !== 0) return;
     const hit = event.target.closest(".free-object");
     if (!hit) return;
+    if (event.target.closest('[contenteditable="true"]')) return;
     event.preventDefault();
     const id = hit.dataset.objectId;
     const object = objectById(state.slide, id);
     if (!object) return;
     const mode = event.target.closest("[data-object-handle]") ? "resize" : "move";
     if (selectedObjectId !== id) {
+      editingObjectTextId = null;
       selectedObjectId = id;
       render();
       renderEditor();
@@ -1028,6 +1189,7 @@
     };
     $("#stage").setPointerCapture?.(event.pointerId);
     document.body.classList.add("object-dragging");
+    showSnapGrid(object.snap === "on");
   }
   function moveObjectPointer(event) {
     if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
@@ -1037,21 +1199,72 @@
     if (!object || !rect.width || !rect.height) return;
     const dx = ((event.clientX - activeObjectPointer.startX) / rect.width) * 100;
     const dy = ((event.clientY - activeObjectPointer.startY) / rect.height) * 100;
+    let xGuide = null,
+      yGuide = null;
     if (activeObjectPointer.mode === "resize") {
-      object.width = neat(
-        clamp(activeObjectPointer.width + dx, 2, 100 - Number(object.x)),
+      let width = clamp(
+        activeObjectPointer.width + dx,
+        2,
+        100 - Number(object.x),
       );
-      object.height = neat(
-        clamp(activeObjectPointer.height + dy, 2, 100 - Number(object.y)),
+      let height = clamp(
+        activeObjectPointer.height + dy,
+        2,
+        100 - Number(object.y),
       );
+      if (object.snap === "on") {
+        const xSnap = nearestSnap(
+          [Number(object.x) + width],
+          objectGuides("x", object.id),
+        );
+        const ySnap = nearestSnap(
+          [Number(object.y) + height],
+          objectGuides("y", object.id),
+        );
+        if (xSnap) {
+          width += xSnap.delta;
+          xGuide = xSnap.guide;
+        }
+        if (ySnap) {
+          height += ySnap.delta;
+          yGuide = ySnap.guide;
+        }
+      }
+      object.width = neat(clamp(width, 2, 100 - Number(object.x)));
+      object.height = neat(clamp(height, 2, 100 - Number(object.y)));
     } else {
-      object.x = neat(
-        clamp(activeObjectPointer.x + dx, 0, 100 - Number(object.width)),
+      let x = clamp(
+        activeObjectPointer.x + dx,
+        0,
+        100 - Number(object.width),
       );
-      object.y = neat(
-        clamp(activeObjectPointer.y + dy, 0, 100 - Number(object.height)),
+      let y = clamp(
+        activeObjectPointer.y + dy,
+        0,
+        100 - Number(object.height),
       );
+      if (object.snap === "on") {
+        const xSnap = nearestSnap(
+          [x, x + Number(object.width) / 2, x + Number(object.width)],
+          objectGuides("x", object.id),
+        );
+        const ySnap = nearestSnap(
+          [y, y + Number(object.height) / 2, y + Number(object.height)],
+          objectGuides("y", object.id),
+        );
+        if (xSnap) {
+          x += xSnap.delta;
+          xGuide = xSnap.guide;
+        }
+        if (ySnap) {
+          y += ySnap.delta;
+          yGuide = ySnap.guide;
+        }
+      }
+      object.x = neat(clamp(x, 0, 100 - Number(object.width)));
+      object.y = neat(clamp(y, 0, 100 - Number(object.height)));
     }
+    showSnapGrid(object.snap === "on", xGuide, yGuide);
     applyObjectPosition(object);
   }
   function endObjectPointer(event) {
@@ -1059,6 +1272,7 @@
       return;
     activeObjectPointer = null;
     document.body.classList.remove("object-dragging");
+    showSnapGrid(false);
     save();
     renderEditor();
   }
@@ -1066,6 +1280,71 @@
   document.addEventListener("pointermove", moveObjectPointer);
   document.addEventListener("pointerup", endObjectPointer);
   document.addEventListener("pointercancel", endObjectPointer);
+  function beginTextEditing(id) {
+    const object = objectById(state.slide, id);
+    if (!object || object.type !== "text") return;
+    selectedObjectId = id;
+    editingObjectTextId = id;
+    render();
+    requestAnimationFrame(() => {
+      const editor = $('[data-object-text-editor="true"]');
+      if (!editor) return;
+      editor.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+  }
+  function finishTextEditing() {
+    if (!editingObjectTextId) return;
+    editingObjectTextId = null;
+    save();
+    render();
+    renderEditor();
+  }
+  $("#slide-root").addEventListener("dblclick", (event) => {
+    const text = event.target.closest(".object-text");
+    if (!text || !$("#editor").open) return;
+    event.preventDefault();
+    beginTextEditing(text.closest(".free-object").dataset.objectId);
+  });
+  $("#slide-root").addEventListener("input", (event) => {
+    if (!event.target.matches('[data-object-text-editor="true"]')) return;
+    const object = currentObject();
+    if (!object || object.type !== "text") return;
+    let value = event.target.textContent.replace(/\r/g, "");
+    if (value.length > 500) {
+      value = value.slice(0, 500);
+      event.target.textContent = value;
+      const range = document.createRange();
+      range.selectNodeContents(event.target);
+      range.collapse(false);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    object.text = value;
+    if (object.bind) deck.slides[state.slide][object.bind] = value;
+    const panel = $(`[data-object-card="${CSS.escape(object.id)}"]`);
+    const field = panel?.querySelector('textarea[data-object-prop="text"]');
+    if (field) {
+      field.value = value;
+      panel.querySelector(".field-head small").textContent =
+        `${value.length} / 500`;
+      panel.querySelector(".object-select span").textContent = value.slice(0, 28);
+    }
+    save();
+  });
+  $("#slide-root").addEventListener("keydown", (event) => {
+    if (!event.target.matches('[data-object-text-editor="true"]')) return;
+    if (event.key === "Escape" || (event.ctrlKey && event.key === "Enter")) {
+      event.preventDefault();
+      event.stopPropagation();
+      finishTextEditing();
+    }
+  });
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
     if (!b) return;
@@ -1082,6 +1361,38 @@
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
       changeExample(event.target.value);
+  });
+  $("#object-toolbar").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    const object = currentObject();
+    if (!button || !object) return;
+    if (button.dataset.toolbarEditText !== undefined) {
+      if (editingObjectTextId === object.id) finishTextEditing();
+      else beginTextEditing(object.id);
+    } else if (button.dataset.toolbarSpectrum !== undefined) {
+      object.style = object.style === "spectrum" ? "solid" : "spectrum";
+      save();
+      render();
+      renderEditor();
+    } else if (button.dataset.toolbarSnap !== undefined) {
+      object.snap = object.snap === "on" ? "off" : "on";
+      save();
+      render();
+      renderEditor();
+    }
+  });
+  $("#object-toolbar").addEventListener("change", (event) => {
+    const object = currentObject();
+    if (!object) return;
+    if (event.target.matches("[data-toolbar-colour]")) {
+      object.color = event.target.value;
+      if (object.type === "text") object.style = "solid";
+    } else if (event.target.matches("[data-toolbar-object-prop]"))
+      object[event.target.dataset.toolbarObjectProp] = event.target.value;
+    else return;
+    save();
+    render();
+    renderEditor();
   });
   $("#slide-dots").addEventListener("click", (event) => {
     const b = event.target.closest("button");
@@ -1132,20 +1443,6 @@
       render();
     }),
   );
-  $("#transition-options").innerHTML = Object.entries(C.TRANSITIONS)
-    .map(
-      ([key, name]) =>
-        `<button data-transition-choice="${key}">${esc(name)}</button>`,
-    )
-    .join("");
-  $$("[data-transition-choice]").forEach((b) =>
-    b.addEventListener("click", () => {
-      deck.transition = b.dataset.transitionChoice;
-      renderedSlide = -1;
-      save();
-      render();
-    }),
-  );
   $("#editor-fields").addEventListener("input", (e) => {
     // Selects also fire input; they are handled on change, where the value is final.
     if (e.target.matches("input[data-field], textarea[data-field]"))
@@ -1165,6 +1462,11 @@
     }
     if (e.target.matches("select[data-field]")) {
       setPath(e.target.dataset.field, e.target.value);
+      if (e.target.dataset.field.endsWith(".transition")) {
+        save();
+        $("#slide-root").dataset.transition = e.target.value;
+        return;
+      }
       // Replay the entrance so the presenter sees the preset they just picked.
       renderedSlide = -1;
       renderedSceneKey = null;
@@ -1189,6 +1491,7 @@
     const data = button.dataset;
     if (data.selectObject) {
       const [slideIndex, id] = data.selectObject.split(":");
+      editingObjectTextId = null;
       selectedObjectId = id;
       state = C.goTo(deck, +slideIndex);
       render();
@@ -1216,6 +1519,7 @@
       if (position < 0) return;
       slide.objects.splice(position, 1);
       if (selectedObjectId === id) selectedObjectId = null;
+      if (editingObjectTextId === id) editingObjectTextId = null;
       state = C.goTo(deck, +slideIndex);
       afterStructureChange();
     } else if (data.duplicateObject) {
@@ -1226,6 +1530,7 @@
       if (!source) return;
       const copy = C.clone(source);
       copy.id = C.newId("object");
+      if (copy.type === "text") copy.bind = "";
       copy.x = String(Math.min(100 - Number(copy.width), Number(copy.x) + 3));
       copy.y = String(Math.min(100 - Number(copy.height), Number(copy.y) + 3));
       slide.objects.push(copy);
@@ -1246,6 +1551,65 @@
       const [moved] = slide.objects.splice(position, 1);
       slide.objects.splice(target, 0, moved);
       selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.objectColour) {
+      const [slideIndex, id, key, colour] = data.objectColour.split(":");
+      const object = objectById(+slideIndex, id);
+      if (!object) return;
+      object[key] = colour;
+      if (object.type === "text" && key === "color") object.style = "solid";
+      selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      save();
+      render();
+      renderEditor();
+    } else if (data.convertText) {
+      const [slideIndex, key] = data.convertText.split(":");
+      const slide = deck.slides[+slideIndex];
+      if (
+        !slide[key] ||
+        slide.objects.length >= C.LIMITS.objects ||
+        slide.objects.some((object) => object.bind === key)
+      )
+        return;
+      const object = C.blankObject("text");
+      const layouts = {
+        title: ["15", "18", "70", "24", "72", "400"],
+        accent: ["20", "35", "60", "18", "68", "600"],
+        caption: ["20", "68", "60", "14", "30", "400"],
+        tool: ["35", "12", "30", "10", "24", "600"],
+        unit: ["62", "55", "22", "13", "42", "400"],
+      };
+      if (!layouts[key]) return;
+      const [x, y, width, height, fontSize, weight] = layouts[key];
+      Object.assign(object, {
+        bind: key,
+        text: slide[key],
+        x,
+        y,
+        width,
+        height,
+        fontSize,
+        weight,
+        color: getComputedStyle(document.documentElement)
+          .getPropertyValue(key === "accent" ? "--accent" : "--text")
+          .trim(),
+        style: key === "accent" ? "spectrum" : "solid",
+      });
+      slide.objects.push(object);
+      selectedObjectId = object.id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+      beginTextEditing(object.id);
+    } else if (data.unbindText) {
+      const [slideIndex, key] = data.unbindText.split(":");
+      const slide = deck.slides[+slideIndex];
+      const position = slide.objects.findIndex((object) => object.bind === key);
+      if (position < 0) return;
+      const [removed] = slide.objects.splice(position, 1);
+      if (selectedObjectId === removed.id) selectedObjectId = null;
+      if (editingObjectTextId === removed.id) editingObjectTextId = null;
       state = C.goTo(deck, +slideIndex);
       afterStructureChange();
     } else if (data.pickPicture) {
@@ -1345,12 +1709,41 @@
     pendingPicturePath = null;
     e.target.value = "";
   });
+  function nudgeSelectedObject(key) {
+    const object = currentObject();
+    if (!object) return false;
+    const axis = key === "ArrowLeft" || key === "ArrowRight" ? "x" : "y";
+    const direction = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
+    const size = Number(object[axis === "x" ? "width" : "height"]);
+    const current = Number(object[axis]);
+    const value =
+      object.snap === "on"
+        ? direction > 0
+          ? Math.ceil((current + 0.1) / 5) * 5
+          : Math.floor((current - 0.1) / 5) * 5
+        : current + direction;
+    object[axis] = neat(clamp(value, 0, 100 - size));
+    save();
+    render();
+    renderEditor();
+    return true;
+  }
   document.addEventListener("keydown", (e) => {
     const openDialogs = $$("dialog[open]");
     const openDialog = openDialogs.at(-1);
     if (e.key === "Escape" && openDialog) {
       e.preventDefault();
       closeDialog(openDialog);
+      return;
+    }
+    if (
+      $("#editor").open &&
+      !editingObjectTextId &&
+      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) &&
+      !e.target.closest("input,textarea,select,[contenteditable=\"true\"]") &&
+      nudgeSelectedObject(e.key)
+    ) {
+      e.preventDefault();
       return;
     }
     if (
