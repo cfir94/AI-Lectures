@@ -158,6 +158,7 @@ p {
   height: 100%;
   position: relative;
   isolation: isolate;
+  background: var(--surface);
 }
 .scene {
   height: 100%;
@@ -393,7 +394,10 @@ h1 span {
   animation-duration: 0.85s;
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
-  animation-delay: calc(var(--step) * 0.11s);
+  animation-delay: calc(var(--step) * 0.11s + var(--enter-delay, 0s));
+}
+.slide.entering {
+  --enter-delay: 0.24s;
 }
 .motion-rise .scene > * {
   animation-name: m-rise;
@@ -416,7 +420,7 @@ h1 span {
 .cascade-word {
   display: inline-block;
   animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
-  animation-delay: calc(var(--w) * 0.09s + 0.12s);
+  animation-delay: calc(var(--w) * 0.09s + 0.12s + var(--enter-delay, 0s));
 }
 @keyframes m-rise {
   from {
@@ -461,30 +465,22 @@ h1 span {
   pointer-events: none;
 }
 [data-transition="fade"] .slide.leaving {
-  animation: t-fade-out 0.45s both;
-}
-[data-transition="fade"] .slide.entering {
-  animation: t-fade-in 0.45s both;
+  animation: t-fade-out 0.34s cubic-bezier(0.4, 0, 1, 1) both;
 }
 [data-transition="push"] .slide.leaving {
-  animation: t-push-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-push-out 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="push"] .slide.entering {
-  animation: t-push-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-push-in 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.leaving {
-  animation: t-zoom-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-zoom-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.entering {
-  animation: t-zoom-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-zoom-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes t-fade-out {
   to {
-    opacity: 0;
-  }
-}
-@keyframes t-fade-in {
-  from {
     opacity: 0;
   }
 }
@@ -496,7 +492,6 @@ h1 span {
 }
 @keyframes t-push-in {
   from {
-    opacity: 0;
     transform: translateX(calc(var(--dir) * -9%));
   }
 }
@@ -508,8 +503,7 @@ h1 span {
 }
 @keyframes t-zoom-in {
   from {
-    opacity: 0;
-    transform: scale(0.93);
+    transform: scale(0.94);
   }
 }
 
@@ -621,6 +615,75 @@ h1 span {
   }
 }
 
+/* A picture that is the slide. */
+.image-frame {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  z-index: 0;
+}
+[class*="motion-"] .image-frame {
+  animation: m-fade 0.9s both;
+  animation-delay: var(--enter-delay, 0s);
+}
+.motion-still .image-frame {
+  animation-name: none;
+}
+.slide-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fit-contain .image-frame {
+  padding: 5cqw;
+}
+.fit-contain.has-text .image-frame {
+  padding-bottom: 28cqw;
+}
+.image-scene {
+  justify-content: flex-end;
+  padding: 8% 8% 9%;
+  z-index: 1;
+}
+.image-text {
+  position: relative;
+  max-width: 100%;
+}
+.fit-cover .image-scene::before {
+  content: "";
+  position: absolute;
+  inset: 32% 0 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 10%,
+    rgba(0, 0, 0, 0.36) 46%,
+    transparent
+  );
+  z-index: -1;
+}
+.fit-cover .image-scene,
+.fit-cover .image-scene h1 {
+  color: #fff;
+}
+.fit-cover .image-scene .scene-caption {
+  color: rgba(255, 255, 255, 0.85);
+}
+.image-slide h1 {
+  line-height: 1.16;
+}
+.image-placeholder {
+  position: absolute;
+  inset: 6cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2cqw;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 1.7cqw, 1.3rem);
+}
 /* One number, filling the stage. */
 .big-number {
   display: flex;
@@ -1024,6 +1087,33 @@ summary small {
   border-bottom: 1px solid var(--line);
   padding: 18px 0;
 }
+.picture-field {
+  margin-top: 18px;
+}
+.picture-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.picture-thumb.empty {
+  border-style: dashed;
+}
+.picture-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.picture-actions .duplicate-button {
+  flex: 1;
+}
+.picture-actions .icon-button {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+}
 .look-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1384,6 +1474,12 @@ kbd {
   .big-number {
     font-size: clamp(3.5rem, 30vw, 9rem);
   }
+  .image-scene {
+    padding: 8% 7% 12%;
+  }
+  .fit-contain.has-text .image-frame {
+    padding-bottom: 45vw;
+  }
   .transition-options {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1528,7 +1624,7 @@ kbd {
   <dialog id="editor" class="editor" aria-labelledby="editor-title">
     <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">מאחורי הקלעים</h2></div><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div>
     <div class="editor-scroll" id="editor-fields"></div>
-    <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden></div>
+    <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden><input type="file" id="picture-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
   </dialog>
   <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options"><button data-theme-choice="carbon"><span class="theme-preview carbon-preview"><i>Aa</i><b>✳</b></span><span>פחם ותכלת</span><small>עמוק · טכנולוגי</small></button><button data-theme-choice="paper"><span class="theme-preview paper-preview"><i>Aa</i><b>✳</b></span><span>לבן וכחול</span><small>בהיר · מדויק</small></button><button data-theme-choice="wine"><span class="theme-preview wine-preview"><i>Aa</i><b>✳</b></span><span>בורדו ולבן</span><small>חם · דרמטי</small></button></div><h3 class="dialog-subhead">מעבר בין שקפים</h3><p class="dialog-hint">איך שקף מחליף את זה שלפניו. תנועת הכניסה והרקע נבחרים לכל שקף בנפרד, בעורך.</p><div class="transition-options" id="transition-options" role="group" aria-label="מעבר בין שקפים"></div></dialog>
   <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
@@ -1540,12 +1636,25 @@ kbd {
 (() => {
   "use strict";
   const THEMES = ["carbon", "paper", "wine"];
-  const LIMITS = { slides: 40, examples: 20, steps: 6, note: 500 };
+  const LIMITS = {
+    slides: 40,
+    examples: 20,
+    steps: 6,
+    note: 500,
+    image: 1500000,
+    importBytes: 12000000,
+  };
+  // Only raster data URIs the editor itself produced. SVG is excluded on purpose:
+  // it can carry script, and nothing here needs it.
+  const IMAGE_HEAD = /^data:image\/(png|jpeg|webp|gif);base64,/;
+  const NOT_BASE64 = /[^A-Za-z0-9+/=]/;
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
   const choice = (options) => ({ choice: options });
+  const picture = () => ({ picture: true, max: LIMITS.image });
+  const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
 
@@ -1628,6 +1737,18 @@ kbd {
       },
       beats: () => 2,
     },
+    image: {
+      label: "תמונה",
+      hint: "תמונה שהיא השקף. הכותרת והמשפט מוקרנים מעליה, ואפשר להשאיר אותם ריקים.",
+      fields: {
+        picture: picture(),
+        fit: choice(FITS),
+        title: text(40, false),
+        caption: text(150, false),
+        alt: text(120, false),
+      },
+      beats: () => 1,
+    },
     number: {
       label: "מספר ענק",
       hint: "מספר אחד שממלא את הבמה ומטפס אליו. טוב לנתון שרוצים שיישאר בראש.",
@@ -1677,6 +1798,7 @@ kbd {
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
+    image: { picture: "", fit: "cover", title: "", caption: "", alt: "" },
     number: { value: "100", unit: "", title: "", caption: "" },
     split: {
       title: "",
@@ -1711,6 +1833,17 @@ kbd {
     };
     const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
     const str = (v, spec) => {
+      if (spec.picture) {
+        const value = v ?? "";
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        if (
+          value &&
+          (!IMAGE_HEAD.test(value) ||
+            NOT_BASE64.test(value.slice(value.indexOf(",") + 1)))
+        )
+          fail();
+        return value;
+      }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
         if (v === undefined) return Object.keys(spec.choice)[0];
@@ -1853,6 +1986,7 @@ kbd {
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    FITS,
     clone,
     newId,
     blankSlide,
@@ -1895,6 +2029,7 @@ kbd {
     toastTimer,
     countFrame,
     pendingOpenId = null,
+    pendingPicturePath = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -1923,6 +2058,8 @@ kbd {
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 4V3H3v13h1"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    image:
+      '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
   };
   const icon = (name) =>
@@ -2050,6 +2187,23 @@ kbd {
       `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
     );
   }
+  function imageSlide(slide, index) {
+    const media = slide.picture
+      ? `<img class="slide-image" src="${esc(slide.picture)}" alt="${esc(slide.alt || slide.title || "תמונה בשקף")}" style="object-fit:${slide.fit}">`
+      : `<p class="image-placeholder">עדיין אין תמונה כאן. אפשר להעלות אותה בעורך.</p>`;
+    const overlay =
+      slide.title || slide.caption
+        ? `<div class="scene image-scene"><div class="image-text">${slide.title ? `<h1>${headline(slide, slide.title)}</h1>` : ""}${caption(slide.caption)}</div></div>`
+        : "";
+    const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
+    return frame(
+      slide,
+      index,
+      `image-slide fit-${slide.fit} ${overlay ? "has-text" : ""}`,
+      `--headline-size:${size}cqw`,
+      `<figure class="image-frame">${media}</figure>${overlay}`,
+    );
+  }
   function numberSlide(slide, index) {
     const size = Math.min(30, 128 / slide.value.length);
     return frame(
@@ -2095,6 +2249,7 @@ kbd {
     demo: demoSlide,
     reveal: revealSlide,
     tokens: tokensSlide,
+    image: imageSlide,
     number: numberSlide,
     split: splitSlide,
     experiment: experimentSlide,
@@ -2315,6 +2470,9 @@ kbd {
     text: "חתיכה",
     value: "המספר",
     unit: "יחידה",
+    picture: "התמונה",
+    fit: "איך היא יושבת",
+    alt: "תיאור לקורא מסך",
     heading: "הכותרת בצד",
     line: "שורה מתחת",
     motion: "תנועת הכניסה",
@@ -2345,10 +2503,27 @@ kbd {
           `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
       )
       .join("")}</select></label>`;
+  const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
+  const pictureField = (label, path, value) =>
+    `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
+      value
+        ? `<img class="picture-thumb" src="${esc(value)}" alt="">`
+        : '<div class="picture-thumb empty"></div>'
+    }<div class="picture-actions"><button class="duplicate-button" data-pick-picture="${path}">${icon("image")}${value ? "החלפת התמונה" : "בחירת תמונה"}</button>${
+      value
+        ? `<button class="icon-button" data-clear-picture="${path}" aria-label="הסרת התמונה">${icon("trash")}</button>`
+        : ""
+    }</div></div>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.choice
+        spec.picture
+          ? pictureField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+            )
+          : spec.choice
           ? picker(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -2470,6 +2645,35 @@ kbd {
     render();
     renderEditor();
   }
+  // Pictures are stored inline as data URIs so the standalone file keeps working
+  // offline; that only stays reasonable if we shrink them on the way in.
+  async function loadPicture(file, path) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1920 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      let data = canvas.toDataURL("image/webp", 0.82);
+      if (!data.startsWith("data:image/webp"))
+        data = canvas.toDataURL("image/jpeg", 0.85);
+      if (data.length > C.LIMITS.image)
+        throw new Error("התמונה גדולה מדי גם אחרי הכיווץ. כדאי לנסות תמונה קטנה יותר.");
+      setPath(path, data);
+      renderedSlide = -1;
+      save();
+      render();
+      renderEditor();
+      notify(`התמונה נוספה, ${weight(data)}.`);
+    } catch (err) {
+      notify(
+        err.message ||
+          "לא הצלחתי לקרוא את הקובץ. אפשר לנסות תמונה בפורמט אחר.",
+      );
+    }
+  }
   function download(text, filename, type) {
     const url = URL.createObjectURL(new Blob([text], { type }));
     const a = document.createElement("a");
@@ -2493,8 +2697,10 @@ kbd {
   async function importJSON(file) {
     if (!file) return;
     try {
-      if (file.size > 500000)
-        throw new Error("הקובץ גדול מדי. גודל התוכן המרבי הוא 500KB.");
+      if (file.size > C.LIMITS.importBytes)
+        throw new Error(
+          `הקובץ גדול מדי. גודל התוכן המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+        );
       const candidate = C.validate(JSON.parse(await file.text()));
       deck = candidate;
       state = C.initialState();
@@ -2618,7 +2824,16 @@ kbd {
     const button = event.target.closest("button");
     if (!button || button.tagName !== "BUTTON" || !validEditor()) return;
     const data = button.dataset;
-    if (data.move) {
+    if (data.pickPicture) {
+      pendingPicturePath = data.pickPicture;
+      $("#picture-file").click();
+    } else if (data.clearPicture) {
+      setPath(data.clearPicture, "");
+      renderedSlide = -1;
+      save();
+      render();
+      renderEditor();
+    } else if (data.move) {
       const [index, direction] = data.move.split(":").map(Number);
       const target = index + direction;
       if (target < 0 || target >= deck.slides.length) return;
@@ -2696,6 +2911,12 @@ kbd {
   $("#import-file").addEventListener("change", (e) =>
     importJSON(e.target.files[0]),
   );
+  $("#picture-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file && pendingPicturePath) loadPicture(file, pendingPicturePath);
+    pendingPicturePath = null;
+    e.target.value = "";
+  });
   document.addEventListener("keydown", (e) => {
     if (
       e.ctrlKey ||

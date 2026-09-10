@@ -25,6 +25,7 @@
     toastTimer,
     countFrame,
     pendingOpenId = null,
+    pendingPicturePath = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -53,6 +54,8 @@
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 4V3H3v13h1"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    image:
+      '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
   };
   const icon = (name) =>
@@ -180,6 +183,23 @@
       `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
     );
   }
+  function imageSlide(slide, index) {
+    const media = slide.picture
+      ? `<img class="slide-image" src="${esc(slide.picture)}" alt="${esc(slide.alt || slide.title || "תמונה בשקף")}" style="object-fit:${slide.fit}">`
+      : `<p class="image-placeholder">עדיין אין תמונה כאן. אפשר להעלות אותה בעורך.</p>`;
+    const overlay =
+      slide.title || slide.caption
+        ? `<div class="scene image-scene"><div class="image-text">${slide.title ? `<h1>${headline(slide, slide.title)}</h1>` : ""}${caption(slide.caption)}</div></div>`
+        : "";
+    const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
+    return frame(
+      slide,
+      index,
+      `image-slide fit-${slide.fit} ${overlay ? "has-text" : ""}`,
+      `--headline-size:${size}cqw`,
+      `<figure class="image-frame">${media}</figure>${overlay}`,
+    );
+  }
   function numberSlide(slide, index) {
     const size = Math.min(30, 128 / slide.value.length);
     return frame(
@@ -225,6 +245,7 @@
     demo: demoSlide,
     reveal: revealSlide,
     tokens: tokensSlide,
+    image: imageSlide,
     number: numberSlide,
     split: splitSlide,
     experiment: experimentSlide,
@@ -445,6 +466,9 @@
     text: "חתיכה",
     value: "המספר",
     unit: "יחידה",
+    picture: "התמונה",
+    fit: "איך היא יושבת",
+    alt: "תיאור לקורא מסך",
     heading: "הכותרת בצד",
     line: "שורה מתחת",
     motion: "תנועת הכניסה",
@@ -475,10 +499,27 @@
           `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
       )
       .join("")}</select></label>`;
+  const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
+  const pictureField = (label, path, value) =>
+    `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
+      value
+        ? `<img class="picture-thumb" src="${esc(value)}" alt="">`
+        : '<div class="picture-thumb empty"></div>'
+    }<div class="picture-actions"><button class="duplicate-button" data-pick-picture="${path}">${icon("image")}${value ? "החלפת התמונה" : "בחירת תמונה"}</button>${
+      value
+        ? `<button class="icon-button" data-clear-picture="${path}" aria-label="הסרת התמונה">${icon("trash")}</button>`
+        : ""
+    }</div></div>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.choice
+        spec.picture
+          ? pictureField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+            )
+          : spec.choice
           ? picker(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -600,6 +641,35 @@
     render();
     renderEditor();
   }
+  // Pictures are stored inline as data URIs so the standalone file keeps working
+  // offline; that only stays reasonable if we shrink them on the way in.
+  async function loadPicture(file, path) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1920 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      let data = canvas.toDataURL("image/webp", 0.82);
+      if (!data.startsWith("data:image/webp"))
+        data = canvas.toDataURL("image/jpeg", 0.85);
+      if (data.length > C.LIMITS.image)
+        throw new Error("התמונה גדולה מדי גם אחרי הכיווץ. כדאי לנסות תמונה קטנה יותר.");
+      setPath(path, data);
+      renderedSlide = -1;
+      save();
+      render();
+      renderEditor();
+      notify(`התמונה נוספה, ${weight(data)}.`);
+    } catch (err) {
+      notify(
+        err.message ||
+          "לא הצלחתי לקרוא את הקובץ. אפשר לנסות תמונה בפורמט אחר.",
+      );
+    }
+  }
   function download(text, filename, type) {
     const url = URL.createObjectURL(new Blob([text], { type }));
     const a = document.createElement("a");
@@ -623,8 +693,10 @@
   async function importJSON(file) {
     if (!file) return;
     try {
-      if (file.size > 500000)
-        throw new Error("הקובץ גדול מדי. גודל התוכן המרבי הוא 500KB.");
+      if (file.size > C.LIMITS.importBytes)
+        throw new Error(
+          `הקובץ גדול מדי. גודל התוכן המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+        );
       const candidate = C.validate(JSON.parse(await file.text()));
       deck = candidate;
       state = C.initialState();
@@ -748,7 +820,16 @@
     const button = event.target.closest("button");
     if (!button || button.tagName !== "BUTTON" || !validEditor()) return;
     const data = button.dataset;
-    if (data.move) {
+    if (data.pickPicture) {
+      pendingPicturePath = data.pickPicture;
+      $("#picture-file").click();
+    } else if (data.clearPicture) {
+      setPath(data.clearPicture, "");
+      renderedSlide = -1;
+      save();
+      render();
+      renderEditor();
+    } else if (data.move) {
       const [index, direction] = data.move.split(":").map(Number);
       const target = index + direction;
       if (target < 0 || target >= deck.slides.length) return;
@@ -826,6 +907,12 @@
   $("#import-file").addEventListener("change", (e) =>
     importJSON(e.target.files[0]),
   );
+  $("#picture-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file && pendingPicturePath) loadPicture(file, pendingPicturePath);
+    pendingPicturePath = null;
+    e.target.value = "";
+  });
   document.addEventListener("keydown", (e) => {
     if (
       e.ctrlKey ||

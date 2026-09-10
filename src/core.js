@@ -2,12 +2,25 @@
 (() => {
   "use strict";
   const THEMES = ["carbon", "paper", "wine"];
-  const LIMITS = { slides: 40, examples: 20, steps: 6, note: 500 };
+  const LIMITS = {
+    slides: 40,
+    examples: 20,
+    steps: 6,
+    note: 500,
+    image: 1500000,
+    importBytes: 12000000,
+  };
+  // Only raster data URIs the editor itself produced. SVG is excluded on purpose:
+  // it can carry script, and nothing here needs it.
+  const IMAGE_HEAD = /^data:image\/(png|jpeg|webp|gif);base64,/;
+  const NOT_BASE64 = /[^A-Za-z0-9+/=]/;
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
   const choice = (options) => ({ choice: options });
+  const picture = () => ({ picture: true, max: LIMITS.image });
+  const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
 
@@ -90,6 +103,18 @@
       },
       beats: () => 2,
     },
+    image: {
+      label: "תמונה",
+      hint: "תמונה שהיא השקף. הכותרת והמשפט מוקרנים מעליה, ואפשר להשאיר אותם ריקים.",
+      fields: {
+        picture: picture(),
+        fit: choice(FITS),
+        title: text(40, false),
+        caption: text(150, false),
+        alt: text(120, false),
+      },
+      beats: () => 1,
+    },
     number: {
       label: "מספר ענק",
       hint: "מספר אחד שממלא את הבמה ומטפס אליו. טוב לנתון שרוצים שיישאר בראש.",
@@ -139,6 +164,7 @@
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
+    image: { picture: "", fit: "cover", title: "", caption: "", alt: "" },
     number: { value: "100", unit: "", title: "", caption: "" },
     split: {
       title: "",
@@ -173,6 +199,17 @@
     };
     const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
     const str = (v, spec) => {
+      if (spec.picture) {
+        const value = v ?? "";
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        if (
+          value &&
+          (!IMAGE_HEAD.test(value) ||
+            NOT_BASE64.test(value.slice(value.indexOf(",") + 1)))
+        )
+          fail();
+        return value;
+      }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
         if (v === undefined) return Object.keys(spec.choice)[0];
@@ -315,6 +352,7 @@
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    FITS,
     clone,
     newId,
     blankSlide,

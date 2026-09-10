@@ -149,6 +149,7 @@ p {
   height: 100%;
   position: relative;
   isolation: isolate;
+  background: var(--surface);
 }
 .scene {
   height: 100%;
@@ -384,7 +385,10 @@ h1 span {
   animation-duration: 0.85s;
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
-  animation-delay: calc(var(--step) * 0.11s);
+  animation-delay: calc(var(--step) * 0.11s + var(--enter-delay, 0s));
+}
+.slide.entering {
+  --enter-delay: 0.24s;
 }
 .motion-rise .scene > * {
   animation-name: m-rise;
@@ -407,7 +411,7 @@ h1 span {
 .cascade-word {
   display: inline-block;
   animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
-  animation-delay: calc(var(--w) * 0.09s + 0.12s);
+  animation-delay: calc(var(--w) * 0.09s + 0.12s + var(--enter-delay, 0s));
 }
 @keyframes m-rise {
   from {
@@ -452,30 +456,22 @@ h1 span {
   pointer-events: none;
 }
 [data-transition="fade"] .slide.leaving {
-  animation: t-fade-out 0.45s both;
-}
-[data-transition="fade"] .slide.entering {
-  animation: t-fade-in 0.45s both;
+  animation: t-fade-out 0.34s cubic-bezier(0.4, 0, 1, 1) both;
 }
 [data-transition="push"] .slide.leaving {
-  animation: t-push-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-push-out 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="push"] .slide.entering {
-  animation: t-push-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-push-in 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.leaving {
-  animation: t-zoom-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-zoom-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.entering {
-  animation: t-zoom-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-zoom-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes t-fade-out {
   to {
-    opacity: 0;
-  }
-}
-@keyframes t-fade-in {
-  from {
     opacity: 0;
   }
 }
@@ -487,7 +483,6 @@ h1 span {
 }
 @keyframes t-push-in {
   from {
-    opacity: 0;
     transform: translateX(calc(var(--dir) * -9%));
   }
 }
@@ -499,8 +494,7 @@ h1 span {
 }
 @keyframes t-zoom-in {
   from {
-    opacity: 0;
-    transform: scale(0.93);
+    transform: scale(0.94);
   }
 }
 
@@ -612,6 +606,75 @@ h1 span {
   }
 }
 
+/* A picture that is the slide. */
+.image-frame {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  z-index: 0;
+}
+[class*="motion-"] .image-frame {
+  animation: m-fade 0.9s both;
+  animation-delay: var(--enter-delay, 0s);
+}
+.motion-still .image-frame {
+  animation-name: none;
+}
+.slide-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fit-contain .image-frame {
+  padding: 5cqw;
+}
+.fit-contain.has-text .image-frame {
+  padding-bottom: 28cqw;
+}
+.image-scene {
+  justify-content: flex-end;
+  padding: 8% 8% 9%;
+  z-index: 1;
+}
+.image-text {
+  position: relative;
+  max-width: 100%;
+}
+.fit-cover .image-scene::before {
+  content: "";
+  position: absolute;
+  inset: 32% 0 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 10%,
+    rgba(0, 0, 0, 0.36) 46%,
+    transparent
+  );
+  z-index: -1;
+}
+.fit-cover .image-scene,
+.fit-cover .image-scene h1 {
+  color: #fff;
+}
+.fit-cover .image-scene .scene-caption {
+  color: rgba(255, 255, 255, 0.85);
+}
+.image-slide h1 {
+  line-height: 1.16;
+}
+.image-placeholder {
+  position: absolute;
+  inset: 6cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2cqw;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 1.7cqw, 1.3rem);
+}
 /* One number, filling the stage. */
 .big-number {
   display: flex;
@@ -1015,6 +1078,33 @@ summary small {
   border-bottom: 1px solid var(--line);
   padding: 18px 0;
 }
+.picture-field {
+  margin-top: 18px;
+}
+.picture-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.picture-thumb.empty {
+  border-style: dashed;
+}
+.picture-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.picture-actions .duplicate-button {
+  flex: 1;
+}
+.picture-actions .icon-button {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+}
 .look-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1374,6 +1464,12 @@ kbd {
   }
   .big-number {
     font-size: clamp(3.5rem, 30vw, 9rem);
+  }
+  .image-scene {
+    padding: 8% 7% 12%;
+  }
+  .fit-contain.has-text .image-frame {
+    padding-bottom: 45vw;
   }
   .transition-options {
     grid-template-columns: repeat(2, 1fr);

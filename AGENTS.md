@@ -19,6 +19,8 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Avoid adding dependencies for capabilities already supported by the browser. There are currently no runtime or build dependencies.
 - Use real buttons, labels and dialogs. Preserve RTL key mappings, keyboard focus and reduced-motion behavior.
 - Preserve content-length limits and the 2–6 steps / 20 examples limits unless explicitly changed. Never silently truncate imported content.
+- Pictures live inside the document as raster data URIs so the standalone file stays standalone. Shrink on upload, accept only `data:image/(png|jpeg|webp|gif);base64,`, and never accept SVG — it can carry script.
+- Slides must stay opaque and occlude each other; a transparent slide makes any crossfade show two headlines at once.
 - Escape untrusted text and embedded JSON. Validate the entire imported document before replacing the active one. Never put secrets into a downloadable HTML file.
 - Local storage is a convenience, not portable storage; preserve JSON and HTML export and a clear storage-failure message.
 
