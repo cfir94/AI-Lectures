@@ -1043,6 +1043,9 @@ h1 {
   margin-top: 2.2cqw;
 }
 .demo-tool {
+  display: inline-flex;
+  gap: 0.6em;
+  align-items: center;
   font-size: clamp(0.75rem, 1.3cqw, 1.05rem);
   letter-spacing: 0.14em;
   color: var(--muted);
@@ -1050,6 +1053,13 @@ h1 {
   padding: 6px 15px;
   border: 1px solid var(--line);
   border-radius: 999px;
+}
+/* The mark rides the eyebrow's line, so it is sized from the type around it and
+   never needs a position of its own. */
+.demo-mark {
+  height: 1.6em;
+  width: auto;
+  object-fit: contain;
 }
 .scene-eyebrow {
   font-size: clamp(0.8rem, 1.5cqw, 1.15rem);
@@ -1090,6 +1100,111 @@ h1 {
   margin-top: 3.2cqw;
   min-height: 3.2em;
 }
+/* ---- Composition ----------------------------------------------------------
+   The scene is a centred column by default. These blocks move it, and nothing
+   in the renderer knows about them: a slide carries `layout-*`, `scale-*` and,
+   on a reveal, `arrange-*`, and the CSS decides what that means. Adding a
+   composition is a row in the table plus a block here. */
+
+/* Anchored into the upper corner, with the diagonal left empty. In RTL the
+   words start at the right, so that is the corner they take. */
+.layout-corner .scene {
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: right;
+  padding: 11% 9% 12% 26%;
+}
+.layout-corner .scene-caption {
+  max-width: 32ch;
+}
+
+/* Hard against the leading edge, mid-height, with a wide clear field beside it.
+   The one that most obviously is not a centred slide. */
+.layout-edge .scene {
+  justify-content: center;
+  align-items: flex-start;
+  text-align: right;
+  padding: 8% 7% 10% 34%;
+}
+.layout-edge .scene-caption {
+  max-width: 30ch;
+}
+
+/* Sitting low, with the air above it. Good for a line that lands. */
+.layout-low .scene {
+  justify-content: flex-end;
+  align-items: flex-start;
+  text-align: right;
+  padding: 10% 9% 14% 22%;
+}
+.layout-low .scene-caption {
+  max-width: 34ch;
+}
+
+/* Centred, but let out: the headline runs nearly the full width instead of
+   stacking into a narrow column. */
+.layout-wide .scene {
+  padding: 8% 4% 12%;
+}
+.layout-wide h1 {
+  max-width: 92%;
+}
+
+/* Headline size as a choice. `auto` keeps the size the renderer computed from
+   the text length; the rest override it, so a quiet slide can follow a loud
+   one on purpose. */
+.scale-small h1,
+.scale-small .reveal-list li {
+  font-size: clamp(1.8rem, 5cqw, 4.4rem);
+}
+.scale-medium h1,
+.scale-medium .reveal-list li {
+  font-size: clamp(2.2rem, 7cqw, 6rem);
+}
+.scale-large h1,
+.scale-large .reveal-list li {
+  font-size: clamp(2.6rem, 9.5cqw, 8.4rem);
+}
+.scale-huge h1,
+.scale-huge .reveal-list li {
+  font-size: clamp(3rem, 13cqw, 12rem);
+  letter-spacing: -0.06em;
+  line-height: 1.02;
+}
+
+/* A run of words across one line rather than down a column. The words share the
+   line, so they shrink; the live one still carries the colour. */
+.arrange-row .reveal-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1.2em;
+  align-items: baseline;
+  justify-content: center;
+}
+.arrange-row .reveal-list li {
+  font-size: clamp(1.4rem, 5.6cqw, 4.6rem);
+}
+.layout-corner.arrange-row .reveal-list,
+.layout-edge.arrange-row .reveal-list,
+.layout-low.arrange-row .reveal-list {
+  justify-content: flex-end;
+}
+
+/* Stepped: each word indented past the one above, so the eye walks down the
+   frame instead of reading a list. */
+.arrange-stair .reveal-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.arrange-stair .reveal-list li {
+  margin-inline-start: calc(var(--w) * 2.6cqw);
+}
+.arrange-stair .scene {
+  align-items: flex-start;
+  text-align: right;
+}
+
 .token-sentence {
   font-size: clamp(1.5rem, 5cqw, 4rem);
   font-weight: 350;

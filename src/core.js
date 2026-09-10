@@ -208,6 +208,7 @@
     danger: "אדום אזהרה",
     mint: "מנטה וירוק",
     cobalt: "כחול קובלט",
+    steel: "פלדה ולבן",
   };
   const PALETTE_STYLES = {
     ice: {
@@ -245,12 +246,49 @@
       text: "#f5f9ff", muted: "#aec0da", accent: "#6ea8ff", rgb: "110,168,255",
       spectrum: "linear-gradient(110deg,#c9e0ff 4%,#6ea8ff 50%,#7de8e8 96%)",
     },
+    /* No hue at all, and the only pure white in the table. It is what a slide
+       looks like when the colour drains out of it — which is how this deck says
+       something broke, instead of turning the wall red. */
+    steel: {
+      surface: "#0e1013", raised: "#1b1f24", soft: "#15181c", line: "#39404a",
+      text: "#ffffff", muted: "#9aa3ad", accent: "#dbe2ea", rgb: "219,226,234",
+      spectrum: "linear-gradient(110deg,#ffffff 4%,#c9d2dc 52%,#8f9aa6 96%)",
+    },
+  };
+  /* Where the words sit in the frame. A deck where every slide centres its
+     headline reads as one slide shown thirty-five times, however good that one
+     slide is — so this is the table that lets a talk breathe: the same content,
+     placed. Each key is a CSS block; nothing branches on it in the renderer. */
+  const LAYOUTS = {
+    center: "במרכז",
+    corner: "פינה עליונה",
+    edge: "צמוד לשוליים",
+    low: "נמוך בפריים",
+    wide: "רחב ופרוס",
+  };
+  /* Headline size as a deliberate choice rather than a computed constant, so a
+     deck can whisper on one slide and shout on the next. */
+  const SCALES = {
+    auto: "לפי אורך הטקסט",
+    small: "קטן",
+    medium: "בינוני",
+    large: "גדול",
+    huge: "ענק",
+  };
+  /* How a run of words is arranged. The descending stack is the original; a row
+     and a stair stop every triple in the deck from looking like the last one. */
+  const ARRANGEMENTS = {
+    stack: "זו מתחת לזו",
+    row: "בשורה אחת",
+    stair: "מדרגות",
   };
   /* A slide the presenter is not showing this time. It stays in the document
      and in the editor, and the deck simply walks past it. */
   const VISIBILITY = { shown: "מוצג בהרצאה", hidden: "מדולג" };
   const COMMON_FIELDS = {
     visibility: choice(VISIBILITY),
+    layout: choice(LAYOUTS),
+    scale: choice(SCALES),
     palette: choice(PALETTES),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
@@ -278,6 +316,11 @@
       fields: {
         title: text(40),
         tool: text(30),
+        /* The tool's own mark, beside its name. It belongs to the scene rather
+           than to a free object pinned at the centre of the stage, so that it
+           follows the slide's composition instead of drifting away from the
+           words when the layout is not centred. */
+        mark: picture(),
         link: link(),
         caption: text(150, false),
         prompt: text(800, false),
@@ -287,7 +330,7 @@
     reveal: {
       label: "מילים שנחשפות",
       hint: "מילה אחת בכל צעד, עם משפט אחד מתחתיה. הקודמות נשארות עמומות.",
-      fields: { title: text(40, false) },
+      fields: { title: text(40, false), arrangement: choice(ARRANGEMENTS) },
       list: {
         key: "items",
         label: "מילה",
@@ -936,6 +979,9 @@
     FITS,
     OBJECT_TYPES,
     SHAPES,
+    LAYOUTS,
+    SCALES,
+    ARRANGEMENTS,
     TEXT_STYLES,
     FILL_STYLES,
     VISUAL_STYLES,
