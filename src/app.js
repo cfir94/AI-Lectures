@@ -2737,7 +2737,12 @@
   });
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
-  $("#edit").addEventListener("click", () => setEditing(!editing));
+  $("#edit").addEventListener("click", (event) => {
+    // Same trap as the navigation dots: leaving focus here turns the presenter's
+    // next space into a second click, which drops them back out of edit mode.
+    event.currentTarget.blur();
+    setEditing(!editing);
+  });
   $("#deck").addEventListener("click", () =>
     $("#editor").open ? closeDialog($("#editor")) : openDialog("editor"),
   );

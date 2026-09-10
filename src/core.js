@@ -116,6 +116,8 @@
     solid: "צבע אחיד",
     spectrum: "צבעוני",
     outline: "קו מתאר",
+    shimmer: "זוהר נודד",
+    sheen: "ברק חולף",
   };
   const VISUALS = {
     accordion: "כרטיס אקורדיון",

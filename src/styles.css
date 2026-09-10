@@ -597,6 +597,7 @@ p {
   text-align: var(--object-align);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  --sweep-tint: var(--object-colour);
 }
 /* "Colourful" should be the presenter's own colour swept through a gradient,
    not one fixed rainbow. Falls back to the theme spectrum where relative
@@ -1210,21 +1211,27 @@ h1 {
   --enter-delay: 0.24s;
 }
 .motion-rise .scene > * {
+  --entrance-name: m-rise;
   animation-name: m-rise;
 }
 .motion-blur .scene > * {
+  --entrance-name: m-blur;
   animation-name: m-blur;
 }
 .motion-wipe .scene > * {
+  --entrance-name: m-wipe;
   animation-name: m-wipe;
 }
 .motion-zoom .scene > * {
+  --entrance-name: m-zoom;
   animation-name: m-zoom;
 }
 .motion-cascade .scene > * {
+  --entrance-name: m-fade;
   animation-name: m-fade;
 }
 .motion-still .scene > * {
+  --entrance-name: none;
   animation-name: none;
 }
 .cascade-word {
@@ -1511,6 +1518,142 @@ h1 {
   -webkit-text-stroke: max(1px, 0.02em) var(--text);
 }
 
+/* Two sweeping finishes. Both are a gradient clipped to the glyphs and moved by
+   a keyframe, so they cost no markup per word and nothing at runtime. The band
+   is built from the text's own colour — dimmed toward the surface for the base
+   in "זוהר נודד", brightened toward it for the glare in "ברק חולף" — so both
+   read on a light theme as well as a dark one. */
+@keyframes text-shimmer-sweep {
+  from { background-position: 100% center; }
+  to { background-position: 0% center; }
+}
+@keyframes text-sheen-sweep {
+  0% { background-position-x: -100%; }
+  40% { background-position-x: 250%; }
+  100% { background-position-x: 250%; }
+}
+.slide {
+  --sweep-tint: var(--text);
+  --sweep-spread: 9%;
+}
+.object-text.text-shimmer,
+.object-text.text-sheen,
+.slide-text-shimmer h1,
+.slide-text-shimmer .scene-eyebrow,
+.slide-text-shimmer .split-heading,
+.slide-text-shimmer .reveal-list li[data-state="now"],
+.slide-text-shimmer .token-sentence,
+.slide-text-shimmer .scene-word,
+.slide-text-sheen h1,
+.slide-text-sheen .scene-eyebrow,
+.slide-text-sheen .split-heading,
+.slide-text-sheen .reveal-list li[data-state="now"],
+.slide-text-sheen .token-sentence,
+.slide-text-sheen .scene-word {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-repeat: no-repeat;
+}
+.object-text.text-shimmer,
+.slide-text-shimmer h1,
+.slide-text-shimmer .scene-eyebrow,
+.slide-text-shimmer .split-heading,
+.slide-text-shimmer .reveal-list li[data-state="now"],
+.slide-text-shimmer .token-sentence,
+.slide-text-shimmer .scene-word {
+  background-color: color-mix(in srgb, var(--sweep-tint) 42%, var(--surface));
+  background-image: linear-gradient(
+    90deg,
+    transparent calc(50% - var(--sweep-spread)),
+    var(--sweep-tint),
+    transparent calc(50% + var(--sweep-spread))
+  );
+  background-size: 250% 100%;
+  animation: text-shimmer-sweep 2.6s linear infinite;
+}
+.slide-text-shimmer .scene > :is(h1, .scene-eyebrow, .split-heading) {
+  animation-name: var(--entrance-name, none), text-shimmer-sweep;
+}
+.object-text.text-sheen,
+.slide-text-sheen h1,
+.slide-text-sheen .scene-eyebrow,
+.slide-text-sheen .split-heading,
+.slide-text-sheen .reveal-list li[data-state="now"],
+.slide-text-sheen .token-sentence,
+.slide-text-sheen .scene-word {
+  background-color: var(--sweep-tint);
+  background-image: linear-gradient(
+    to right,
+    var(--sweep-tint) 0%,
+    color-mix(in srgb, var(--sweep-tint) 28%, var(--surface)) 40%,
+    color-mix(in srgb, var(--sweep-tint) 28%, var(--surface)) 60%,
+    var(--sweep-tint) 100%
+  );
+  background-size: 50% 200%;
+  animation: text-sheen-sweep 4.4s linear infinite;
+}
+.slide-text-sheen .scene > :is(h1, .scene-eyebrow, .split-heading) {
+  animation-name: var(--entrance-name, none), text-sheen-sweep;
+}
+/* A slide-level sweep sits on the same element as the entrance preset, which
+   owns `animation-name` on `.scene > *`. Composing both from `--entrance-name`
+   keeps the two motion layers separate: the entrance still plays once on
+   arrival, the sweep keeps running underneath it. */
+.slide-text-shimmer .scene > :is(h1, .scene-eyebrow, .split-heading),
+.slide-text-sheen .scene > :is(h1, .scene-eyebrow, .split-heading) {
+  animation-duration: 0.85s, var(--sweep-duration);
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1), linear;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: both, none;
+  animation-delay: calc(var(--step) * 0.11s + var(--enter-delay, 0s)), 0s;
+}
+.slide-text-shimmer {
+  --sweep-duration: 2.6s;
+}
+.slide-text-sheen {
+  --sweep-duration: 4.4s;
+}
+/* A beat-only re-render suppresses every animation in the scene so the entrance
+   does not replay on each step. A sweep is not an entrance — like the ambient
+   backdrops it has to keep running — so it is re-asserted here, entrance and
+   all, which is what "no motion" was asking for in the first place. */
+.slide-text-shimmer.no-motion
+  .scene
+  :is(h1, .scene-eyebrow, .split-heading, .token-sentence, .scene-word),
+.slide-text-shimmer.no-motion .scene .reveal-list li[data-state="now"] {
+  animation: text-shimmer-sweep var(--sweep-duration) linear infinite !important;
+}
+.slide-text-sheen.no-motion
+  .scene
+  :is(h1, .scene-eyebrow, .split-heading, .token-sentence, .scene-word),
+.slide-text-sheen.no-motion .scene .reveal-list li[data-state="now"] {
+  animation: text-sheen-sweep var(--sweep-duration) linear infinite !important;
+}
+/* With the sweep frozen the band would sit wherever it stopped, so reduced
+   motion gets the plain colour instead of a half-lit headline. */
+@media (prefers-reduced-motion: reduce) {
+  .object-text.text-shimmer,
+  .object-text.text-sheen,
+  .slide-text-shimmer h1,
+  .slide-text-shimmer .scene-eyebrow,
+  .slide-text-shimmer .split-heading,
+  .slide-text-shimmer .reveal-list li[data-state="now"],
+  .slide-text-shimmer .token-sentence,
+  .slide-text-shimmer .scene-word,
+  .slide-text-sheen h1,
+  .slide-text-sheen .scene-eyebrow,
+  .slide-text-sheen .split-heading,
+  .slide-text-sheen .reveal-list li[data-state="now"],
+  .slide-text-sheen .token-sentence,
+  .slide-text-sheen .scene-word {
+    background-image: none;
+    color: var(--sweep-tint);
+    -webkit-text-fill-color: var(--sweep-tint);
+  }
+}
+
 /* Editing a projected string in place: it must stay exactly where it was. */
 [data-slide-text-editing="true"] {
   cursor: text;
@@ -1521,6 +1664,18 @@ h1 {
   border-radius: 4px;
   -webkit-text-fill-color: currentColor;
   background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+/* A finish that clips the background to the glyphs outranks the editing rule on
+   specificity, which would leave the presenter typing into half-lit or
+   invisible letters. While a string is being edited it is plain text. */
+.slide [data-slide-text-editing="true"] {
+  animation: none;
+  background-image: none;
+  background-color: color-mix(in srgb, var(--surface) 55%, transparent);
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
 }
 .editing [data-slide-text] {
   cursor: text;
