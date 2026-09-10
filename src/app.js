@@ -102,6 +102,10 @@
       inner = [0, 1, 2, 3]
         .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
         .join("");
+    else if (kind === "picture")
+      inner = slide.backdropPicture
+        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
+        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>';
     else if (kind === "beams") inner = '<div class="beam-field"></div>';
     else if (kind === "halo") inner = '<div class="halo"></div>';
     else if (kind === "waves")
@@ -617,7 +621,7 @@
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
-  const LOOK_KEYS = new Set(["motion", "backdrop"]);
+  const LOOK_KEYS = new Set(["motion", "backdrop", "backdropPicture"]);
   const splitSpecs = (specs) => {
     const content = {},
       look = {};
@@ -634,7 +638,8 @@
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
-      <div class="look-row">${fieldsFor(slide, look, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop }, `slides.${index}`)}</div>
+      ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
   function examplesEditor(open) {
@@ -661,14 +666,15 @@
       : new Set([deck.slides[state.slide].id]);
     if (pendingOpenId) open.add(pendingOpenId);
     $("#editor-fields").innerHTML =
-      deck.slides
-        .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
-        .join("") +
-      `<div class="slide-add"><label class="field"><span class="field-head"><span>שקף חדש</span></span><select id="new-slide-type">${Object.entries(
+      `<div class="slide-add"><label class="field"><span class="field-head"><span>הוספת שקף חדש בסוף המצגת</span></span><select id="new-slide-type">${Object.entries(
         C.SLIDE_TYPES,
       )
         .map(([key, t]) => `<option value="${key}">${esc(t.label)}</option>`)
-        .join("")}</select></label><button class="duplicate-button" id="add-slide" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}הוספה בסוף המצגת</button></div>` +
+        .join("")}</select></label><button class="duplicate-button" id="add-slide" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}הוספה</button></div>` +
+      deck.slides
+        .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
+        .join("") +
+
       examplesEditor(open.has("examples"));
   }
   function setPath(path, value) {
@@ -890,6 +896,8 @@
       renderedSceneKey = null;
       save();
       render();
+      // Choosing the picture backdrop reveals its upload field.
+      if (e.target.dataset.field.endsWith(".backdrop")) renderEditor();
       return;
     }
     if (e.target.id === "editor-example") {

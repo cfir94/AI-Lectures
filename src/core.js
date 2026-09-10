@@ -53,6 +53,7 @@
     beams: "קרני אור",
     waves: "גלים",
     halo: "הילה",
+    picture: "תמונה משלך",
     plain: "רקע נקי",
   };
   const TRANSITIONS = {
@@ -64,6 +65,7 @@
   const COMMON_FIELDS = {
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
+    backdropPicture: picture(),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -205,6 +207,7 @@
     ...clone(BLANKS[type]),
     motion: "rise",
     backdrop: "arcs",
+    backdropPicture: "",
     note: "",
   });
   const blankItem = (type) =>
