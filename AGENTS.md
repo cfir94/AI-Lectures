@@ -15,12 +15,16 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Keep document validation and navigation in `src/core.js`. Keep content in the versioned document schema and presentation styles in CSS theme tokens.
 - Declare a slide type once in `SLIDE_TYPES`: its fields, length limits, list and beat count. Validation, the editor and the presenter keys all read that table — do not special-case a type in the editor.
 - `THEMES`, `MOTIONS`, `BACKDROPS` and `TRANSITIONS` work the same way: a key CSS hooks onto and a Hebrew name the editor shows. Add an option as a table row plus a CSS block, never as a branch in the render path.
+- Free composition is an additive `objects` layer on every slide, plus the blank `canvas` slide type. Keep the structured slide scenes intact; presenters use a canvas slide when every element needs free placement. Declare object, shape and text-style choices in `OBJECT_TYPES`, `SHAPES` and `TEXT_STYLES`.
+- Object geometry is stored as strings in stage percentages (`x`, `y`, `width`, `height`) so it scales with the 16:9 canvas. Keep direct manipulation and numeric editor fields in sync, preserve layer order, and validate every imported coordinate, colour and object ID before rendering.
+- Keep every object fully inside the stage, keep object IDs unique across the entire document, and preserve the mobile stage-editing mode that collapses the inspector while direct manipulation is active.
 - `render` restores focus by `data-action` after rebuilding the stage, so blur a control *before* rendering, never after.
 - Keep the two motion layers separate: slide entrance runs on `.scene > *` and is driven by the motion class, which is stripped when only the beat changed; per-beat animation belongs on inner elements. Ambient backdrop loops must survive a restart unnoticed, because a re-render recreates them.
 - Avoid adding dependencies for capabilities already supported by the browser. There are currently no runtime or build dependencies.
 - Use real buttons, labels and dialogs. Preserve RTL key mappings, keyboard focus and reduced-motion behavior.
 - Preserve content-length limits and the 2–6 steps / 20 examples limits unless explicitly changed. Never silently truncate imported content.
-- Pictures live inside the document as raster data URIs so the standalone file stays standalone. Shrink on upload, accept only `data:image/(png|jpeg|webp|gif);base64,`, and never accept SVG — it can carry script.
+- Pictures, including free image objects, live inside the document as raster data URIs so the standalone file stays standalone. Shrink on upload, accept only `data:image/(png|jpeg|webp|gif);base64,`, and never accept SVG — it can carry script.
+- Enforce the aggregate portable-document budget on import, image upload, duplication and export. Check Base64 structure and raster signatures in core, then decode every imported picture in the browser before replacing the active document.
 - Slides must stay opaque and occlude each other; a transparent slide makes any crossfade show two headlines at once.
 - Escape untrusted text and embedded JSON. Validate the entire imported document before replacing the active one. Never put secrets into a downloadable HTML file.
 - Local storage is a convenience, not portable storage; preserve JSON and HTML export and a clear storage-failure message.

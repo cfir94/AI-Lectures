@@ -29,6 +29,8 @@
     notesOpen = false,
     pendingOpenId = null,
     pendingPicturePath = null,
+    selectedObjectId = null,
+    activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -121,8 +123,44 @@
     }
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
+  const shapeMarkup = (object) => {
+    const common = `fill="${esc(object.color)}" stroke="${esc(object.stroke)}" stroke-width="${esc(object.strokeWidth)}" vector-effect="non-scaling-stroke"`;
+    if (object.shape === "circle")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="47" ry="47" ${common}/></svg>`;
+    if (object.shape === "line")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><line x1="4" y1="50" x2="96" y2="50" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+    if (object.shape === "arrow")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 50h78M66 26l24 24-24 24" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+    if (object.shape === "star")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="m50 4 11 31 33 1-26 20 10 33-28-19-28 19 10-33L6 36l33-1Z" ${common}/></svg>`;
+    if (object.shape === "blob")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22c13 17 9 45-7 61-16 15-43 17-59 2C1 70 4 40 19 21 34 3 68 4 82 22Z" ${common}/></svg>`;
+    if (object.shape === "ring")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="43" ry="43" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(3, Number(object.strokeWidth))}" vector-effect="non-scaling-stroke"/></svg>`;
+    return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="8" ${common}/></svg>`;
+  };
+  const objectMarkup = (object, index) => {
+    const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;transform:rotate(${object.rotation}deg);opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
+    let body = "";
+    if (object.type === "text")
+      body = `<p class="object-text text-${object.style}" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}">${esc(object.text)}</p>`;
+    else if (object.type === "image")
+      body = object.picture
+        ? `<img class="object-image" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
+        : '<span class="object-placeholder">תמונה</span>';
+    else body = shapeMarkup(object);
+    const handles =
+      selectedObjectId === object.id
+        ? '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>'
+        : "";
+    return `<div class="free-object object-${object.type} ${selectedObjectId === object.id ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
+  };
+  const freeObjects = (slide) =>
+    slide.objects?.length
+      ? `<div class="free-object-layer">${slide.objects.map(objectMarkup).join("")}</div>`
+      : "";
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}</section>`;
+    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
   const caption = (value) =>
     value ? `<p class="scene-caption">${esc(value)}</p>` : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
@@ -267,6 +305,15 @@
       `<div class="scene timer-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
+  function canvasSlide(slide, index) {
+    return frame(
+      slide,
+      index,
+      "canvas-slide",
+      "",
+      '<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p></div>',
+    );
+  }
   function experimentSlide(slide, index, step) {
     const e = C.selected(deck),
       agent = step > 0,
@@ -291,6 +338,7 @@
     number: numberSlide,
     split: splitSlide,
     timer: timerSlide,
+    canvas: canvasSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -458,6 +506,12 @@
       ? "נשמר במכשיר הזה · אפשר להוריד עותק לגיבוי"
       : "השמירה במכשיר אינה זמינה. יש להוריד עותק לפני הסגירה.";
   }
+  const withinDocumentLimit = () =>
+    C.serializedBytes(deck) <= C.LIMITS.importBytes;
+  const documentLimitMessage = () =>
+    notify(
+      `המצגת גדולה מדי. כדי לשמור אותה בדפדפן ובקובץ נייד, הגודל המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+    );
   function act(action) {
     if (action === "replay") {
       renderedSlide = -1;
@@ -512,10 +566,19 @@
       if (!$("dialog[open]")) document.body.classList.add("controls-idle");
     }, 4500);
   }
+  function setStageEditing(active) {
+    document.body.classList.toggle("editor-stage-mode", active);
+    $("#editor-stage-toggle").textContent = active ? "חזרה לעורך" : "עריכת במה";
+    $("#editor-stage-toggle").setAttribute("aria-pressed", String(active));
+  }
   function openDialog(id) {
     wake();
-    if (id === "editor") renderEditor();
-    $(`#${id}`).showModal();
+    if (id === "editor") {
+      renderEditor();
+      document.body.classList.add("editing");
+      setStageEditing(false);
+      $(`#${id}`).show();
+    } else $(`#${id}`).showModal();
   }
   function validEditor() {
     const invalid = $$("#editor-fields input, #editor-fields textarea").find(
@@ -530,6 +593,10 @@
   function closeDialog(dialog) {
     if (dialog.id === "editor" && !validEditor()) return;
     dialog.close();
+    if (dialog.id === "editor") {
+      document.body.classList.remove("editing");
+      setStageEditing(false);
+    }
     wake();
   }
   const FIELD_LABELS = {
@@ -621,6 +688,37 @@
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
+  const objectName = (object) =>
+    object.type === "text"
+      ? object.text.slice(0, 28)
+      : object.type === "image"
+        ? "תמונה חופשית"
+        : C.SHAPES[object.shape];
+  const objectInput = (label, slideIndex, object, key, min, max, step = 1) =>
+    `<label class="object-field"><span>${label}</span><input type="number" value="${esc(object[key])}" min="${min}" max="${max}" step="${step}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+  const objectColour = (label, slideIndex, object, key) =>
+    `<label class="object-field colour-field"><span>${label}</span><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+  const objectPicker = (label, slideIndex, object, key, options) =>
+    `<label class="object-field"><span>${label}</span><select data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}">${Object.entries(options)
+      .map(
+        ([value, name]) =>
+          `<option value="${value}" ${value === object[key] ? "selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("")}</select></label>`;
+  function objectEditor(object, slideIndex, objectIndex) {
+    const common = `<div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
+    let specific = "";
+    if (object.type === "text")
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה", slideIndex, object, "style", C.TEXT_STYLES)}${objectColour("צבע", slideIndex, object, "color")}</div>`;
+    else if (object.type === "image")
+      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
+    else
+      specific = `<div class="object-transform-grid">${objectPicker("צורה", slideIndex, object, "shape", C.SHAPES)}${objectColour("מילוי", slideIndex, object, "color")}${objectColour("קו", slideIndex, object, "stroke")}${objectInput("עובי קו", slideIndex, object, "strokeWidth", 0, 20)}</div>`;
+    return `<section class="object-editor ${selectedObjectId === object.id ? "selected" : ""}" data-object-card="${esc(object.id)}"><div class="object-editor-header"><button class="object-select" data-select-object="${slideIndex}:${esc(object.id)}"><span>${esc(objectName(object))}</span><small>${esc(C.OBJECT_TYPES[object.type])}</small></button><div class="object-editor-actions"><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:1" aria-label="העברה קדימה">${icon("up")}</button><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:-1" aria-label="העברה אחורה">${icon("down")}</button><button class="icon-button" data-duplicate-object="${slideIndex}:${esc(object.id)}" aria-label="שכפול אובייקט">${icon("copy")}</button><button class="icon-button" data-remove-object="${slideIndex}:${esc(object.id)}" aria-label="מחיקת אובייקט">${icon("trash")}</button></div></div>${specific}${common}</section>`;
+  }
+  function objectTools(slide, index) {
+    return `<section class="objects-panel"><div class="objects-panel-head"><div><strong>אובייקטים חופשיים</strong><small>אפשר לגרור ולשנות גודל ישירות על הבמה כשהעורך פתוח.</small></div><span>${slide.objects.length} / ${C.LIMITS.objects}</span></div><div class="object-add-row"><button data-add-object="${index}:text" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}טקסט</button><button data-add-object="${index}:image" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("image")}תמונה</button><button data-add-object="${index}:shape" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}צורה</button></div>${slide.objects.map((object, objectIndex) => objectEditor(object, index, objectIndex)).join("")}</section>`;
+  }
   const LOOK_KEYS = new Set(["motion", "backdrop", "backdropPicture"]);
   const splitSpecs = (specs) => {
     const content = {},
@@ -638,6 +736,7 @@
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
+      ${objectTools(slide, index)}
       <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
@@ -682,9 +781,69 @@
     if (p[0] === "slides") {
       const slide = deck.slides[+p[1]];
       if (p.length === 3) slide[p[2]] = value;
-      else slide[p[2]][+p[3]][p[4]] = value;
+      else if (p.length === 5) slide[p[2]][+p[3]][p[4]] = value;
+      else if (p.length === 6) slide[p[2]][+p[3]][p[4]][+p[5]] = value;
     } else if (p[0] === "example") C.selected(deck)[p[1]] = value;
     else if (p[0] === "steps") C.selected(deck).steps[+p[1]][p[2]] = value;
+  }
+  function getPath(path) {
+    const p = path.split(".");
+    if (p[0] === "slides") {
+      const slide = deck.slides[+p[1]];
+      if (p.length === 3) return slide[p[2]];
+      if (p.length === 5) return slide[p[2]][+p[3]][p[4]];
+    }
+    if (p[0] === "example") return C.selected(deck)[p[1]];
+    if (p[0] === "steps") return C.selected(deck).steps[+p[1]][p[2]];
+  }
+  const objectById = (slideIndex, id) =>
+    deck.slides[slideIndex]?.objects.find((object) => object.id === id);
+  const normalizeObjectNumber = (key, value) => {
+    const ranges = {
+      x: [0, 100],
+      y: [0, 100],
+      width: [2, 100],
+      height: [2, 100],
+      rotation: [-180, 180],
+      opacity: [0, 100],
+      fontSize: [8, 300],
+      radius: [0, 50],
+      strokeWidth: [0, 20],
+    };
+    if (!ranges[key]) return value;
+    const [min, max] = ranges[key];
+    return String(Math.min(max, Math.max(min, Number(value) || 0)));
+  };
+  function updateObjectField(input) {
+    const slideIndex = +input.dataset.objectSlide;
+    const object = objectById(slideIndex, input.dataset.objectId);
+    if (!object) return;
+    const key = input.dataset.objectProp;
+    const previous = object[key];
+    let value = normalizeObjectNumber(key, input.value);
+    if (key === "x") value = neat(Math.min(Number(value), 100 - Number(object.width)));
+    else if (key === "y")
+      value = neat(Math.min(Number(value), 100 - Number(object.height)));
+    else if (key === "width")
+      value = neat(Math.min(Number(value), 100 - Number(object.x)));
+    else if (key === "height")
+      value = neat(Math.min(Number(value), 100 - Number(object.y)));
+    object[key] = value;
+    if (!withinDocumentLimit()) {
+      object[key] = previous;
+      input.value = previous;
+      documentLimitMessage();
+      return;
+    }
+    if (input.type === "number") input.value = value;
+    if (key === "text") {
+      input.closest(".field").querySelector("small").textContent =
+        `${value.length} / 500`;
+    }
+    selectedObjectId = object.id;
+    if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
+    save();
+    render();
   }
   function updateField(input) {
     input.closest(".field").querySelector("small").textContent =
@@ -735,7 +894,14 @@
         data = canvas.toDataURL("image/jpeg", 0.85);
       if (data.length > C.LIMITS.image)
         throw new Error("התמונה גדולה מדי גם אחרי הכיווץ. כדאי לנסות תמונה קטנה יותר.");
+      const previous = getPath(path);
       setPath(path, data);
+      if (!withinDocumentLimit()) {
+        setPath(path, previous);
+        throw new Error(
+          `אין מספיק מקום לעוד תמונה. הגודל המרבי של מצגת ניידת הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+        );
+      }
       renderedSlide = -1;
       save();
       render();
@@ -760,13 +926,34 @@
   }
   function exportHTML() {
     if (!validEditor()) return;
-    const exportId = `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    download(
-      C.portableHTML(initialHTML, deck, exportId),
-      "מצ׳אטבוט-לסוכן.html",
-      "text/html;charset=utf-8",
-    );
-    notify("העותק כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.");
+    try {
+      const exportId = `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      download(
+        C.portableHTML(initialHTML, deck, exportId),
+        "מצ׳אטבוט-לסוכן.html",
+        "text/html;charset=utf-8",
+      );
+      notify("העותק כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.");
+    } catch (err) {
+      notify(err.message);
+    }
+  }
+  async function checkImportedPictures(document) {
+    const values = new Set();
+    for (const slide of document.slides) {
+      if (slide.backdropPicture) values.add(slide.backdropPicture);
+      if (slide.picture) values.add(slide.picture);
+      for (const object of slide.objects)
+        if (object.type === "image" && object.picture) values.add(object.picture);
+    }
+    try {
+      for (const value of values) {
+        const bitmap = await createImageBitmap(await (await fetch(value)).blob());
+        bitmap.close();
+      }
+    } catch {
+      throw new Error("אחת התמונות בקובץ פגומה. התוכן שלך נשמר ללא שינוי.");
+    }
   }
   async function importJSON(file) {
     if (!file) return;
@@ -776,6 +963,7 @@
           `הקובץ גדול מדי. גודל התוכן המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
         );
       const candidate = C.validate(JSON.parse(await file.text()));
+      await checkImportedPictures(candidate);
       deck = candidate;
       state = C.initialState();
       renderedDots = "";
@@ -803,6 +991,81 @@
       notify("הדפדפן לא אפשר מסך מלא. אפשר להשתמש ב־F11.");
     }
   }
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const neat = (value) => String(Math.round(value * 10) / 10);
+  function applyObjectPosition(object) {
+    const el = $(`.free-object[data-object-id="${CSS.escape(object.id)}"]`);
+    if (!el) return;
+    el.style.left = `${object.x}%`;
+    el.style.top = `${object.y}%`;
+    el.style.width = `${object.width}%`;
+    el.style.height = `${object.height}%`;
+  }
+  function startObjectPointer(event) {
+    if (!$("#editor").open || event.button !== 0) return;
+    const hit = event.target.closest(".free-object");
+    if (!hit) return;
+    event.preventDefault();
+    const id = hit.dataset.objectId;
+    const object = objectById(state.slide, id);
+    if (!object) return;
+    const mode = event.target.closest("[data-object-handle]") ? "resize" : "move";
+    if (selectedObjectId !== id) {
+      selectedObjectId = id;
+      render();
+      renderEditor();
+    }
+    activeObjectPointer = {
+      id,
+      pointerId: event.pointerId,
+      mode,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: Number(object.x),
+      y: Number(object.y),
+      width: Number(object.width),
+      height: Number(object.height),
+    };
+    $("#stage").setPointerCapture?.(event.pointerId);
+    document.body.classList.add("object-dragging");
+  }
+  function moveObjectPointer(event) {
+    if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
+      return;
+    const object = objectById(state.slide, activeObjectPointer.id);
+    const rect = $("#stage").getBoundingClientRect();
+    if (!object || !rect.width || !rect.height) return;
+    const dx = ((event.clientX - activeObjectPointer.startX) / rect.width) * 100;
+    const dy = ((event.clientY - activeObjectPointer.startY) / rect.height) * 100;
+    if (activeObjectPointer.mode === "resize") {
+      object.width = neat(
+        clamp(activeObjectPointer.width + dx, 2, 100 - Number(object.x)),
+      );
+      object.height = neat(
+        clamp(activeObjectPointer.height + dy, 2, 100 - Number(object.y)),
+      );
+    } else {
+      object.x = neat(
+        clamp(activeObjectPointer.x + dx, 0, 100 - Number(object.width)),
+      );
+      object.y = neat(
+        clamp(activeObjectPointer.y + dy, 0, 100 - Number(object.height)),
+      );
+    }
+    applyObjectPosition(object);
+  }
+  function endObjectPointer(event) {
+    if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
+      return;
+    activeObjectPointer = null;
+    document.body.classList.remove("object-dragging");
+    save();
+    renderEditor();
+  }
+  $("#slide-root").addEventListener("pointerdown", startObjectPointer);
+  document.addEventListener("pointermove", moveObjectPointer);
+  document.addEventListener("pointerup", endObjectPointer);
+  document.addEventListener("pointercancel", endObjectPointer);
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
     if (!b) return;
@@ -887,8 +1150,19 @@
     // Selects also fire input; they are handled on change, where the value is final.
     if (e.target.matches("input[data-field], textarea[data-field]"))
       updateField(e.target);
+    else if (
+      e.target.matches(
+        "input[data-object-prop], textarea[data-object-prop]",
+      )
+    )
+      updateObjectField(e.target);
   });
   $("#editor-fields").addEventListener("change", (e) => {
+    if (e.target.matches("select[data-object-prop]")) {
+      updateObjectField(e.target);
+      renderEditor();
+      return;
+    }
     if (e.target.matches("select[data-field]")) {
       setPath(e.target.dataset.field, e.target.value);
       // Replay the entrance so the presenter sees the preset they just picked.
@@ -913,7 +1187,68 @@
     const button = event.target.closest("button");
     if (!button || button.tagName !== "BUTTON" || !validEditor()) return;
     const data = button.dataset;
-    if (data.pickPicture) {
+    if (data.selectObject) {
+      const [slideIndex, id] = data.selectObject.split(":");
+      selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      render();
+      renderEditor();
+    } else if (data.addObject) {
+      const [slideIndex, type] = data.addObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      if (slide.objects.length >= C.LIMITS.objects) return;
+      const added = C.blankObject(type);
+      const rootStyle = getComputedStyle(document.documentElement);
+      if (type === "text")
+        added.color = rootStyle.getPropertyValue("--text").trim();
+      else if (type === "shape") {
+        added.color = rootStyle.getPropertyValue("--accent").trim();
+        added.stroke = rootStyle.getPropertyValue("--text").trim();
+      }
+      slide.objects.push(added);
+      selectedObjectId = added.id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.removeObject) {
+      const [slideIndex, id] = data.removeObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      const position = slide.objects.findIndex((object) => object.id === id);
+      if (position < 0) return;
+      slide.objects.splice(position, 1);
+      if (selectedObjectId === id) selectedObjectId = null;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.duplicateObject) {
+      const [slideIndex, id] = data.duplicateObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      if (slide.objects.length >= C.LIMITS.objects) return;
+      const source = objectById(+slideIndex, id);
+      if (!source) return;
+      const copy = C.clone(source);
+      copy.id = C.newId("object");
+      copy.x = String(Math.min(100 - Number(copy.width), Number(copy.x) + 3));
+      copy.y = String(Math.min(100 - Number(copy.height), Number(copy.y) + 3));
+      slide.objects.push(copy);
+      if (!withinDocumentLimit()) {
+        slide.objects.pop();
+        documentLimitMessage();
+        return;
+      }
+      selectedObjectId = copy.id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.objectLayer) {
+      const [slideIndex, id, direction] = data.objectLayer.split(":");
+      const slide = deck.slides[+slideIndex];
+      const position = slide.objects.findIndex((object) => object.id === id);
+      const target = position + Number(direction);
+      if (position < 0 || target < 0 || target >= slide.objects.length) return;
+      const [moved] = slide.objects.splice(position, 1);
+      slide.objects.splice(target, 0, moved);
+      selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.pickPicture) {
       pendingPicturePath = data.pickPicture;
       $("#picture-file").click();
     } else if (data.clearPicture) {
@@ -986,6 +1321,10 @@
     }
   });
   $("#export-html").addEventListener("click", exportHTML);
+  $("#editor-stage-toggle").addEventListener("click", () => {
+    if (!validEditor()) return;
+    setStageEditing(!document.body.classList.contains("editor-stage-mode"));
+  });
   $("#export-json").addEventListener("click", () => {
     if (validEditor())
       download(
@@ -1007,12 +1346,19 @@
     e.target.value = "";
   });
   document.addEventListener("keydown", (e) => {
+    const openDialogs = $$("dialog[open]");
+    const openDialog = openDialogs.at(-1);
+    if (e.key === "Escape" && openDialog) {
+      e.preventDefault();
+      closeDialog(openDialog);
+      return;
+    }
     if (
       e.ctrlKey ||
       e.altKey ||
       e.metaKey ||
       e.repeat ||
-      $("dialog[open]") ||
+      openDialog ||
       e.target.closest('input,textarea,select,[contenteditable="true"]')
     )
       return;

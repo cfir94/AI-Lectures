@@ -15,15 +15,24 @@
     slides: 40,
     examples: 20,
     steps: 6,
+    objects: 40,
     note: 500,
     image: 1500000,
-    importBytes: 12000000,
+    importBytes: 2400000,
   };
   // Only raster data URIs the editor itself produced. SVG is excluded on purpose:
   // it can carry script, and nothing here needs it.
   const IMAGE_HEAD = /^data:image\/(png|jpeg|webp|gif);base64,/;
-  const NOT_BASE64 = /[^A-Za-z0-9+/=]/;
+  const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  const IMAGE_SIGNATURES = {
+    png: ["iVBORw0KGgo"],
+    jpeg: ["/9j/"],
+    webp: ["UklGR"],
+    gif: ["R0lGOD"],
+  };
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const serializedBytes = (value) =>
+    new TextEncoder().encode(JSON.stringify(value)).byteLength;
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
@@ -31,6 +40,26 @@
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
+  const OBJECT_TYPES = {
+    text: "טקסט",
+    image: "תמונה",
+    shape: "צורה",
+  };
+  const SHAPES = {
+    rectangle: "מלבן",
+    circle: "עיגול",
+    line: "קו",
+    arrow: "חץ",
+    star: "כוכב",
+    blob: "כתם",
+    ring: "טבעת",
+  };
+  const TEXT_STYLES = {
+    solid: "צבע אחיד",
+    spectrum: "צבעוני",
+    outline: "קו מתאר",
+  };
+  const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
 
@@ -164,6 +193,13 @@
       },
       beats: () => 1,
     },
+    canvas: {
+      label: "במה חופשית",
+      hint: "שקף ריק עם תיבות טקסט, תמונות וצורות שאפשר למקם ולשנות ישירות על הבמה.",
+      fields: {},
+      objects: true,
+      beats: () => 1,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -171,8 +207,10 @@
       beats: (slide, deck) => 1 + selected(deck).steps.length,
     },
   };
-  for (const type of Object.values(SLIDE_TYPES))
+  for (const type of Object.values(SLIDE_TYPES)) {
     type.fields = { ...type.fields, ...COMMON_FIELDS };
+    type.objects = true;
+  }
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
     demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
@@ -199,6 +237,7 @@
       ],
     },
     timer: { minutes: "10", title: "", caption: "" },
+    canvas: { objects: [] },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
@@ -208,10 +247,42 @@
     motion: "rise",
     backdrop: "arcs",
     backdropPicture: "",
+    objects: [],
     note: "",
   });
   const blankItem = (type) =>
     clone(BLANKS[type][SLIDE_TYPES[type].list.key][0]);
+  const blankObject = (type) => {
+    const base = {
+      id: newId("object"),
+      type,
+      x: "20",
+      y: "25",
+      width: "60",
+      height: type === "text" ? "22" : "45",
+      rotation: "0",
+      opacity: "100",
+    };
+    if (type === "text")
+      return {
+        ...base,
+        text: "טקסט חופשי",
+        fontSize: "64",
+        weight: "400",
+        align: "center",
+        color: "#f6f7f8",
+        style: "solid",
+      };
+    if (type === "image")
+      return { ...base, picture: "", fit: "contain", radius: "0", alt: "" };
+    return {
+      ...base,
+      shape: "rectangle",
+      color: "#88e6ee",
+      stroke: "#f6f7f8",
+      strokeWidth: "0",
+    };
+  };
   const safeJSON = (value) =>
     JSON.stringify(value)
       .replace(/</g, "\\u003c")
@@ -229,18 +300,25 @@
       if (spec.picture) {
         const value = v ?? "";
         if (typeof value !== "string" || value.length > spec.max) fail();
-        if (
-          value &&
-          (!IMAGE_HEAD.test(value) ||
-            NOT_BASE64.test(value.slice(value.indexOf(",") + 1)))
-        )
-          fail();
+        if (value) {
+          const head = value.match(IMAGE_HEAD);
+          const payload = value.slice(value.indexOf(",") + 1);
+          if (
+            !head ||
+            !payload ||
+            !BASE64.test(payload) ||
+            !IMAGE_SIGNATURES[head[1]].some((signature) =>
+              payload.startsWith(signature),
+            )
+          )
+            fail();
+        }
         return value;
       }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
         if (v === undefined) return Object.keys(spec.choice)[0];
-        if (typeof v !== "string" || !(v in spec.choice)) fail();
+        if (typeof v !== "string" || !Object.hasOwn(spec.choice, v)) fail();
         return v;
       }
       const value = spec.required ? v : (v ?? "");
@@ -249,13 +327,75 @@
       if (spec.digits && !/^\d+$/.test(value)) fail();
       return value;
     };
+    const number = (v, min, max) => {
+      if (typeof v !== "string" || !/^-?\d+(\.\d+)?$/.test(v)) fail();
+      const raw = Number(v);
+      if (!Number.isFinite(raw) || raw < min || raw > max) fail();
+      return String(Math.round(raw * 10) / 10);
+    };
+    const colour = (v) => {
+      if (typeof v !== "string" || !/^#[0-9a-f]{6}$/i.test(v)) fail();
+      return v.toLowerCase();
+    };
+    const ownChoice = (v, options) => {
+      if (typeof v !== "string" || !Object.hasOwn(options, v)) fail();
+      return v;
+    };
+    const object = (item) => {
+      if (!obj(item) || !Object.hasOwn(OBJECT_TYPES, item.type)) fail();
+      const base = {
+        id: str(item.id, text(100)),
+        type: item.type,
+        x: number(item.x, 0, 100),
+        y: number(item.y, 0, 100),
+        width: number(item.width, 2, 100),
+        height: number(item.height, 2, 100),
+        rotation: number(item.rotation, -180, 180),
+        opacity: number(item.opacity, 0, 100),
+      };
+      if (
+        Number(base.x) + Number(base.width) > 100 ||
+        Number(base.y) + Number(base.height) > 100
+      )
+        fail();
+      if (item.type === "text")
+        return {
+          ...base,
+          text: str(item.text, text(500)),
+          fontSize: number(item.fontSize, 8, 300),
+          weight: ownChoice(item.weight, { 300: true, 400: true, 600: true, 800: true }),
+          align: ownChoice(item.align, ALIGNS),
+          color: colour(item.color),
+          style: ownChoice(item.style, TEXT_STYLES),
+        };
+      if (item.type === "image")
+        return {
+          ...base,
+          picture: str(item.picture, picture()),
+          fit: ownChoice(item.fit, FITS),
+          radius: number(item.radius, 0, 50),
+          alt: str(item.alt, text(120, false)),
+        };
+      return {
+        ...base,
+        shape: ownChoice(item.shape, SHAPES),
+        color: colour(item.color),
+        stroke: colour(item.stroke),
+        strokeWidth: number(item.strokeWidth, 0, 20),
+      };
+    };
     const group = (source, fields) => {
       const out = {};
       for (const [key, spec] of Object.entries(fields))
         out[key] = str(source[key], spec);
       return out;
     };
-    if (!obj(raw) || raw.version !== 2 || !Object.hasOwn(THEMES, raw.theme))
+    if (
+      !obj(raw) ||
+      serializedBytes(raw) > LIMITS.importBytes ||
+      raw.version !== 2 ||
+      !Object.hasOwn(THEMES, raw.theme)
+    )
       fail();
     if (
       !Array.isArray(raw.slides) ||
@@ -292,6 +432,16 @@
             return group(item, fields);
           });
         }
+        if (type.objects) {
+          const objects = s.objects ?? [];
+          if (!Array.isArray(objects) || objects.length > LIMITS.objects) fail();
+          slide.objects = objects.map(object);
+          if (
+            new Set(slide.objects.map((item) => item.id)).size !==
+            slide.objects.length
+          )
+            fail();
+        }
         return slide;
       }),
       examples: raw.examples.map((e) => {
@@ -320,9 +470,13 @@
     };
     const unique = (values) => new Set(values).size === values.length;
     const ids = result.examples.map((e) => e.id);
+    const objectIds = result.slides.flatMap((slide) =>
+      slide.objects.map((item) => item.id),
+    );
     if (
       !unique(result.slides.map((s) => s.id)) ||
       !unique(ids) ||
+      !unique(objectIds) ||
       !ids.includes(result.selectedExampleId)
     )
       fail();
@@ -382,10 +536,16 @@
     BACKDROPS,
     TRANSITIONS,
     FITS,
+    OBJECT_TYPES,
+    SHAPES,
+    TEXT_STYLES,
+    ALIGNS,
     clone,
+    serializedBytes,
     newId,
     blankSlide,
     blankItem,
+    blankObject,
     safeJSON,
     validate,
     portableHTML,
