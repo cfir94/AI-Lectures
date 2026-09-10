@@ -524,8 +524,12 @@
       });
     });
   }
+  const paletteStyle = (slide) => {
+    const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
+    return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
+  };
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"}" motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -553,7 +557,7 @@
       390 / (slide.title.length + slide.accent.length + 4),
     );
     const opening =
-      index === 0
+      C.shownPosition(deck, index) === 1
         ? `<div class="scene-controls intro-controls"><button class="quiet-button" data-action="next">מתחילים ${icon("next")}</button><button class="icon-button" data-action="replay" aria-label="הפעלה חוזרת של הפתיחה">${icon("replay")}</button></div>`
         : "";
     return frame(
@@ -1347,6 +1351,7 @@
     backdrop: "רקע הבמה",
     transition: "מעבר לשקף הזה",
     textStyle: "מראה הטקסט",
+    palette: "פלטת השקף",
     visibility: "הצגה בהרצאה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
@@ -1580,6 +1585,7 @@
   }
   const LOOK_KEYS = new Set([
     "visibility",
+    "palette",
     "textStyle",
     "motion",
     "backdrop",
@@ -1604,7 +1610,7 @@
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, palette: look.palette, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }

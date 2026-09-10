@@ -9,6 +9,17 @@ const tinyPng =
 const seed = JSON.parse(
   await readFile(new URL("../src/content.json", import.meta.url), "utf8"),
 );
+// Content can legitimately fill the 40-slide document limit. Tests that append
+// temporary slides use the preserved trial set as a compact, legacy-shaped
+// fixture and deliberately omit visibility to exercise its default.
+const smallSeed = () => {
+  const document = C.clone(seed);
+  document.slides = document.slides.slice(0, 11).map((slide) => {
+    delete slide.visibility;
+    return slide;
+  });
+  return document;
+};
 const indexOfType = (type) => seed.slides.findIndex((s) => s.type === type);
 test("portable export preserves edited content, scripts and an isolated storage identity", async () => {
   const html = await readFile(
@@ -60,11 +71,13 @@ test("look presets fall back when absent and are rejected when wrong", () => {
   delete partial.transition;
   delete partial.slides[0].motion;
   delete partial.slides[0].backdrop;
+  delete partial.slides[0].palette;
   delete partial.slides[0].transition;
   const document = C.validate(partial);
   assert.equal(document.transition, Object.keys(C.TRANSITIONS)[0]);
   assert.equal(document.slides[0].motion, Object.keys(C.MOTIONS)[0]);
   assert.equal(document.slides[0].backdrop, Object.keys(C.BACKDROPS)[0]);
+  assert.equal(document.slides[0].palette, Object.keys(C.PALETTES)[0]);
   assert.equal(
     document.slides[0].transition,
     Object.keys(C.TRANSITIONS)[0],
@@ -73,6 +86,7 @@ test("look presets fall back when absent and are rejected when wrong", () => {
     (d) => (d.transition = "swirl"),
     (d) => (d.slides[0].motion = "explode"),
     (d) => (d.slides[0].backdrop = "lava"),
+    (d) => (d.slides[0].palette = "neon-rainbow"),
     (d) => (d.slides[0].transition = "spin"),
     (d) => (d.slides[0].motion = 7),
   ]) {
@@ -83,7 +97,7 @@ test("look presets fall back when absent and are rejected when wrong", () => {
 });
 test("pictures accept only raster data URIs, and may be empty", () => {
   const withPicture = (value) => {
-    const document = C.clone(seed);
+    const document = smallSeed();
     document.slides.push({ ...C.blankSlide("image"), picture: value });
     return document;
   };
@@ -104,7 +118,7 @@ test("pictures accept only raster data URIs, and may be empty", () => {
     assert.throws(() => C.validate(withPicture(bad)));
 });
 test("free objects validate on every slide and reject unsafe values", () => {
-  const document = C.clone(seed);
+  const document = smallSeed();
   document.slides.push(C.blankSlide("canvas"));
   for (const slide of document.slides) {
     const text = C.blankObject("text");
@@ -183,7 +197,7 @@ test("free objects validate on every slide and reject unsafe values", () => {
 test("a star field arrives as a backdrop, not as a component", () => {
   assert.ok(Object.hasOwn(C.BACKDROPS, "stars"));
   assert.ok(!Object.hasOwn(C.VISUALS, "stars"));
-  const document = C.clone(seed);
+  const document = smallSeed();
   const stars = C.blankObject("visual");
   stars.visual = "stars";
   const keeper = C.blankObject("shape");
@@ -358,7 +372,7 @@ test("a local video is a relative path under the deck, and nothing else", () => 
 });
 
 test("a video slide keeps an empty link and refuses an unknown one", () => {
-  const document = C.clone(seed);
+  const document = smallSeed();
   const slide = C.blankSlide("video");
   document.slides.push(slide);
   assert.equal(C.validate(document).slides.at(-1).url, "");
@@ -452,7 +466,7 @@ test("the full portable document stays within the shared size budget", () => {
 });
 test("every listed theme validates, and inherited keys do not", () => {
   for (const theme of Object.keys(C.THEMES)) {
-    const document = C.clone(seed);
+    const document = smallSeed();
     document.theme = theme;
     assert.equal(C.validate(document).theme, theme);
   }
@@ -464,7 +478,7 @@ test("every listed theme validates, and inherited keys do not", () => {
 });
 test("a timer only accepts a whole number of minutes", () => {
   const withMinutes = (value) => {
-    const document = C.clone(seed);
+    const document = smallSeed();
     document.slides.push({ ...C.blankSlide("timer"), minutes: value });
     return document;
   };
@@ -554,14 +568,14 @@ test("reject malformed imports, duplicate IDs, oversized fields and unsupported 
     (d) => (d.examples[0].steps = []),
     (d) => (d.examples[0].steps[0] = null),
   ]) {
-    const bad = C.clone(seed);
+    const bad = smallSeed();
     modify(bad);
     assert.throws(() => C.validate(bad));
-    assert.equal(seed.slides.length, 11);
+    assert.equal(smallSeed().slides.length, 11);
   }
 });
 test("a hidden slide stays in the document and is walked past", () => {
-  const document = C.clone(seed);
+  const document = smallSeed();
   // Absent in documents written before slides could be skipped.
   assert.ok(C.validate(document).slides.every((slide) => C.isShown(slide)));
   document.slides[1].visibility = "hidden";
@@ -592,25 +606,35 @@ test("a hidden slide stays in the document and is walked past", () => {
 });
 
 test("navigation walks every beat of every slide and stops at both ends", () => {
-  const total = seed.slides.reduce((sum, _, i) => sum + C.beats(seed, i), 0);
+  const document = C.validate(smallSeed());
+  const total = document.slides.reduce(
+    (sum, _, i) => sum + C.beats(document, i),
+    0,
+  );
   const visited = new Set();
-  let s = C.initialState();
+  let s = C.initialState(document);
   for (let i = 0; i < total + 10; i++) {
     visited.add(`${s.slide}:${s.step}`);
-    s = C.transition(s, "next", seed);
+    s = C.transition(s, "next", document);
   }
-  const last = seed.slides.length - 1;
+  const last = document.slides.length - 1;
   assert.equal(visited.size, total);
-  assert.deepEqual(s, { slide: last, step: C.beats(seed, last) - 1 });
-  for (let i = 0; i < total + 10; i++) s = C.transition(s, "prev", seed);
-  assert.deepEqual(s, C.initialState());
+  assert.deepEqual(s, { slide: last, step: C.beats(document, last) - 1 });
+  for (let i = 0; i < total + 10; i++)
+    s = C.transition(s, "prev", document);
+  assert.deepEqual(s, C.initialState(document));
 });
 test("stepping back from a slide lands on the previous slide's last beat", () => {
-  const reveal = indexOfType("reveal");
-  const s = C.transition({ slide: reveal + 1, step: 0 }, "prev", seed);
+  const document = C.validate(smallSeed());
+  const reveal = document.slides.findIndex((slide) => slide.type === "reveal");
+  const s = C.transition(
+    { slide: reveal + 1, step: 0 },
+    "prev",
+    document,
+  );
   assert.deepEqual(s, {
     slide: reveal,
-    step: seed.slides[reveal].items.length - 1,
+    step: document.slides[reveal].items.length - 1,
   });
 });
 test("mode changes and replay reset stale progress inside the experiment", () => {
@@ -621,7 +645,7 @@ test("mode changes and replay reset stale progress inside the experiment", () =>
   assert.deepEqual(C.transition(s, "reset", seed), { slide, step: 0 });
 });
 test("new slides and list items are valid content on their own", () => {
-  const document = C.clone(seed);
+  const document = smallSeed();
   for (const type of Object.keys(C.SLIDE_TYPES))
     document.slides.push(C.blankSlide(type));
   for (const type of ["reveal", "split", "tokens"]) {

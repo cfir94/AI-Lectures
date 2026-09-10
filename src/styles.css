@@ -1911,10 +1911,47 @@ h1 {
   display: block;
 }
 .fit-contain .image-frame {
-  padding: 5cqw;
+  padding: 1.5cqw;
 }
 .fit-contain.has-text .image-frame {
-  padding-bottom: 28cqw;
+  padding: 1.5cqw;
+}
+.fit-contain.has-text .image-scene {
+  padding: 0;
+}
+.fit-contain.has-text .image-text {
+  position: absolute;
+  inset-inline-start: 4.5%;
+  bottom: 5%;
+  width: max-content;
+  min-width: 0;
+  max-width: min(42%, 34rem);
+  padding: 1.1cqw 1.45cqw 1.2cqw;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  border-radius: clamp(14px, 1.5cqw, 24px);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+  box-shadow: 0 20px 70px #0008;
+  text-align: right;
+}
+.fit-contain.has-text .image-text h1 {
+  max-width: 9.5em;
+  font-size: clamp(2rem, min(var(--headline-size), 4.8cqw), 5rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+.fit-contain.has-text .image-text .scene-caption {
+  max-width: 25em;
+  margin-top: 0.65cqw;
+  font-size: clamp(0.95rem, 1.45cqw, 1.35rem);
+  line-height: 1.45;
+  text-wrap: balance;
+}
+.image-controls {
+  right: auto;
+  left: 4%;
+  justify-content: flex-start;
 }
 .image-scene {
   justify-content: flex-end;
@@ -2782,7 +2819,7 @@ summary small {
 .backdrop-scrim {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  background: color-mix(in srgb, var(--surface) 18%, transparent);
 }
 .picture-field {
   margin-top: 18px;
@@ -3195,7 +3232,20 @@ kbd {
     padding: 8% 7% 12%;
   }
   .fit-contain.has-text .image-frame {
-    padding-bottom: 45vw;
+    padding: 12px;
+  }
+  .fit-contain.has-text .image-text {
+    inset-inline-start: 4%;
+    bottom: 9%;
+    max-width: 76%;
+    padding: 14px 16px 16px;
+  }
+  .fit-contain.has-text .image-text h1 {
+    font-size: clamp(1.8rem, 8vw, 3rem);
+  }
+  .fit-contain.has-text .image-text .scene-caption {
+    margin-top: 6px;
+    font-size: 1rem;
   }
   .transition-options {
     grid-template-columns: repeat(2, 1fr);

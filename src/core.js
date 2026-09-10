@@ -14,7 +14,7 @@
   const LIMITS = {
     drafts: 25,
     draftName: 60,
-    slides: 40,
+    slides: 48,
     examples: 20,
     steps: 6,
     objects: 40,
@@ -194,11 +194,61 @@
     zoom: "זום",
     cut: "חיתוך",
   };
+  /* A slide palette changes the whole light field, not just one highlighted
+     word. Values remain a closed table so imported documents cannot inject
+     arbitrary CSS into the stage. */
+  const PALETTES = {
+    ice: "קרח ותכלת",
+    violet: "סגול חשמלי",
+    rose: "ורוד ומג׳נטה",
+    amber: "ענבר וזהב",
+    danger: "אדום אזהרה",
+    mint: "מנטה וירוק",
+    cobalt: "כחול קובלט",
+  };
+  const PALETTE_STYLES = {
+    ice: {
+      surface: "#10171e", raised: "#1d2933", soft: "#17242d", line: "#365160",
+      text: "#f6fbff", muted: "#aebfca", accent: "#88e6ee", rgb: "136,230,238",
+      spectrum: "linear-gradient(110deg,#bff8ff 5%,#74c8ff 52%,#b9a3ff 96%)",
+    },
+    violet: {
+      surface: "#171126", raised: "#2a2044", soft: "#221938", line: "#4d3d75",
+      text: "#faf7ff", muted: "#c2b7d8", accent: "#b9a3ff", rgb: "185,163,255",
+      spectrum: "linear-gradient(110deg,#d8ccff 4%,#a887ff 48%,#ff79c9 96%)",
+    },
+    rose: {
+      surface: "#210f1b", raised: "#3b1a30", soft: "#301326", line: "#693251",
+      text: "#fff7fb", muted: "#d4afc2", accent: "#ff72b6", rgb: "255,114,182",
+      spectrum: "linear-gradient(110deg,#ffd2e8 5%,#ff72b6 48%,#b99aff 96%)",
+    },
+    amber: {
+      surface: "#21170f", raised: "#382819", soft: "#2d2015", line: "#62472a",
+      text: "#fff9ef", muted: "#d5bea1", accent: "#f2bd62", rgb: "242,189,98",
+      spectrum: "linear-gradient(110deg,#fff0b8 4%,#f2bd62 50%,#ff8875 96%)",
+    },
+    danger: {
+      surface: "#200f13", raised: "#39191e", soft: "#2e1418", line: "#683039",
+      text: "#fff7f7", muted: "#d7b0b4", accent: "#ff6b6b", rgb: "255,107,107",
+      spectrum: "linear-gradient(110deg,#ffd0c7 4%,#ff6b6b 48%,#ff8a3d 96%)",
+    },
+    mint: {
+      surface: "#0f1e18", raised: "#1b3429", soft: "#162a21", line: "#315a49",
+      text: "#f4fff9", muted: "#add0bf", accent: "#7fe3b0", rgb: "127,227,176",
+      spectrum: "linear-gradient(110deg,#c9ffe2 4%,#7fe3b0 50%,#b8e96f 96%)",
+    },
+    cobalt: {
+      surface: "#0d1628", raised: "#172947", soft: "#121f37", line: "#2b4e7b",
+      text: "#f5f9ff", muted: "#aec0da", accent: "#6ea8ff", rgb: "110,168,255",
+      spectrum: "linear-gradient(110deg,#c9e0ff 4%,#6ea8ff 50%,#7de8e8 96%)",
+    },
+  };
   /* A slide the presenter is not showing this time. It stays in the document
      and in the editor, and the deck simply walks past it. */
   const VISIBILITY = { shown: "מוצג בהרצאה", hidden: "מדולג" };
   const COMMON_FIELDS = {
     visibility: choice(VISIBILITY),
+    palette: choice(PALETTES),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
@@ -867,6 +917,8 @@
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    PALETTES,
+    PALETTE_STYLES,
     VISIBILITY,
     isShown,
     shownCount,
