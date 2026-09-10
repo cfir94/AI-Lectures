@@ -202,7 +202,12 @@
   /* A slide palette changes the whole light field, not just one highlighted
      word. Values remain a closed table so imported documents cannot inject
      arbitrary CSS into the stage. */
+  /* "deck" is the absence of a palette: the slide takes the deck's theme rather
+     than carrying colours of its own. It is first because it is the sane
+     default — without it every slide pins itself, the theme controls nothing
+     but the strip around the stage, and choosing one appears to do nothing. */
   const PALETTES = {
+    deck: "לפי ערכת המצגת",
     ice: "קרח ותכלת",
     violet: "סגול חשמלי",
     rose: "ורוד ומג׳נטה",
