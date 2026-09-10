@@ -148,12 +148,14 @@ p {
 .stage:focus {
   outline: none;
 }
-#slide-root,
+#slide-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 .slide {
   width: 100%;
   height: 100%;
-}
-.slide {
   position: relative;
   isolation: isolate;
 }
@@ -183,9 +185,6 @@ h1 span {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
-.statement-scene h1 {
-  animation: thought-in 1.1s cubic-bezier(0.22, 0.7, 0.3, 1) both;
-}
 .scene-caption {
   font-size: clamp(1.1rem, 2cqw, 1.8rem);
   line-height: 1.6;
@@ -194,9 +193,6 @@ h1 span {
   max-width: 28em;
   margin-top: 2cqw;
   text-wrap: balance;
-}
-.statement-scene .scene-caption {
-  animation: thought-in 0.9s 0.35s both;
 }
 .scene-context {
   position: absolute;
@@ -210,7 +206,12 @@ h1 span {
 }
 .scene-message {
   max-width: 100%;
+}
+.scene-message > * {
   animation: thought-in 0.85s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+.scene-message > p {
+  animation-delay: 0.1s;
 }
 .scene-word {
   font-size: clamp(2.5rem, var(--scene-size, 13cqw), 12rem);
@@ -238,9 +239,6 @@ h1 span {
   padding: 6px 15px;
   border: 1px solid var(--line);
   border-radius: 999px;
-}
-.demo-slide h1 {
-  animation: thought-in 0.9s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
 .scene-eyebrow {
   font-size: clamp(0.8rem, 1.5cqw, 1.15rem);
@@ -286,7 +284,6 @@ h1 span {
   font-weight: 350;
   letter-spacing: -0.03em;
   line-height: 1.4;
-  animation: thought-in 0.8s both;
 }
 .token-chunks {
   display: flex;
@@ -310,12 +307,6 @@ h1 span {
 }
 .tokens-scene .scene-caption {
   margin-top: 3.2cqw;
-}
-.no-motion .reveal-list li[data-state="now"],
-.no-motion .token,
-.no-motion .token-sentence,
-.no-motion .demo-slide h1 {
-  animation: none;
 }
 .simulation-note {
   position: absolute;
@@ -380,13 +371,334 @@ h1 span {
 .complete-scene .atmosphere {
   opacity: 1;
 }
-.no-entry .statement-scene h1,
-.no-entry .statement-scene .scene-caption {
-  animation: none;
-}
-.no-motion .scene-message,
+.no-motion .scene *,
 .no-motion .light-arc {
-  animation: none;
+  animation: none !important;
+}
+/* Entrance presets. The motion class is stripped on a beat-only re-render,
+   so these run when a slide arrives, not every time a step advances. */
+.scene > * {
+  --step: 0;
+}
+.scene > *:nth-child(2) {
+  --step: 1;
+}
+.scene > *:nth-child(3) {
+  --step: 2;
+}
+.scene > *:nth-child(4) {
+  --step: 3;
+}
+[class*="motion-"] .scene > * {
+  animation-duration: 0.85s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
+  animation-delay: calc(var(--step) * 0.11s);
+}
+.motion-rise .scene > * {
+  animation-name: m-rise;
+}
+.motion-blur .scene > * {
+  animation-name: m-blur;
+}
+.motion-wipe .scene > * {
+  animation-name: m-wipe;
+}
+.motion-zoom .scene > * {
+  animation-name: m-zoom;
+}
+.motion-cascade .scene > * {
+  animation-name: m-fade;
+}
+.motion-still .scene > * {
+  animation-name: none;
+}
+.cascade-word {
+  display: inline-block;
+  animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--w) * 0.09s + 0.12s);
+}
+@keyframes m-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+@keyframes m-blur {
+  from {
+    opacity: 0;
+    filter: blur(15px);
+    transform: scale(1.03);
+  }
+}
+@keyframes m-wipe {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(12px);
+  }
+  to {
+    clip-path: inset(0 0 -20% 0);
+  }
+}
+@keyframes m-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Slide-to-slide transitions. --dir is 1 forward, -1 back. */
+.slide.leaving {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+[data-transition="fade"] .slide.leaving {
+  animation: t-fade-out 0.45s both;
+}
+[data-transition="fade"] .slide.entering {
+  animation: t-fade-in 0.45s both;
+}
+[data-transition="push"] .slide.leaving {
+  animation: t-push-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="push"] .slide.entering {
+  animation: t-push-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="zoom"] .slide.leaving {
+  animation: t-zoom-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="zoom"] .slide.entering {
+  animation: t-zoom-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes t-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes t-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes t-push-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 9%));
+  }
+}
+@keyframes t-push-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * -9%));
+  }
+}
+@keyframes t-zoom-out {
+  to {
+    opacity: 0;
+    transform: scale(1.09);
+  }
+}
+@keyframes t-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93);
+  }
+}
+
+/* Backdrops. Every ambient loop stays small enough that restarting it on a
+   re-render is invisible. */
+.grid-plane {
+  position: absolute;
+  inset: -6%;
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(var(--accent-rgb), 0.22) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(var(--accent-rgb), 0.22) 1px,
+      transparent 1px
+    );
+  background-size: 6.5% 11%;
+  mask-image: radial-gradient(
+    ellipse 56% 50% at 50% 50%,
+    transparent 28%,
+    #000 96%
+  );
+  animation: grid-drift 24s linear infinite;
+}
+@keyframes grid-drift {
+  to {
+    background-position:
+      6.5% 11%,
+      6.5% 11%;
+  }
+}
+.backdrop-particles i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4);
+  animation: particle-float var(--drift) ease-in-out var(--delay) infinite
+    alternate;
+}
+@keyframes particle-float {
+  from {
+    opacity: 0.3;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.95;
+    transform: translate3d(6px, -9px, 0);
+  }
+}
+.aurora-blob {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.32;
+  background: radial-gradient(
+    circle,
+    rgba(var(--accent-rgb), 0.9),
+    transparent 68%
+  );
+  animation: aurora-drift 20s ease-in-out infinite alternate;
+  animation-delay: calc(var(--blob) * -7s);
+}
+.aurora-blob:nth-child(1) {
+  inset-inline-start: -14%;
+  top: -20%;
+}
+.aurora-blob:nth-child(2) {
+  inset-inline-end: -18%;
+  bottom: -24%;
+}
+.aurora-blob:nth-child(3) {
+  inset-inline-start: 32%;
+  top: 28%;
+  width: 44%;
+  opacity: 0.16;
+}
+@keyframes aurora-drift {
+  to {
+    transform: translate(4%, -3%) scale(1.14);
+  }
+}
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(34% + var(--ring) * 25%);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 50%;
+  animation: ring-pulse 7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--ring) * -1.7s);
+}
+@keyframes ring-pulse {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* One number, filling the stage. */
+.big-number {
+  display: flex;
+  align-items: baseline;
+  gap: 0.16em;
+  font-size: clamp(4rem, var(--number-size, 26cqw), 20rem);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.big-number span {
+  unicode-bidi: isolate;
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+.big-number em {
+  font-size: 0.2em;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  -webkit-text-fill-color: var(--muted);
+}
+.number-scene .scene-caption {
+  margin-top: 2.6cqw;
+}
+
+/* Two sides of the same stage. */
+.split-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--sides, 2), 1fr);
+}
+.split-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6cqw;
+  padding: 0 3cqw;
+  border-inline-start: 1px solid var(--line);
+  transition: opacity 0.5s;
+}
+.split-list li:first-child {
+  border-inline-start: 0;
+}
+.split-heading {
+  font-size: clamp(1.7rem, 6.2cqw, 5rem);
+  font-weight: 350;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  color: var(--text);
+}
+.split-line {
+  font-size: clamp(0.9rem, 1.7cqw, 1.5rem);
+  line-height: 1.55;
+  color: var(--muted);
+  text-wrap: balance;
+}
+.split-list li[data-state="past"] {
+  opacity: 0.38;
+}
+.split-list li[data-state="next"] {
+  opacity: 0.1;
+}
+.split-list li[data-state="now"] .split-heading {
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.split-list li[data-state="now"] {
+  animation: thought-in 0.6s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
 .scene-controls {
   position: absolute;
@@ -712,6 +1024,43 @@ summary small {
   border-bottom: 1px solid var(--line);
   padding: 18px 0;
 }
+.look-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+.look-row .field {
+  margin-top: 0;
+}
+.dialog-subhead {
+  font-size: 0.95rem;
+  font-weight: 550;
+  margin: 28px 0 0;
+}
+.small-dialog > .dialog-hint {
+  font-size: 0.82rem;
+  margin-top: 8px;
+}
+.transition-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.transition-options button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  padding: 11px 6px;
+  font-size: 0.8rem;
+}
+.transition-options button[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--soft);
+}
 .slide-add .field {
   margin-top: 0;
 }
@@ -1016,6 +1365,28 @@ kbd {
   .token {
     font-size: clamp(1rem, 5vw, 1.8rem);
   }
+  .split-list {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .split-list li {
+    border-inline-start: 0;
+    border-top: 1px solid var(--line);
+    padding: 26px 0 0;
+  }
+  .split-list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .split-heading {
+    font-size: clamp(1.8rem, 9vw, 3rem);
+  }
+  .big-number {
+    font-size: clamp(3.5rem, 30vw, 9rem);
+  }
+  .transition-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .demo-tool {
     margin-bottom: 22px;
   }
@@ -1159,12 +1530,12 @@ kbd {
     <div class="editor-scroll" id="editor-fields"></div>
     <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden></div>
   </dialog>
-  <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options"><button data-theme-choice="carbon"><span class="theme-preview carbon-preview"><i>Aa</i><b>✳</b></span><span>פחם ותכלת</span><small>עמוק · טכנולוגי</small></button><button data-theme-choice="paper"><span class="theme-preview paper-preview"><i>Aa</i><b>✳</b></span><span>לבן וכחול</span><small>בהיר · מדויק</small></button><button data-theme-choice="wine"><span class="theme-preview wine-preview"><i>Aa</i><b>✳</b></span><span>בורדו ולבן</span><small>חם · דרמטי</small></button></div></dialog>
+  <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options"><button data-theme-choice="carbon"><span class="theme-preview carbon-preview"><i>Aa</i><b>✳</b></span><span>פחם ותכלת</span><small>עמוק · טכנולוגי</small></button><button data-theme-choice="paper"><span class="theme-preview paper-preview"><i>Aa</i><b>✳</b></span><span>לבן וכחול</span><small>בהיר · מדויק</small></button><button data-theme-choice="wine"><span class="theme-preview wine-preview"><i>Aa</i><b>✳</b></span><span>בורדו ולבן</span><small>חם · דרמטי</small></button></div><h3 class="dialog-subhead">מעבר בין שקפים</h3><p class="dialog-hint">איך שקף מחליף את זה שלפניו. תנועת הכניסה והרקע נבחרים לכל שקף בנפרד, בעורך.</p><div class="transition-options" id="transition-options" role="group" aria-label="מעבר בין שקפים"></div></dialog>
   <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -1174,8 +1545,38 @@ kbd {
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
+  const choice = (options) => ({ choice: options });
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
+
+  /* Look and feel the presenter picks per slide. Names are Hebrew because they
+     are shown in the editor; the keys are what CSS hooks onto. */
+  const MOTIONS = {
+    rise: "עלייה רכה",
+    blur: "התבהרות",
+    wipe: "חשיפה",
+    cascade: "מילה אחרי מילה",
+    zoom: "התקרבות",
+    still: "בלי תנועה",
+  };
+  const BACKDROPS = {
+    arcs: "קשתות אור",
+    grid: "רשת",
+    particles: "חלקיקים",
+    aurora: "זוהר",
+    rings: "טבעות",
+    plain: "רקע נקי",
+  };
+  const TRANSITIONS = {
+    fade: "הצלבה",
+    push: "החלקה",
+    zoom: "זום",
+    cut: "חיתוך",
+  };
+  const COMMON_FIELDS = {
+    motion: choice(MOTIONS),
+    backdrop: choice(BACKDROPS),
+  };
 
   /* Every slide type declares its fields once: validation, the editor and the
      beat count for the presenter's arrow keys all read this table. */
@@ -1227,6 +1628,30 @@ kbd {
       },
       beats: () => 2,
     },
+    number: {
+      label: "מספר ענק",
+      hint: "מספר אחד שממלא את הבמה ומטפס אליו. טוב לנתון שרוצים שיישאר בראש.",
+      fields: {
+        value: text(9),
+        unit: text(20, false),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
+    split: {
+      label: "שניים זה מול זה",
+      hint: "שני צדדים על אותה במה. כל צעד מדליק צד אחד, והקודם נשאר עמום לצידו.",
+      fields: { title: text(40, false) },
+      list: {
+        key: "sides",
+        label: "צד",
+        min: 2,
+        max: 3,
+        fields: { heading: text(20), line: text(120, false) },
+      },
+      beats: (slide) => slide.sides.length,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -1234,6 +1659,8 @@ kbd {
       beats: (slide, deck) => 1 + selected(deck).steps.length,
     },
   };
+  for (const type of Object.values(SLIDE_TYPES))
+    type.fields = { ...type.fields, ...COMMON_FIELDS };
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
     demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
@@ -1250,12 +1677,22 @@ kbd {
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
+    number: { value: "100", unit: "", title: "", caption: "" },
+    split: {
+      title: "",
+      sides: [
+        { heading: "צד אחד", line: "" },
+        { heading: "צד שני", line: "" },
+      ],
+    },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
     id: newId("slide"),
     type,
     ...clone(BLANKS[type]),
+    motion: "rise",
+    backdrop: "arcs",
     note: "",
   });
   const blankItem = (type) =>
@@ -1274,6 +1711,12 @@ kbd {
     };
     const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
     const str = (v, spec) => {
+      if (spec.choice) {
+        // An absent preset falls back to the default; a wrong one is a bad file.
+        if (v === undefined) return Object.keys(spec.choice)[0];
+        if (typeof v !== "string" || !(v in spec.choice)) fail();
+        return v;
+      }
       const value = spec.required ? v : (v ?? "");
       if (typeof value !== "string" || value.length > spec.max) fail();
       if (spec.required && !value.trim()) fail();
@@ -1299,6 +1742,7 @@ kbd {
       version: 2,
       documentId: str(raw.documentId, text(100)),
       theme: raw.theme,
+      transition: str(raw.transition, choice(TRANSITIONS)),
       selectedExampleId: str(raw.selectedExampleId, text(100)),
       slides: raw.slides.map((s) => {
         if (!obj(s)) fail();
@@ -1406,6 +1850,9 @@ kbd {
     THEMES,
     LIMITS,
     SLIDE_TYPES,
+    MOTIONS,
+    BACKDROPS,
+    TRANSITIONS,
     clone,
     newId,
     blankSlide,
@@ -1446,6 +1893,8 @@ kbd {
     canSave = true,
     idleTimer,
     toastTimer,
+    countFrame,
+    pendingOpenId = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -1485,12 +1934,59 @@ kbd {
   $("#next").innerHTML = icon("next");
 
   // Keynote scenes: one focal point, with presenter controls kept off the canvas.
-  const atmosphere = () =>
-    '<div class="atmosphere" aria-hidden="true"><div class="light-arc arc-one"></div><div class="light-arc arc-two"></div></div>';
-  const frame = (index, classes, style, body) =>
-    `<section class="slide ${classes}" aria-label="שקף ${index + 1}" style="${style}">${atmosphere()}${body}</section>`;
+  const reducedMotion = () =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  // Particle positions must survive a re-render, so they come from the slide id.
+  function seeded(id) {
+    let h = 2166136261;
+    for (let i = 0; i < id.length; i++)
+      h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+    return () => {
+      h = Math.imul(h ^ (h >>> 15), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    };
+  }
+  function backdrop(slide) {
+    const kind = slide.backdrop;
+    if (kind === "plain") return "";
+    let inner = "";
+    if (kind === "arcs")
+      inner =
+        '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>';
+    else if (kind === "grid") inner = '<div class="grid-plane"></div>';
+    else if (kind === "aurora")
+      inner = [0, 1, 2]
+        .map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`)
+        .join("");
+    else if (kind === "rings")
+      inner = [0, 1, 2, 3]
+        .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
+        .join("");
+    else if (kind === "particles") {
+      const random = seeded(slide.id);
+      inner = Array.from({ length: 28 }, () => {
+        const round = (n) => n.toFixed(2);
+        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`;
+      }).join("");
+    }
+    return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
+  }
+  const frame = (slide, index, classes, style, body) =>
+    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}</section>`;
   const caption = (value) =>
     value ? `<p class="scene-caption">${esc(value)}</p>` : "";
+  // "cascade" needs each word on its own, so it gets its own markup path.
+  const headline = (slide, value) =>
+    slide.motion === "cascade"
+      ? value
+          .split(" ")
+          .map(
+            (word, i) =>
+              `<span class="cascade-word" style="--w:${i}">${esc(word)}</span>`,
+          )
+          .join(" ")
+      : esc(value);
 
   function statementSlide(slide, index) {
     const size = Math.min(
@@ -1502,10 +1998,11 @@ kbd {
         ? `<div class="scene-controls intro-controls"><button class="quiet-button" data-action="next">מתחילים ${icon("next")}</button><button class="icon-button" data-action="replay" aria-label="הפעלה חוזרת של הפתיחה">${icon("replay")}</button></div>`
         : "";
     return frame(
+      slide,
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1>${esc(slide.title)}${slide.accent ? ` <span>${esc(slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1>${headline(slide, slide.title)}${slide.accent ? ` <span>${headline(slide, slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -1514,17 +2011,18 @@ kbd {
       ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
       : "";
     return frame(
+      slide,
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${esc(slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${headline(slide, slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
     const words = slide.items
       .map(
         (item, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}">${esc(item.word)}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}">${esc(item.word)}</li>`,
       )
       .join("");
     const size = Math.min(
@@ -1532,6 +2030,7 @@ kbd {
       210 / Math.max(...slide.items.map((i) => i.word.length)),
     );
     return frame(
+      slide,
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
@@ -1544,10 +2043,36 @@ kbd {
         ? `<p class="token-sentence">${esc(slide.chunks.map((c) => c.text).join(""))}</p>`
         : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}">${esc(c.text)}</span>`).join("")}</p>`;
     return frame(
+      slide,
       index,
       "tokens-slide",
       "",
       `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
+    );
+  }
+  function numberSlide(slide, index) {
+    const size = Math.min(30, 128 / slide.value.length);
+    return frame(
+      slide,
+      index,
+      "number-slide",
+      `--number-size:${size}cqw`,
+      `<div class="scene number-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${slide.unit ? `<em>${esc(slide.unit)}</em>` : ""}</p>${caption(slide.caption)}</div>`,
+    );
+  }
+  function splitSlide(slide, index, step) {
+    const sides = slide.sides
+      .map(
+        (side, i) =>
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line">${esc(side.line)}</span>` : ""}</li>`,
+      )
+      .join("");
+    return frame(
+      slide,
+      index,
+      "split-slide",
+      `--sides:${slide.sides.length}`,
+      `<div class="scene split-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
   function experimentSlide(slide, index, step) {
@@ -1558,6 +2083,7 @@ kbd {
     const heading = agent ? current.label : slide.title;
     const size = Math.min(13, 195 / (heading.length + 2));
     return frame(
+      slide,
       index,
       `experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}`,
       `--scene-size:${size}cqw;--phase:${Math.max(0, step - 1)}`,
@@ -1569,6 +2095,8 @@ kbd {
     demo: demoSlide,
     reveal: revealSlide,
     tokens: tokensSlide,
+    number: numberSlide,
+    split: splitSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -1585,6 +2113,10 @@ kbd {
     const place = `שקף ${state.slide + 1} מתוך ${deck.slides.length}`;
     if (slide.type === "reveal")
       return `${place}: ${slideName(slide)} — ${slide.items[step].word}`;
+    if (slide.type === "split")
+      return `${place}: ${slideName(slide)} — ${slide.sides[step].heading}`;
+    if (slide.type === "number")
+      return `${place}: ${slide.value} ${slide.unit}`.trim();
     if (slide.type === "experiment") {
       const e = C.selected(deck);
       return step === 0
@@ -1610,22 +2142,53 @@ kbd {
       else b.removeAttribute("aria-current");
     });
   }
+  // A number slide climbs to its value once, and never past the current render.
+  function countUp(current) {
+    cancelAnimationFrame(countFrame);
+    const el = current.querySelector("[data-count]");
+    if (!el || !/^\d{1,9}$/.test(el.dataset.count) || reducedMotion()) return;
+    const target = Number(el.dataset.count);
+    const started = performance.now();
+    const tick = (now) => {
+      const progress = Math.min(1, (now - started) / 900);
+      el.textContent = String(
+        Math.round(target * (1 - Math.pow(1 - progress, 3))),
+      );
+      if (progress < 1) countFrame = requestAnimationFrame(tick);
+    };
+    countFrame = requestAnimationFrame(tick);
+  }
   function render() {
     const actionFocus = document.activeElement?.dataset.action;
     const slide = deck.slides[state.slide];
+    const root = $("#slide-root");
     document.documentElement.dataset.theme = deck.theme;
-    $("#slide-root").innerHTML = SCENES[slide.type](
-      slide,
-      state.slide,
-      state.step,
-    );
-    if (renderedSlide === state.slide)
-      $("#slide-root .slide").classList.add("no-entry");
+    root.dataset.transition = deck.transition;
+    const html = SCENES[slide.type](slide, state.slide, state.step);
+    const sameSlide = renderedSlide === state.slide;
+    const direction = state.slide < renderedSlide ? -1 : 1;
+    root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
+    const previous = root.lastElementChild;
+    if (previous && !sameSlide && deck.transition !== "cut" && !reducedMotion()) {
+      previous.classList.add("leaving");
+      const drop = () => previous.remove();
+      // animationend bubbles, so only the slide's own exit may retire it.
+      previous.addEventListener("animationend", (event) => {
+        if (event.target === previous) drop();
+      });
+      setTimeout(drop, 900);
+      root.insertAdjacentHTML("beforeend", html);
+      root.lastElementChild.classList.add("entering");
+    } else root.innerHTML = html;
+    const current = root.lastElementChild;
+    current.style.setProperty("--dir", direction);
+    // A step inside the same slide keeps the stage still; only beats animate.
+    if (sameSlide) current.classList.remove(`motion-${slide.motion}`);
     renderedSlide = state.slide;
     const sceneKey = `${state.slide}:${state.step}`;
-    if (renderedSceneKey === sceneKey)
-      $("#slide-root .slide").classList.add("no-motion");
+    if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
+    countUp(current);
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
@@ -1638,6 +2201,12 @@ kbd {
       b.setAttribute(
         "aria-pressed",
         String(b.dataset.themeChoice === deck.theme),
+      ),
+    );
+    $$("[data-transition-choice]").forEach((b) =>
+      b.setAttribute(
+        "aria-pressed",
+        String(b.dataset.transitionChoice === deck.transition),
       ),
     );
     if (actionFocus)
@@ -1744,6 +2313,12 @@ kbd {
     prompt: "הפרומפט — לא מוקרן, מועתק בלחיצה",
     word: "מילה",
     text: "חתיכה",
+    value: "המספר",
+    unit: "יחידה",
+    heading: "הכותרת בצד",
+    line: "שורה מתחת",
+    motion: "תנועת הכניסה",
+    backdrop: "רקע הבמה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -1761,17 +2336,33 @@ kbd {
   ]);
   const field = (label, path, value, max, multi = false, required = true) =>
     `<label class="field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span>${multi ? `<textarea rows="2"` : '<input type="text"'} data-field="${path}" maxlength="${max}" ${required ? "required" : ""} ${multi ? `>${esc(value)}</textarea>` : `value="${esc(value)}">`}</label>`;
+  const picker = (label, path, value, options, extra = "") =>
+    `<label class="field"><span class="field-head"><span>${label}</span></span><select data-field="${path}" ${extra}>${Object.entries(
+      options,
+    )
+      .map(
+        ([key, name]) =>
+          `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("")}</select></label>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        field(
-          FIELD_LABELS[key] || key,
-          `${prefix}.${key}`,
-          source[key],
-          spec.max,
-          MULTILINE.has(key),
-          spec.required,
-        ),
+        spec.choice
+          ? picker(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.choice,
+            )
+          : field(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+              MULTILINE.has(key),
+              spec.required,
+            ),
       )
       .join("");
   function listEditor(slide, index, list) {
@@ -1783,14 +2374,24 @@ kbd {
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
+  const LOOK_KEYS = new Set(["motion", "backdrop"]);
+  const splitSpecs = (specs) => {
+    const content = {},
+      look = {};
+    for (const [key, spec] of Object.entries(specs))
+      (LOOK_KEYS.has(key) ? look : content)[key] = spec;
+    return { content, look };
+  };
   function slideEditor(slide, index, open) {
     const type = C.SLIDE_TYPES[slide.type];
     const last = deck.slides.length - 1;
+    const { content, look } = splitSpecs(type.fields);
     return `<details data-open-key="${esc(slide.id)}" ${open ? "open" : ""}><summary><span class="slide-editor-name">${index + 1}. ${esc(slideName(slide))}</span><small>${esc(type.label)}</small></summary>
       <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
       <p class="editor-note">${esc(type.hint)}</p>
-      ${fieldsFor(slide, type.fields, `slides.${index}`)}
+      ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
+      <div class="look-row">${fieldsFor(slide, look, `slides.${index}`)}</div>
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
   function examplesEditor(open) {
@@ -1815,6 +2416,7 @@ kbd {
     const open = previouslyOpen.length
       ? new Set(previouslyOpen)
       : new Set([deck.slides[state.slide].id]);
+    if (pendingOpenId) open.add(pendingOpenId);
     $("#editor-fields").innerHTML =
       deck.slides
         .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
@@ -1935,6 +2537,8 @@ kbd {
     const b = event.target.closest("button");
     if (!b) return;
     state = C.goTo(deck, +b.dataset.slide);
+    // Hand the keyboard back to the deck; otherwise space re-fires this dot.
+    b.blur();
     render();
     wake();
   });
@@ -1972,10 +2576,35 @@ kbd {
       render();
     }),
   );
+  $("#transition-options").innerHTML = Object.entries(C.TRANSITIONS)
+    .map(
+      ([key, name]) =>
+        `<button data-transition-choice="${key}">${esc(name)}</button>`,
+    )
+    .join("");
+  $$("[data-transition-choice]").forEach((b) =>
+    b.addEventListener("click", () => {
+      deck.transition = b.dataset.transitionChoice;
+      renderedSlide = -1;
+      save();
+      render();
+    }),
+  );
   $("#editor-fields").addEventListener("input", (e) => {
-    if (e.target.matches("[data-field]")) updateField(e.target);
+    // Selects also fire input; they are handled on change, where the value is final.
+    if (e.target.matches("input[data-field], textarea[data-field]"))
+      updateField(e.target);
   });
   $("#editor-fields").addEventListener("change", (e) => {
+    if (e.target.matches("select[data-field]")) {
+      setPath(e.target.dataset.field, e.target.value);
+      // Replay the entrance so the presenter sees the preset they just picked.
+      renderedSlide = -1;
+      renderedSceneKey = null;
+      save();
+      render();
+      return;
+    }
     if (e.target.id === "editor-example") {
       if (!validEditor()) {
         e.target.value = deck.selectedExampleId;
@@ -2003,9 +2632,15 @@ kbd {
       afterStructureChange();
     } else if (button.id === "add-slide") {
       if (deck.slides.length >= C.LIMITS.slides) return;
-      deck.slides.push(C.blankSlide($("#new-slide-type").value));
+      const added = C.blankSlide($("#new-slide-type").value);
+      deck.slides.push(added);
       state = C.goTo(deck, deck.slides.length - 1);
+      pendingOpenId = added.id;
       afterStructureChange();
+      pendingOpenId = null;
+      $(`[data-open-key="${CSS.escape(added.id)}"]`)?.scrollIntoView({
+        block: "center",
+      });
     } else if (data.addItem !== undefined) {
       const slide = deck.slides[+data.addItem];
       const list = C.SLIDE_TYPES[slide.type].list;

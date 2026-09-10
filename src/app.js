@@ -23,6 +23,8 @@
     canSave = true,
     idleTimer,
     toastTimer,
+    countFrame,
+    pendingOpenId = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -62,12 +64,59 @@
   $("#next").innerHTML = icon("next");
 
   // Keynote scenes: one focal point, with presenter controls kept off the canvas.
-  const atmosphere = () =>
-    '<div class="atmosphere" aria-hidden="true"><div class="light-arc arc-one"></div><div class="light-arc arc-two"></div></div>';
-  const frame = (index, classes, style, body) =>
-    `<section class="slide ${classes}" aria-label="שקף ${index + 1}" style="${style}">${atmosphere()}${body}</section>`;
+  const reducedMotion = () =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  // Particle positions must survive a re-render, so they come from the slide id.
+  function seeded(id) {
+    let h = 2166136261;
+    for (let i = 0; i < id.length; i++)
+      h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+    return () => {
+      h = Math.imul(h ^ (h >>> 15), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    };
+  }
+  function backdrop(slide) {
+    const kind = slide.backdrop;
+    if (kind === "plain") return "";
+    let inner = "";
+    if (kind === "arcs")
+      inner =
+        '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>';
+    else if (kind === "grid") inner = '<div class="grid-plane"></div>';
+    else if (kind === "aurora")
+      inner = [0, 1, 2]
+        .map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`)
+        .join("");
+    else if (kind === "rings")
+      inner = [0, 1, 2, 3]
+        .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
+        .join("");
+    else if (kind === "particles") {
+      const random = seeded(slide.id);
+      inner = Array.from({ length: 28 }, () => {
+        const round = (n) => n.toFixed(2);
+        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`;
+      }).join("");
+    }
+    return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
+  }
+  const frame = (slide, index, classes, style, body) =>
+    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}</section>`;
   const caption = (value) =>
     value ? `<p class="scene-caption">${esc(value)}</p>` : "";
+  // "cascade" needs each word on its own, so it gets its own markup path.
+  const headline = (slide, value) =>
+    slide.motion === "cascade"
+      ? value
+          .split(" ")
+          .map(
+            (word, i) =>
+              `<span class="cascade-word" style="--w:${i}">${esc(word)}</span>`,
+          )
+          .join(" ")
+      : esc(value);
 
   function statementSlide(slide, index) {
     const size = Math.min(
@@ -79,10 +128,11 @@
         ? `<div class="scene-controls intro-controls"><button class="quiet-button" data-action="next">מתחילים ${icon("next")}</button><button class="icon-button" data-action="replay" aria-label="הפעלה חוזרת של הפתיחה">${icon("replay")}</button></div>`
         : "";
     return frame(
+      slide,
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1>${esc(slide.title)}${slide.accent ? ` <span>${esc(slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1>${headline(slide, slide.title)}${slide.accent ? ` <span>${headline(slide, slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -91,17 +141,18 @@
       ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
       : "";
     return frame(
+      slide,
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${esc(slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${headline(slide, slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
     const words = slide.items
       .map(
         (item, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}">${esc(item.word)}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}">${esc(item.word)}</li>`,
       )
       .join("");
     const size = Math.min(
@@ -109,6 +160,7 @@
       210 / Math.max(...slide.items.map((i) => i.word.length)),
     );
     return frame(
+      slide,
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
@@ -121,10 +173,36 @@
         ? `<p class="token-sentence">${esc(slide.chunks.map((c) => c.text).join(""))}</p>`
         : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}">${esc(c.text)}</span>`).join("")}</p>`;
     return frame(
+      slide,
       index,
       "tokens-slide",
       "",
       `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
+    );
+  }
+  function numberSlide(slide, index) {
+    const size = Math.min(30, 128 / slide.value.length);
+    return frame(
+      slide,
+      index,
+      "number-slide",
+      `--number-size:${size}cqw`,
+      `<div class="scene number-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${slide.unit ? `<em>${esc(slide.unit)}</em>` : ""}</p>${caption(slide.caption)}</div>`,
+    );
+  }
+  function splitSlide(slide, index, step) {
+    const sides = slide.sides
+      .map(
+        (side, i) =>
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line">${esc(side.line)}</span>` : ""}</li>`,
+      )
+      .join("");
+    return frame(
+      slide,
+      index,
+      "split-slide",
+      `--sides:${slide.sides.length}`,
+      `<div class="scene split-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
   function experimentSlide(slide, index, step) {
@@ -135,6 +213,7 @@
     const heading = agent ? current.label : slide.title;
     const size = Math.min(13, 195 / (heading.length + 2));
     return frame(
+      slide,
       index,
       `experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}`,
       `--scene-size:${size}cqw;--phase:${Math.max(0, step - 1)}`,
@@ -146,6 +225,8 @@
     demo: demoSlide,
     reveal: revealSlide,
     tokens: tokensSlide,
+    number: numberSlide,
+    split: splitSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -162,6 +243,10 @@
     const place = `שקף ${state.slide + 1} מתוך ${deck.slides.length}`;
     if (slide.type === "reveal")
       return `${place}: ${slideName(slide)} — ${slide.items[step].word}`;
+    if (slide.type === "split")
+      return `${place}: ${slideName(slide)} — ${slide.sides[step].heading}`;
+    if (slide.type === "number")
+      return `${place}: ${slide.value} ${slide.unit}`.trim();
     if (slide.type === "experiment") {
       const e = C.selected(deck);
       return step === 0
@@ -187,22 +272,53 @@
       else b.removeAttribute("aria-current");
     });
   }
+  // A number slide climbs to its value once, and never past the current render.
+  function countUp(current) {
+    cancelAnimationFrame(countFrame);
+    const el = current.querySelector("[data-count]");
+    if (!el || !/^\d{1,9}$/.test(el.dataset.count) || reducedMotion()) return;
+    const target = Number(el.dataset.count);
+    const started = performance.now();
+    const tick = (now) => {
+      const progress = Math.min(1, (now - started) / 900);
+      el.textContent = String(
+        Math.round(target * (1 - Math.pow(1 - progress, 3))),
+      );
+      if (progress < 1) countFrame = requestAnimationFrame(tick);
+    };
+    countFrame = requestAnimationFrame(tick);
+  }
   function render() {
     const actionFocus = document.activeElement?.dataset.action;
     const slide = deck.slides[state.slide];
+    const root = $("#slide-root");
     document.documentElement.dataset.theme = deck.theme;
-    $("#slide-root").innerHTML = SCENES[slide.type](
-      slide,
-      state.slide,
-      state.step,
-    );
-    if (renderedSlide === state.slide)
-      $("#slide-root .slide").classList.add("no-entry");
+    root.dataset.transition = deck.transition;
+    const html = SCENES[slide.type](slide, state.slide, state.step);
+    const sameSlide = renderedSlide === state.slide;
+    const direction = state.slide < renderedSlide ? -1 : 1;
+    root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
+    const previous = root.lastElementChild;
+    if (previous && !sameSlide && deck.transition !== "cut" && !reducedMotion()) {
+      previous.classList.add("leaving");
+      const drop = () => previous.remove();
+      // animationend bubbles, so only the slide's own exit may retire it.
+      previous.addEventListener("animationend", (event) => {
+        if (event.target === previous) drop();
+      });
+      setTimeout(drop, 900);
+      root.insertAdjacentHTML("beforeend", html);
+      root.lastElementChild.classList.add("entering");
+    } else root.innerHTML = html;
+    const current = root.lastElementChild;
+    current.style.setProperty("--dir", direction);
+    // A step inside the same slide keeps the stage still; only beats animate.
+    if (sameSlide) current.classList.remove(`motion-${slide.motion}`);
     renderedSlide = state.slide;
     const sceneKey = `${state.slide}:${state.step}`;
-    if (renderedSceneKey === sceneKey)
-      $("#slide-root .slide").classList.add("no-motion");
+    if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
+    countUp(current);
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
@@ -215,6 +331,12 @@
       b.setAttribute(
         "aria-pressed",
         String(b.dataset.themeChoice === deck.theme),
+      ),
+    );
+    $$("[data-transition-choice]").forEach((b) =>
+      b.setAttribute(
+        "aria-pressed",
+        String(b.dataset.transitionChoice === deck.transition),
       ),
     );
     if (actionFocus)
@@ -321,6 +443,12 @@
     prompt: "הפרומפט — לא מוקרן, מועתק בלחיצה",
     word: "מילה",
     text: "חתיכה",
+    value: "המספר",
+    unit: "יחידה",
+    heading: "הכותרת בצד",
+    line: "שורה מתחת",
+    motion: "תנועת הכניסה",
+    backdrop: "רקע הבמה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -338,17 +466,33 @@
   ]);
   const field = (label, path, value, max, multi = false, required = true) =>
     `<label class="field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span>${multi ? `<textarea rows="2"` : '<input type="text"'} data-field="${path}" maxlength="${max}" ${required ? "required" : ""} ${multi ? `>${esc(value)}</textarea>` : `value="${esc(value)}">`}</label>`;
+  const picker = (label, path, value, options, extra = "") =>
+    `<label class="field"><span class="field-head"><span>${label}</span></span><select data-field="${path}" ${extra}>${Object.entries(
+      options,
+    )
+      .map(
+        ([key, name]) =>
+          `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("")}</select></label>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        field(
-          FIELD_LABELS[key] || key,
-          `${prefix}.${key}`,
-          source[key],
-          spec.max,
-          MULTILINE.has(key),
-          spec.required,
-        ),
+        spec.choice
+          ? picker(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.choice,
+            )
+          : field(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+              MULTILINE.has(key),
+              spec.required,
+            ),
       )
       .join("");
   function listEditor(slide, index, list) {
@@ -360,14 +504,24 @@
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
+  const LOOK_KEYS = new Set(["motion", "backdrop"]);
+  const splitSpecs = (specs) => {
+    const content = {},
+      look = {};
+    for (const [key, spec] of Object.entries(specs))
+      (LOOK_KEYS.has(key) ? look : content)[key] = spec;
+    return { content, look };
+  };
   function slideEditor(slide, index, open) {
     const type = C.SLIDE_TYPES[slide.type];
     const last = deck.slides.length - 1;
+    const { content, look } = splitSpecs(type.fields);
     return `<details data-open-key="${esc(slide.id)}" ${open ? "open" : ""}><summary><span class="slide-editor-name">${index + 1}. ${esc(slideName(slide))}</span><small>${esc(type.label)}</small></summary>
       <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
       <p class="editor-note">${esc(type.hint)}</p>
-      ${fieldsFor(slide, type.fields, `slides.${index}`)}
+      ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
+      <div class="look-row">${fieldsFor(slide, look, `slides.${index}`)}</div>
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
   function examplesEditor(open) {
@@ -392,6 +546,7 @@
     const open = previouslyOpen.length
       ? new Set(previouslyOpen)
       : new Set([deck.slides[state.slide].id]);
+    if (pendingOpenId) open.add(pendingOpenId);
     $("#editor-fields").innerHTML =
       deck.slides
         .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
@@ -512,6 +667,8 @@
     const b = event.target.closest("button");
     if (!b) return;
     state = C.goTo(deck, +b.dataset.slide);
+    // Hand the keyboard back to the deck; otherwise space re-fires this dot.
+    b.blur();
     render();
     wake();
   });
@@ -549,10 +706,35 @@
       render();
     }),
   );
+  $("#transition-options").innerHTML = Object.entries(C.TRANSITIONS)
+    .map(
+      ([key, name]) =>
+        `<button data-transition-choice="${key}">${esc(name)}</button>`,
+    )
+    .join("");
+  $$("[data-transition-choice]").forEach((b) =>
+    b.addEventListener("click", () => {
+      deck.transition = b.dataset.transitionChoice;
+      renderedSlide = -1;
+      save();
+      render();
+    }),
+  );
   $("#editor-fields").addEventListener("input", (e) => {
-    if (e.target.matches("[data-field]")) updateField(e.target);
+    // Selects also fire input; they are handled on change, where the value is final.
+    if (e.target.matches("input[data-field], textarea[data-field]"))
+      updateField(e.target);
   });
   $("#editor-fields").addEventListener("change", (e) => {
+    if (e.target.matches("select[data-field]")) {
+      setPath(e.target.dataset.field, e.target.value);
+      // Replay the entrance so the presenter sees the preset they just picked.
+      renderedSlide = -1;
+      renderedSceneKey = null;
+      save();
+      render();
+      return;
+    }
     if (e.target.id === "editor-example") {
       if (!validEditor()) {
         e.target.value = deck.selectedExampleId;
@@ -580,9 +762,15 @@
       afterStructureChange();
     } else if (button.id === "add-slide") {
       if (deck.slides.length >= C.LIMITS.slides) return;
-      deck.slides.push(C.blankSlide($("#new-slide-type").value));
+      const added = C.blankSlide($("#new-slide-type").value);
+      deck.slides.push(added);
       state = C.goTo(deck, deck.slides.length - 1);
+      pendingOpenId = added.id;
       afterStructureChange();
+      pendingOpenId = null;
+      $(`[data-open-key="${CSS.escape(added.id)}"]`)?.scrollIntoView({
+        block: "center",
+      });
     } else if (data.addItem !== undefined) {
       const slide = deck.slides[+data.addItem];
       const list = C.SLIDE_TYPES[slide.type].list;

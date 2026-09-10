@@ -50,6 +50,42 @@ test("optional slide fields may be omitted and come back empty", () => {
   assert.equal(document.slides[0].caption, "");
   assert.equal(document.slides[0].note, "");
 });
+test("look presets fall back when absent and are rejected when wrong", () => {
+  const partial = C.clone(seed);
+  delete partial.transition;
+  delete partial.slides[0].motion;
+  delete partial.slides[0].backdrop;
+  const document = C.validate(partial);
+  assert.equal(document.transition, Object.keys(C.TRANSITIONS)[0]);
+  assert.equal(document.slides[0].motion, Object.keys(C.MOTIONS)[0]);
+  assert.equal(document.slides[0].backdrop, Object.keys(C.BACKDROPS)[0]);
+  for (const modify of [
+    (d) => (d.transition = "swirl"),
+    (d) => (d.slides[0].motion = "explode"),
+    (d) => (d.slides[0].backdrop = "lava"),
+    (d) => (d.slides[0].motion = 7),
+  ]) {
+    const bad = C.clone(seed);
+    modify(bad);
+    assert.throws(() => C.validate(bad));
+  }
+});
+test("every slide type reports the beats its content implies", () => {
+  const document = C.clone(seed);
+  document.slides = Object.keys(C.SLIDE_TYPES).map((type) =>
+    C.blankSlide(type),
+  );
+  const valid = C.validate(document);
+  const beatsOf = (type) =>
+    C.beats(valid, valid.slides.findIndex((s) => s.type === type));
+  assert.equal(beatsOf("statement"), 1);
+  assert.equal(beatsOf("demo"), 1);
+  assert.equal(beatsOf("number"), 1);
+  assert.equal(beatsOf("tokens"), 2);
+  assert.equal(beatsOf("reveal"), 3);
+  assert.equal(beatsOf("split"), 2);
+  assert.equal(beatsOf("experiment"), 1 + valid.examples[0].steps.length);
+});
 test("reject malformed imports, duplicate IDs, oversized fields and unsupported versions", () => {
   for (const modify of [
     (d) => (d.version = 1),
@@ -108,10 +144,13 @@ test("new slides and list items are valid content on their own", () => {
   const document = C.clone(seed);
   for (const type of Object.keys(C.SLIDE_TYPES))
     document.slides.push(C.blankSlide(type));
-  document.slides.push({
-    ...C.blankSlide("reveal"),
-    items: [C.blankItem("reveal"), C.blankItem("reveal")],
-  });
+  for (const type of ["reveal", "split", "tokens"]) {
+    const list = C.SLIDE_TYPES[type].list;
+    document.slides.push({
+      ...C.blankSlide(type),
+      [list.key]: Array.from({ length: list.min }, () => C.blankItem(type)),
+    });
+  }
   assert.doesNotThrow(() => C.validate(document));
 });
 test("embedded content cannot terminate its script tag", () => {
