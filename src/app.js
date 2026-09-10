@@ -176,6 +176,38 @@
       [0, 1, 2, 3].map((i) => `<div class="ring" style="--ring:${i}"></div>`).join(""),
     beams: () => '<div class="beam-field"></div>',
     halo: () => '<div class="halo"></div>',
+    /* Nodes joined to their nearest neighbours, drawn once from the slide's own
+       seed so a re-render rebuilds the same constellation. The middle of the
+       frame is left empty on purpose: this is light behind the words, never a
+       diagram competing with them. */
+    neural: (slide) => {
+      const random = seeded(slide.id);
+      const nodes = [];
+      for (let tries = 0; tries < 320 && nodes.length < 18; tries++) {
+        const x = random() * 160;
+        const y = random() * 90;
+        const dx = (x - 80) / 80;
+        const dy = (y - 45) / 45;
+        if (Math.hypot(dx, dy) < 0.66) continue; // the headline owns the middle
+        if (nodes.some((n) => Math.hypot(n.x - x, n.y - y) < 15)) continue;
+        nodes.push({ x, y, r: 0.32 + random() * 0.34, delay: random() * -9 });
+      }
+      const edges = [];
+      nodes.forEach((a, i) =>
+        nodes.slice(i + 1).forEach((b) => {
+          const span = Math.hypot(a.x - b.x, a.y - b.y);
+          if (span < 27) edges.push({ a, b, span, delay: random() * -14 });
+        }),
+      );
+      const round = (n) => n.toFixed(2);
+      const line = ({ a, b, span, delay }) =>
+        `<line x1="${round(a.x)}" y1="${round(a.y)}" x2="${round(b.x)}" y2="${round(b.y)}" style="--span:${round(span)};--delay:${round(delay)}s"/>`;
+      const dot = ({ x, y, r, delay }) =>
+        `<circle cx="${round(x)}" cy="${round(y)}" r="${round(r)}" style="--delay:${round(delay)}s"/>`;
+      return `<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g class="neural-edges">${edges
+        .map(line)
+        .join("")}</g><g class="neural-nodes">${nodes.map(dot).join("")}</g></svg>`;
+    },
     mesh: () =>
       [0, 1, 2, 3].map((i) => `<div class="mesh-blob" style="--mesh:${i}"></div>`).join(""),
     waves: () =>
@@ -906,6 +938,13 @@
       !reducedMotion() &&
       (slide.transition !== "cut" || exitsOnly)
     ) {
+      /* The class that brought this slide in has to go before it is asked to
+         leave: the entrance rule and the exit rule have equal weight, and the
+         entrance one wins on order, so an outgoing slide was replaying its own
+         arrival — sliding back in from the side before vanishing. Its direction
+         is the move happening now, not the one that delivered it. */
+      previous.classList.remove("entering");
+      previous.style.setProperty("--dir", direction);
       previous.classList.add("leaving");
       if (hasObjectExits)
         previous.style.setProperty("--slide-exit-duration", "0.52s");
@@ -2698,7 +2737,12 @@
   });
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
-  $("#edit").addEventListener("click", () => setEditing(!editing));
+  $("#edit").addEventListener("click", (event) => {
+    // Same trap as the navigation dots: leaving focus here turns the presenter's
+    // next space into a second click, which drops them back out of edit mode.
+    event.currentTarget.blur();
+    setEditing(!editing);
+  });
   $("#deck").addEventListener("click", () =>
     $("#editor").open ? closeDialog($("#editor")) : openDialog("editor"),
   );

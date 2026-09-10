@@ -116,6 +116,8 @@
     solid: "צבע אחיד",
     spectrum: "צבעוני",
     outline: "קו מתאר",
+    shimmer: "זוהר נודד",
+    sheen: "ברק חולף",
   };
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
@@ -184,6 +186,7 @@
     waves: "גלים",
     halo: "הילה",
     stars: "שדה כוכבים",
+    neural: "רשת חיבורים",
     mesh: "מרחב צבע",
     picture: "תמונה משלך",
     plain: "רקע נקי",
