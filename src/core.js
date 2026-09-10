@@ -111,6 +111,8 @@
     star: "כוכב",
     blob: "כתם",
     ring: "טבעת",
+    dots: "שדה נקודות",
+    rule: "קו שיער",
   };
   const TEXT_STYLES = {
     solid: "צבע אחיד",
@@ -209,6 +211,10 @@
     mint: "מנטה וירוק",
     cobalt: "כחול קובלט",
     steel: "פלדה ולבן",
+    paper: "לבן ודיו",
+    mist: "ערפל בהיר",
+    sand: "חול וחום",
+    midnight: "כחול חצות",
   };
   const PALETTE_STYLES = {
     ice: {
@@ -253,6 +259,30 @@
       surface: "#0e1013", raised: "#1b1f24", soft: "#15181c", line: "#39404a",
       text: "#ffffff", muted: "#9aa3ad", accent: "#dbe2ea", rgb: "219,226,234",
       spectrum: "linear-gradient(110deg,#ffffff 4%,#c9d2dc 52%,#8f9aa6 96%)",
+    },
+    /* Light stages. Everything on the stage is built from these tokens, so a
+       pale surface with dark text works the same way round — but `raised` and
+       `soft` have to go *darker* than the surface here, not lighter, or every
+       panel and chip disappears into the background. */
+    paper: {
+      surface: "#ffffff", raised: "#eef1f6", soft: "#f5f7fa", line: "#c9d2de",
+      text: "#0c1118", muted: "#5a6675", accent: "#1f5fd0", rgb: "31,95,208",
+      spectrum: "linear-gradient(110deg,#1f5fd0 4%,#3b4fd8 52%,#7a3fd0 96%)",
+    },
+    mist: {
+      surface: "#e8edf3", raised: "#d6dee8", soft: "#dfe6ee", line: "#adbccd",
+      text: "#101823", muted: "#4f5d6e", accent: "#1d5bb8", rgb: "29,91,184",
+      spectrum: "linear-gradient(110deg,#1d5bb8 4%,#2f6fa8 52%,#5a4fb0 96%)",
+    },
+    sand: {
+      surface: "#f6f1e7", raised: "#e6ddcc", soft: "#efe8da", line: "#cdbfa5",
+      text: "#1c1710", muted: "#6b5c46", accent: "#a35a1c", rgb: "163,90,28",
+      spectrum: "linear-gradient(110deg,#a35a1c 4%,#b8762a 52%,#7d5a2e 96%)",
+    },
+    midnight: {
+      surface: "#05070f", raised: "#101728", soft: "#0a0f1c", line: "#243252",
+      text: "#eef3ff", muted: "#93a3c2", accent: "#7fd8ff", rgb: "127,216,255",
+      spectrum: "linear-gradient(110deg,#d8f4ff 4%,#7fd8ff 50%,#9db4ff 96%)",
     },
   };
   /* Where the words sit in the frame. A deck where every slide centres its
@@ -632,7 +662,12 @@
       if (!Number.isFinite(raw) || raw < min || raw > max) fail();
       return String(Math.round(raw * 10) / 10);
     };
+    /* "auto" means the object takes the slide's own text colour instead of
+       carrying one. It is what lets a box survive its slide being given a
+       light palette: a fixed near-white is invisible on white paper, and the
+       presenter should not have to re-colour every box to change a theme. */
     const colour = (v) => {
+      if (v === "auto") return "auto";
       if (typeof v !== "string" || !/^#[0-9a-f]{6}$/i.test(v)) fail();
       return v.toLowerCase();
     };
