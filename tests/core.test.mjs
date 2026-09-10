@@ -70,6 +70,26 @@ test("look presets fall back when absent and are rejected when wrong", () => {
     assert.throws(() => C.validate(bad));
   }
 });
+test("pictures accept only raster data URIs, and may be empty", () => {
+  const withPicture = (value) => {
+    const document = C.clone(seed);
+    document.slides.push({ ...C.blankSlide("image"), picture: value });
+    return document;
+  };
+  const tiny =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=";
+  assert.equal(C.validate(withPicture(tiny)).slides.at(-1).picture, tiny);
+  assert.equal(C.validate(withPicture("")).slides.at(-1).picture, "");
+  for (const bad of [
+    "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+    "javascript:alert(1)",
+    "https://example.com/photo.png",
+    "data:image/png;base64,not base64!",
+    "data:image/png;base64," + "A".repeat(C.LIMITS.image),
+    42,
+  ])
+    assert.throws(() => C.validate(withPicture(bad)));
+});
 test("every slide type reports the beats its content implies", () => {
   const document = C.clone(seed);
   document.slides = Object.keys(C.SLIDE_TYPES).map((type) =>
@@ -80,6 +100,7 @@ test("every slide type reports the beats its content implies", () => {
     C.beats(valid, valid.slides.findIndex((s) => s.type === type));
   assert.equal(beatsOf("statement"), 1);
   assert.equal(beatsOf("demo"), 1);
+  assert.equal(beatsOf("image"), 1);
   assert.equal(beatsOf("number"), 1);
   assert.equal(beatsOf("tokens"), 2);
   assert.equal(beatsOf("reveal"), 3);
