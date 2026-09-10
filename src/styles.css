@@ -253,6 +253,7 @@ p {
   display: block;
   width: 100%;
   height: 100%;
+  -webkit-user-drag: none;
 }
 .free-object-visual {
   pointer-events: auto;
@@ -347,34 +348,29 @@ p {
   text-align: center;
   text-wrap: balance;
 }
-.visual-stars {
-  position: relative;
-  border-radius: 4%;
-  background: radial-gradient(ellipse at bottom, color-mix(in srgb, var(--visual-colour) 28%, var(--visual-secondary)) 0%, var(--visual-secondary) 72%);
+/* The colourful fill is the object's own colour swept through a gradient, the
+   same idea as the colourful text. */
+.visual-component.is-spectrum {
+  --visual-face: var(--visual-gradient);
 }
-.visual-stars i {
-  position: absolute;
-  left: var(--sx);
-  top: var(--sy);
-  width: var(--ss);
-  height: var(--ss);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--visual-colour) 65%, white);
-  box-shadow: 0 0 calc(var(--ss) * 3) var(--visual-colour);
-  animation: visual-star-drift 8s ease-in-out infinite alternate;
-  animation-delay: var(--sd);
+.visual-accordion.is-spectrum p {
+  background: var(--visual-gradient);
+  border-color: transparent;
 }
-.visual-stars span {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: white;
-  font-size: clamp(0.8rem, 2.5cqw, 2.4rem);
-  text-shadow: 0 2px 18px #000;
+.visual-accordion.is-spectrum span {
+  color: #10171e;
 }
-@keyframes visual-star-drift {
-  to { transform: translateY(-18px); opacity: 0.35; }
+.visual-glass.is-spectrum {
+  border-color: transparent;
+  background:
+    linear-gradient(125deg, #ffffff26, transparent 45%),
+    var(--visual-gradient);
+}
+.visual-glass.is-spectrum span {
+  color: #10171e;
+}
+.visual-glass.is-spectrum i {
+  background: var(--visual-colour);
 }
 .object-text {
   width: 100%;
@@ -424,7 +420,12 @@ p {
   overflow: auto;
   outline: 2px solid var(--accent);
   outline-offset: 6px;
+  color: var(--object-colour);
+  -webkit-text-fill-color: var(--object-colour);
+  -webkit-text-stroke: 0;
   background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
 }
 .object-placeholder {
   width: 100%;
@@ -458,6 +459,9 @@ p {
 .editing [data-slide-text]:hover {
   outline: 1px dashed rgba(var(--accent-rgb), 0.62);
   outline-offset: 7px;
+}
+.free-object:not(.selected) .object-handle {
+  display: none;
 }
 .object-handle {
   position: absolute;
@@ -511,13 +515,17 @@ p {
   position: absolute;
   z-index: 8;
   top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 12px;
+  right: 12px;
+  width: max-content;
+  margin-inline: auto;
   direction: rtl;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
+  row-gap: 6px;
   max-width: calc(100% - 24px);
   padding: 8px;
   border: 1px solid var(--line);
@@ -525,6 +533,16 @@ p {
   background: color-mix(in srgb, var(--raised) 94%, transparent);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
+}
+.object-toolbar .tool-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* A cluster keeps its controls together, but never past the edge of a phone
+     screen: it wraps inside itself before anything is pushed out of reach. */
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
 }
 .object-toolbar button,
 .object-toolbar label {
@@ -552,10 +570,47 @@ p {
   white-space: nowrap;
 }
 .object-toolbar select {
-  min-width: 92px;
+  max-width: 118px;
   border: 0;
   background: transparent;
   color: var(--text);
+  font-size: 0.75rem;
+}
+.object-toolbar .stage-motion span {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+/* Size is the control presenters reach for most, so it is a stepper you can
+   hold down, with the exact number in the middle. */
+.stage-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.stage-stepper input {
+  width: 46px;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.75rem;
+  text-align: center;
+}
+.object-toolbar .stage-stepper button.icon-only {
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: var(--soft);
+}
+.object-toolbar .stage-stepper button svg {
+  width: 15px;
+  height: 15px;
 }
 .stage-colour input {
   width: 31px;
@@ -1006,6 +1061,37 @@ h1 {
     transform: translate3d(6px, -9px, 0);
   }
 }
+.backdrop-stars {
+  background: radial-gradient(
+    ellipse 90% 70% at 50% 108%,
+    rgba(var(--accent-rgb), 0.22),
+    transparent 70%
+  );
+}
+.backdrop-stars i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: color-mix(in srgb, rgb(var(--accent-rgb)) 55%, white);
+  box-shadow: 0 0 calc(var(--s) * 3.5) rgba(var(--accent-rgb), 0.75);
+  /* A negative delay starts every star mid-loop, so a re-render during editing
+     is not visible as a twinkle that restarts together. */
+  animation: star-twinkle var(--twinkle) ease-in-out var(--delay) infinite
+    alternate;
+}
+@keyframes star-twinkle {
+  from {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
 .aurora-blob {
   position: absolute;
   width: 62%;
@@ -1103,9 +1189,10 @@ h1 {
   position: absolute;
   z-index: 8;
   bottom: 14px;
-  flex-wrap: nowrap;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 12px;
+  right: 12px;
+  width: max-content;
+  margin-inline: auto;
   direction: rtl;
   display: flex;
   align-items: center;
@@ -1119,6 +1206,12 @@ h1 {
   background: color-mix(in srgb, var(--raised) 94%, transparent);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
+}
+/* A toolbar that covers the object it edits is worse than no toolbar, so it
+   steps aside when the selection is underneath it. */
+.object-toolbar.at-bottom {
+  top: auto;
+  bottom: 124px;
 }
 .stage-tools button,
 .stage-tools label {
@@ -2422,9 +2515,23 @@ kbd {
 @media (max-width: 950px) {
   .object-toolbar {
     top: 8px;
-    width: calc(100% - 16px);
-    max-width: none;
+    left: 8px;
+    right: 8px;
+    width: auto;
     flex-wrap: wrap;
+  }
+}
+/* On a phone the same controls would stack four rows deep and cover the slide.
+   They stay in one row that scrolls sideways instead, so nothing is lost. */
+@media (max-width: 700px) {
+  .object-toolbar,
+  .object-toolbar .tool-cluster {
+    flex-wrap: nowrap;
+  }
+  .object-toolbar {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
       .theater {
     padding-bottom: 80px;
@@ -2589,7 +2696,7 @@ kbd {
     font-size: 0.7rem;
   }
   .object-toolbar select {
-    min-width: 76px;
+    max-width: 92px;
   }
   .toolbar .icon-button {
     width: 32px;

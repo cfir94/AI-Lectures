@@ -19,6 +19,12 @@
   const timers = new Map();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
+  const history = C.createHistory();
+  /* Changes coalesce into one undo step while they belong to the same editing
+     session. Without the counter, two visits to the same box would be one
+     step, and undo would walk back further than the presenter expects. */
+  let editSession = 0;
+  const newEditSession = () => ++editSession;
   let deck = C.clone(embedded),
     state = C.initialState(),
     canSave = true,
@@ -72,6 +78,9 @@
     shape: '<rect x="3" y="3" width="9" height="9" rx="1.5"/><circle cx="16.5" cy="16.5" r="4.5"/>',
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
+    undo: '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a5.5 5.5 0 0 1 0 11h-2"/>',
+    redo: '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a5.5 5.5 0 0 0 0 11h2"/>',
+    minus: '<path d="M5 12h14"/>',
   };
   const icon = (name) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.agent}</svg>`;
@@ -95,6 +104,43 @@
       return ((h ^= h >>> 16) >>> 0) / 4294967296;
     };
   }
+  /* "Colourful" is the presenter's own colour swept through a gradient. Text
+     gets it from CSS; a shape paints an SVG gradient and a visual component a
+     CSS one, so both ends of the sweep are computed here as real colours. */
+  function hsl(hex) {
+    const n = Number.parseInt(hex.slice(1), 16);
+    const r = ((n >> 16) & 255) / 255,
+      g = ((n >> 8) & 255) / 255,
+      b = (n & 255) / 255;
+    const max = Math.max(r, g, b),
+      min = Math.min(r, g, b),
+      d = max - min;
+    const l = (max + min) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    const h = !d
+      ? 0
+      : max === r
+        ? ((g - b) / d) % 6
+        : max === g
+          ? (b - r) / d + 2
+          : (r - g) / d + 4;
+    return [(h * 60 + 360) % 360, s * 100, l * 100];
+  }
+  const shifted = (hex, dl, dh) => {
+    const [h, s, l] = hsl(hex);
+    return `hsl(${Math.round((((h + dh) % 360) + 360) % 360)} ${Math.round(
+      Math.min(100, Math.max(6, s + 10)),
+    )}% ${Math.round(Math.min(96, Math.max(6, l + dl)))}%)`;
+  };
+  const spectrumStops = (hex) => [
+    shifted(hex, 11, -36),
+    hex,
+    shifted(hex, -5, 46),
+  ];
+  const spectrumGradient = (hex) => {
+    const [a, b, c] = spectrumStops(hex);
+    return `linear-gradient(125deg, ${a}, ${b} 48%, ${c})`;
+  };
   function backdrop(slide) {
     const kind = slide.backdrop;
     if (kind === "plain") return "";
@@ -121,7 +167,13 @@
       inner = [0, 1, 2]
         .map((i) => `<div class="wave" style="--wave:${i}"></div>`)
         .join("");
-    else if (kind === "particles") {
+    else if (kind === "stars") {
+      const random = seeded(slide.id);
+      inner = Array.from({ length: 74 }, () => {
+        const round = (n) => n.toFixed(2);
+        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 92)}%;--s:${round(0.8 + random() * 2.2)}px;--delay:${round(random() * -9)}s;--twinkle:${round(3.4 + random() * 4.6)}s"></i>`;
+      }).join("");
+    } else if (kind === "particles") {
       const random = seeded(slide.id);
       inner = Array.from({ length: 28 }, () => {
         const round = (n) => n.toFixed(2);
@@ -130,35 +182,64 @@
     }
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
-  const shapeMarkup = (object) => {
-    const common = `fill="${esc(object.color)}" stroke="${esc(object.stroke)}" stroke-width="${esc(object.strokeWidth)}" vector-effect="non-scaling-stroke"`;
+  // An imported ID is any string, so it is scrubbed before it becomes a
+  // gradient reference rather than trusted inside url(#…).
+  const paintId = (object, index) =>
+    `fill-${index}-${object.id.replace(/[^A-Za-z0-9_-]/g, "")}`;
+  const shapeMarkup = (object, index) => {
+    const spectrum = object.style === "spectrum";
+    const outline = object.style === "outline";
+    const id = paintId(object, index);
+    const paint = spectrum ? `url(#${id})` : object.color;
+    const defs = spectrum
+      ? `<defs><linearGradient id="${esc(id)}" x1="0" y1="0" x2="1" y2="1">${spectrumStops(
+          object.color,
+        )
+          .map(
+            (stop, i) =>
+              `<stop offset="${i / 2}" stop-color="${esc(stop)}"/>`,
+          )
+          .join("")}</linearGradient></defs>`
+      : "";
+    // Outline draws the shape in its own colour and needs a line to draw with.
+    const strokePaint = outline ? paint : object.stroke;
+    const width = outline
+      ? Math.max(2, Number(object.strokeWidth))
+      : Number(object.strokeWidth);
+    const common = `fill="${outline ? "none" : esc(paint)}" stroke="${esc(strokePaint)}" stroke-width="${width}" vector-effect="non-scaling-stroke"`;
+    const svg = (body) =>
+      `<svg viewBox="0 0 100 100" aria-hidden="true">${defs}${body}</svg>`;
     if (object.shape === "circle")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="47" ry="47" ${common}/></svg>`;
+      return svg(`<ellipse cx="50" cy="50" rx="47" ry="47" ${common}/>`);
     if (object.shape === "line")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><line x1="4" y1="50" x2="96" y2="50" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+      return svg(
+        `<line x1="4" y1="50" x2="96" y2="50" stroke="${esc(paint)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`,
+      );
     if (object.shape === "arrow")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 50h78M66 26l24 24-24 24" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+      return svg(
+        `<path d="M5 50h78M66 26l24 24-24 24" fill="none" stroke="${esc(paint)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`,
+      );
     if (object.shape === "star")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="m50 4 11 31 33 1-26 20 10 33-28-19-28 19 10-33L6 36l33-1Z" ${common}/></svg>`;
+      return svg(
+        `<path d="m50 4 11 31 33 1-26 20 10 33-28-19-28 19 10-33L6 36l33-1Z" ${common}/>`,
+      );
     if (object.shape === "blob")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22c13 17 9 45-7 61-16 15-43 17-59 2C1 70 4 40 19 21 34 3 68 4 82 22Z" ${common}/></svg>`;
+      return svg(
+        `<path d="M82 22c13 17 9 45-7 61-16 15-43 17-59 2C1 70 4 40 19 21 34 3 68 4 82 22Z" ${common}/>`,
+      );
     if (object.shape === "ring")
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="43" ry="43" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(3, Number(object.strokeWidth))}" vector-effect="non-scaling-stroke"/></svg>`;
-    return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="8" ${common}/></svg>`;
+      return svg(
+        `<ellipse cx="50" cy="50" rx="43" ry="43" fill="none" stroke="${esc(paint)}" stroke-width="${Math.max(3, Number(object.strokeWidth))}" vector-effect="non-scaling-stroke"/>`,
+      );
+    return svg(`<rect x="2" y="2" width="96" height="96" rx="8" ${common}/>`);
   };
   const visualMarkup = (object) => {
-    const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)}`;
+    const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
+    const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
     if (object.visual === "glass")
-      return `<div class="visual-component visual-glass" style="${style}" role="img" aria-label="משטח זכוכית נוזלית"><i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span></div>`;
-    if (object.visual === "stars") {
-      const random = seeded(object.id);
-      const stars = Array.from({ length: 54 }, () =>
-        `<i style="--sx:${(random() * 100).toFixed(1)}%;--sy:${(random() * 100).toFixed(1)}%;--ss:${(0.7 + random() * 2.1).toFixed(1)}px;--sd:${(-random() * 8).toFixed(1)}s"></i>`,
-      ).join("");
-      return `<div class="visual-component visual-stars" style="${style}" role="img" aria-label="שדה כוכבים מונפש">${stars}<span>${esc(object.label1)}</span></div>`;
-    }
-    return `<div class="visual-component visual-accordion" style="${style}" aria-label="כרטיס אקורדיון אינטראקטיבי">${labels.map((label) => `<p><span>${esc(label)}</span></p>`).join("")}</div>`;
+      return `<div class="visual-component visual-glass${spectrum}" style="${style}" role="img" aria-label="משטח זכוכית נוזלית"><i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span></div>`;
+    return `<div class="visual-component visual-accordion${spectrum}" style="${style}" aria-label="כרטיס אקורדיון אינטראקטיבי">${labels.map((label) => `<p><span>${esc(label)}</span></p>`).join("")}</div>`;
   };
   const objectMarkup = (object, index) => {
     const selected = selectedObjectId === object.id;
@@ -173,14 +254,12 @@
       body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
-        ? `<img class="object-image" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
+        ? `<img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
         : '<span class="object-placeholder">תמונה</span>';
     else if (object.type === "visual") body = visualMarkup(object);
-    else body = shapeMarkup(object);
+    else body = shapeMarkup(object, index);
     const handles =
-      selected
-        ? '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>'
-        : "";
+      '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>';
     return `<div class="free-object free-object-${object.type} object-enter-${object.entrance} object-exit-${object.exit} ${selected ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
   };
   const freeObjects = (slide) =>
@@ -198,25 +277,138 @@
     deck.slides[state.slide]?.objects.find(
       (object) => object.id === selectedObjectId,
     );
+  /* Everything an object can be changed into lives here, on the object itself.
+     The side panel is for the deck; a presenter who double-clicks a box on the
+     stage expects the box's own controls to be within reach. */
+  const toolbarSelect = (label, key, options, value, showLabel = false) =>
+    `<label class="stage-motion" title="${esc(label)}">${showLabel ? `<span>${esc(label)}</span>` : ""}<select data-toolbar-object-prop="${key}" aria-label="${esc(label)}">${optionMarkup(options, value)}</select></label>`;
+  const toolbarColour = (label, key, value) =>
+    `<label class="stage-colour" title="${esc(label)}"><span>${esc(label)}</span><input type="color" value="${esc(value)}" data-toolbar-colour="${key}" aria-label="${esc(label)}"></label>`;
+  const sizeStepper = (object) =>
+    `<div class="stage-stepper" role="group" aria-label="גודל הטקסט"><button class="icon-only" data-toolbar-size="-1" title="הקטנת הטקסט" aria-label="הקטנת הטקסט">${icon("minus")}</button><input type="number" min="8" max="300" step="1" value="${esc(object.fontSize)}" data-toolbar-size-value aria-label="גודל הטקסט" title="גודל הטקסט"><button class="icon-only" data-toolbar-size="1" title="הגדלת הטקסט" aria-label="הגדלת הטקסט">${icon("plus")}</button></div>`;
   function renderObjectToolbar() {
     const toolbar = $("#object-toolbar");
     const object = currentObject();
     if (!editing || !object) {
       toolbar.hidden = true;
       toolbar.innerHTML = "";
+      toolbar.dataset.objectId = "";
       return;
     }
-    const colour =
-      object.type === "text" || object.type === "shape" || object.type === "visual"
-        ? `<label class="stage-colour"><span>${object.type === "text" ? "צבע טקסט" : object.type === "visual" ? "צבע רכיב" : "צבע צורה"}</span><input type="color" value="${esc(object.color)}" data-toolbar-colour aria-label="בחירת צבע"></label>`
-        : "";
-    const textTools =
-      object.type === "text"
-        ? `<button data-toolbar-edit-text aria-pressed="${editingObjectTextId === object.id}">${editingObjectTextId === object.id ? "סיום טקסט" : "עריכת טקסט"}</button><label class="stage-text-style"><span>מראה הטקסט</span><select data-toolbar-text-style>${optionMarkup(C.TEXT_STYLES, object.style)}</select></label>`
-        : "";
-    toolbar.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span>${textTools}${colour}<label class="stage-motion"><span>כניסה</span><select data-toolbar-object-prop="entrance">${optionMarkup(C.OBJECT_ENTRANCES, object.entrance)}</select></label><label class="stage-motion"><span>יציאה</span><select data-toolbar-object-prop="exit">${optionMarkup(C.OBJECT_EXITS, object.exit)}</select></label><button data-toolbar-snap aria-pressed="${object.snap === "on"}">${object.snap === "on" ? "גריד פעיל" : "בלי הצמדה"}</button><button class="icon-only danger" data-toolbar-delete title="מחיקת האובייקט · Delete" aria-label="מחיקת האובייקט">${icon("trash")}</button>`;
+    /* Never rebuild a control that is being held. A colour picker dragged
+       through a hundred shades fires a hundred updates, and replacing the
+       input on the first of them ends the gesture. Buttons that change what
+       the toolbar says blur themselves first, so they still refresh. */
+    if (
+      toolbar.dataset.objectId === object.id &&
+      toolbar.contains(document.activeElement)
+    )
+      return;
+    const slide = deck.slides[state.slide];
+    const index = slide.objects.indexOf(object);
+    const editingThis = editingObjectTextId === object.id;
+    let specific = "";
+    if (object.type === "text")
+      specific =
+        `<button data-toolbar-edit-text aria-pressed="${editingThis}">${editingThis ? "סיום טקסט" : "עריכת טקסט"}</button>` +
+        sizeStepper(object) +
+        toolbarSelect("משקל", "weight", C.TEXT_WEIGHTS, object.weight) +
+        toolbarSelect("יישור", "align", C.ALIGNS, object.align) +
+        toolbarSelect("מראה", "style", C.TEXT_STYLES, object.style) +
+        toolbarColour("צבע", "color", object.color);
+    else if (object.type === "shape")
+      specific =
+        toolbarSelect("צורה", "shape", C.SHAPES, object.shape) +
+        toolbarSelect("מראה", "style", C.FILL_STYLES, object.style) +
+        toolbarColour("צבע", "color", object.color) +
+        toolbarColour("קו", "stroke", object.stroke);
+    else if (object.type === "visual")
+      specific =
+        toolbarSelect("רכיב", "visual", C.VISUALS, object.visual) +
+        toolbarSelect("מראה", "style", C.VISUAL_STYLES, object.style) +
+        toolbarColour("צבע", "color", object.color) +
+        toolbarColour("רקע", "secondary", object.secondary);
+    else
+      specific =
+        toolbarSelect("התאמה", "fit", C.FITS, object.fit) +
+        `<button data-toolbar-picture="${index}">${icon("image")}${object.picture ? "החלפת תמונה" : "בחירת תמונה"}</button>`;
+    toolbar.innerHTML =
+      `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span><span class="tool-cluster">${specific}</span><span class="stage-tools-divider"></span><span class="tool-cluster">` +
+      toolbarSelect(
+        "כניסה",
+        "entrance",
+        C.OBJECT_ENTRANCES,
+        object.entrance,
+        true,
+      ) +
+      toolbarSelect("יציאה", "exit", C.OBJECT_EXITS, object.exit, true) +
+      `</span><span class="stage-tools-divider"></span><span class="tool-cluster"><button class="icon-only" data-toolbar-layer="1" title="העברה קדימה" aria-label="העברה קדימה" ${index >= slide.objects.length - 1 ? "disabled" : ""}>${icon("up")}</button><button class="icon-only" data-toolbar-layer="-1" title="העברה אחורה" aria-label="העברה אחורה" ${index <= 0 ? "disabled" : ""}>${icon("down")}</button><button class="icon-only" data-toolbar-duplicate title="שכפול האובייקט" aria-label="שכפול האובייקט" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("copy")}</button><button data-toolbar-snap aria-pressed="${object.snap === "on"}" title="הצמדה לגריד">${object.snap === "on" ? "גריד" : "חופשי"}</button><button class="icon-only danger" data-toolbar-delete title="מחיקת האובייקט · Delete" aria-label="מחיקת האובייקט">${icon("trash")}</button></span>`;
+    toolbar.dataset.objectId = object.id;
     toolbar.hidden = false;
     placeFloater(toolbar);
+    avoidSelection(toolbar);
+  }
+  /* A text box being edited must survive a change of look: rebuilding the stage
+     would replace the node the caret sits in. Everything the presenter can
+     change from the toolbar is written straight onto the element instead. */
+  function applyObjectLook(object) {
+    if (object.type !== "text") return false;
+    const box = $(`.free-object[data-object-id="${CSS.escape(object.id)}"]`);
+    const el = box?.querySelector(".object-text");
+    if (!el) return false;
+    box.className = `free-object free-object-text object-enter-${object.entrance} object-exit-${object.exit}${selectedObjectId === object.id ? " selected" : ""}`;
+    el.style.setProperty("--object-size", object.fontSize);
+    el.style.setProperty("--object-weight", object.weight);
+    el.style.setProperty("--object-align", object.align);
+    el.style.setProperty("--object-colour", object.color);
+    el.classList.remove(...Object.keys(C.TEXT_STYLES).map((key) => `text-${key}`));
+    el.classList.add(`text-${object.style}`);
+    return true;
+  }
+  let renderFrame = null;
+  function renderSoon() {
+    if (renderFrame) return;
+    renderFrame = requestAnimationFrame(() => {
+      renderFrame = null;
+      render();
+    });
+  }
+  function stepFontSize(object, direction) {
+    const current = Number(object.fontSize);
+    const step = Math.max(2, Math.round(current * 0.08));
+    return String(clamp(current + step * direction, 8, 300));
+  }
+  function moveObjectLayer(slideIndex, id, direction) {
+    const slide = deck.slides[slideIndex];
+    const position = slide.objects.findIndex((object) => object.id === id);
+    const target = position + direction;
+    if (position < 0 || target < 0 || target >= slide.objects.length) return;
+    const [moved] = slide.objects.splice(position, 1);
+    slide.objects.splice(target, 0, moved);
+    selectedObjectId = id;
+    state = C.goTo(deck, slideIndex);
+    afterStructureChange();
+  }
+  function duplicateObject(slideIndex, id) {
+    const slide = deck.slides[slideIndex];
+    if (slide.objects.length >= C.LIMITS.objects) return;
+    const source = objectById(slideIndex, id);
+    if (!source) return;
+    const copy = C.clone(source);
+    copy.id = C.newId("object");
+    // A copy is a second box, so it cannot keep writing into the slide field.
+    if (copy.type === "text") copy.bind = "";
+    copy.x = String(Math.min(100 - Number(copy.width), Number(copy.x) + 3));
+    copy.y = String(Math.min(100 - Number(copy.height), Number(copy.y) + 3));
+    slide.objects.push(copy);
+    if (!withinDocumentLimit()) {
+      slide.objects.pop();
+      documentLimitMessage();
+      return;
+    }
+    selectedObjectId = copy.id;
+    state = C.goTo(deck, slideIndex);
+    afterStructureChange();
   }
   function previewObjectMotion(id, phase, preset) {
     requestAnimationFrame(() => {
@@ -659,6 +851,27 @@
     if (actionFocus)
       $(`[data-action="${actionFocus}"]`)?.focus({ preventScroll: true });
     renderObjectToolbar();
+    renderHistoryButtons();
+  }
+  /* Finishing an edit leaves the words correct in both the DOM and the
+     document; the rebuild that follows only restores markup the editing
+     stripped. Running it immediately would replace the node between the two
+     clicks of a double-click, and the second click would land on nothing —
+     which is exactly what "double-click does not work" looked like. */
+  let sceneRefresh = null;
+  function cancelSceneRefresh() {
+    clearTimeout(sceneRefresh);
+    sceneRefresh = null;
+  }
+  function refreshSceneSoon() {
+    cancelSceneRefresh();
+    sceneRefresh = setTimeout(() => {
+      sceneRefresh = null;
+      if (editingSlideText || editingObjectTextId || activeObjectPointer)
+        return;
+      render();
+      renderEditor();
+    }, 420);
   }
   function notify(message) {
     clearTimeout(toastTimer);
@@ -669,18 +882,7 @@
       4500,
     );
   }
-  /* Two very different failures used to share one message. Invalid content is a
-     defect in this app, not a storage problem, and saying so is what lets it be
-     found instead of quietly eating the presenter's work. */
-  function save() {
-    let payload;
-    try {
-      payload = JSON.stringify(C.validate(deck));
-    } catch {
-      $("#save-status").textContent =
-        "השינוי האחרון אינו תקין ולכן לא נשמר. בטלו אותו כדי להמשיך לשמור.";
-      return;
-    }
+  function persist(payload) {
     try {
       localStorage.setItem(storageKey, payload);
       canSave = true;
@@ -690,6 +892,66 @@
     $("#save-status").textContent = canSave
       ? "נשמר במכשיר הזה · אפשר להוריד עותק לגיבוי"
       : "השמירה במכשיר אינה זמינה. יש להוריד עותק לפני הסגירה.";
+  }
+  /* Two very different failures used to share one message. Invalid content is a
+     defect in this app, not a storage problem, and saying so is what lets it be
+     found instead of quietly eating the presenter's work.
+     `token` names the interaction a change belongs to: consecutive changes with
+     the same token are one undo step, so a typed sentence comes back as a
+     sentence and a dragged colour slider as one colour. */
+  function save(token = null) {
+    let payload;
+    try {
+      payload = JSON.stringify(C.validate(deck));
+    } catch {
+      $("#save-status").textContent =
+        "השינוי האחרון אינו תקין ולכן לא נשמר. בטלו אותו כדי להמשיך לשמור.";
+      return;
+    }
+    history.record(payload, token);
+    persist(payload);
+    renderHistoryButtons();
+  }
+  function renderHistoryButtons() {
+    $("#undo").disabled = !history.canUndo();
+    $("#redo").disabled = !history.canRedo();
+  }
+  // Undo should show what it undid: the first slide whose content differs is
+  // where the presenter is put, even if they had walked away from it.
+  const changedSlide = (before, after) => {
+    const length = Math.max(before.slides.length, after.slides.length);
+    for (let i = 0; i < length; i++)
+      if (
+        JSON.stringify(before.slides[i]) !== JSON.stringify(after.slides[i])
+      )
+        return Math.min(i, after.slides.length - 1);
+    return -1;
+  };
+  function stepHistory(direction) {
+    const payload = direction < 0 ? history.undo() : history.redo();
+    if (payload === null) return false;
+    let restored;
+    try {
+      restored = C.validate(JSON.parse(payload));
+    } catch {
+      return false;
+    }
+    finishSlideTextEditing({ rerender: false });
+    editingObjectTextId = null;
+    cancelSceneRefresh();
+    const target = changedSlide(deck, restored);
+    deck = restored;
+    state = C.goTo(
+      deck,
+      target >= 0 ? target : Math.min(state.slide, deck.slides.length - 1),
+    );
+    if (!currentObject()) selectedObjectId = null;
+    persist(payload);
+    renderedDots = "";
+    render();
+    renderEditor();
+    notify(direction < 0 ? "הפעולה בוטלה." : "הפעולה הוחזרה.");
+    return true;
   }
   const withinDocumentLimit = () =>
     C.serializedBytes(deck) <= C.LIMITS.importBytes;
@@ -766,8 +1028,31 @@
     if (!spot) return;
     el.style.left = `${spot.x}%`;
     el.style.top = `${spot.y}%`;
+    el.style.right = "auto";
     el.style.bottom = "auto";
-    el.style.transform = "none";
+    el.style.marginInline = "0";
+    el.classList.remove("at-bottom");
+  }
+  /* Only where the presenter has not put the panel themselves: a toolbar that
+     sits on top of the box being edited hides the words it is editing. */
+  function avoidSelection(toolbar) {
+    if (floaters[toolbar.id]) return;
+    requestAnimationFrame(() => {
+      const target = $(
+        `.free-object[data-object-id="${CSS.escape(selectedObjectId ?? "")}"]`,
+      );
+      toolbar.classList.remove("at-bottom");
+      if (!target) return;
+      const panel = toolbar.getBoundingClientRect();
+      const box = target.getBoundingClientRect();
+      if (
+        panel.left < box.right &&
+        box.left < panel.right &&
+        panel.top < box.bottom &&
+        box.top < panel.bottom
+      )
+        toolbar.classList.add("at-bottom");
+    });
   }
   function startFloaterDrag(event) {
     const grip = event.target.closest("[data-drag-grip]");
@@ -837,8 +1122,8 @@
   function openDialog(id) {
     wake();
     if (id === "editor") {
-      renderEditor();
       $(`#${id}`).show();
+      renderEditor();
     } else $(`#${id}`).showModal();
   }
   function validEditor() {
@@ -981,13 +1266,13 @@
     let specific = "";
     if (object.type === "text") {
       const limit = C.textLimit(deck.slides[slideIndex], object);
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
     } else if (object.type === "image")
       specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
     else if (object.type === "visual")
-      specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
+      specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}${objectPicker("מראה", slideIndex, object, "style", C.VISUAL_STYLES)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
     else
-      specific = `<div class="object-transform-grid">${objectPicker("צורה", slideIndex, object, "shape", C.SHAPES)}${objectColour("מילוי", slideIndex, object, "color")}${objectColour("קו", slideIndex, object, "stroke")}${objectInput("עובי קו", slideIndex, object, "strokeWidth", 0, 20)}</div>`;
+      specific = `<div class="object-transform-grid">${objectPicker("צורה", slideIndex, object, "shape", C.SHAPES)}${objectPicker("מראה", slideIndex, object, "style", C.FILL_STYLES)}${objectColour("מילוי", slideIndex, object, "color")}${objectColour("קו", slideIndex, object, "stroke")}${objectInput("עובי קו", slideIndex, object, "strokeWidth", 0, 20)}</div>`;
     return `<section class="object-editor ${selectedObjectId === object.id ? "selected" : ""}" data-object-card="${esc(object.id)}"><div class="object-editor-header"><button class="object-select" data-select-object="${slideIndex}:${esc(object.id)}"><span>${esc(objectName(object))}</span><small>${esc(C.OBJECT_TYPES[object.type])}</small></button><div class="object-editor-actions"><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:1" aria-label="העברה קדימה">${icon("up")}</button><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:-1" aria-label="העברה אחורה">${icon("down")}</button><button class="icon-button" data-duplicate-object="${slideIndex}:${esc(object.id)}" aria-label="שכפול אובייקט">${icon("copy")}</button><button class="icon-button" data-remove-object="${slideIndex}:${esc(object.id)}" aria-label="מחיקת אובייקט">${icon("trash")}</button></div></div>${specific}${common}</section>`;
   }
   function objectTools(slide, index) {
@@ -1099,6 +1384,7 @@
       <button class="duplicate-button" id="add-step" ${e.steps.length >= C.LIMITS.steps ? "disabled" : ""}>${icon("plus")}הוספת שלב</button></details>`;
   }
   function renderEditor() {
+    if (!$("#editor").open) return;
     const previouslyOpen = $$("#editor-fields details[open]").map(
       (d) => d.dataset.openKey,
     );
@@ -1189,7 +1475,12 @@
     }
     selectedObjectId = object.id;
     if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
-    save();
+    // A slider dragged through twenty colours is one decision, not twenty.
+    save(
+      input.tagName === "SELECT"
+        ? null
+        : `object:${object.id}:${key}:${editSession}`,
+    );
     render();
     if (key === "entrance" || key === "exit")
       previewObjectMotion(object.id, key, value);
@@ -1205,13 +1496,14 @@
     input.setCustomValidity("");
     const path = input.dataset.field.split(".");
     setPath(input.dataset.field, input.value);
+    const token = `field:${input.dataset.field}:${editSession}`;
     if (path[0] === "slides" && path.length === 3) {
       const bound = deck.slides[+path[1]].objects.find(
         (object) => object.bind === path[2],
       );
       if (bound) bound.text = input.value;
     }
-    save();
+    save(token);
     render();
     if (path[0] === "slides" && path[2] === "title") {
       const label = $(
@@ -1250,6 +1542,8 @@
     selectedObjectId = added.id;
     state = C.goTo(deck, slideIndex);
     afterStructureChange();
+    // A new box still holds its placeholder, so typing should replace it.
+    if (type === "text" && editing) beginTextEditing(added.id, true);
     return added;
   }
   function afterStructureChange() {
@@ -1416,17 +1710,27 @@
   }
   function startObjectPointer(event) {
     if (!editing || event.button !== 0) return;
+    // Leaving one text box must not cost the click that picked the next one.
     if (
       editingObjectTextId &&
       !event.target.closest('[data-object-text-editor="true"]')
-    ) {
+    )
       finishTextEditing();
+    const hit = event.target.closest(".free-object");
+    if (!hit) {
+      // Clicking the bare stage lets go of the object, so the toolbar stops
+      // pointing at something the presenter is no longer working on.
+      if (selectedObjectId && !event.target.closest("[data-slide-text]")) {
+        selectedObjectId = null;
+        $$(".free-object.selected").forEach((el) =>
+          el.classList.remove("selected"),
+        );
+        renderObjectToolbar();
+        renderEditor();
+      }
       return;
     }
-    const hit = event.target.closest(".free-object");
-    if (!hit) return;
     if (event.target.closest('[contenteditable="true"]')) return;
-    event.preventDefault();
     const id = hit.dataset.objectId;
     const object = objectById(state.slide, id);
     if (!object) return;
@@ -1444,6 +1748,7 @@
       id,
       pointerId: event.pointerId,
       mode,
+      moved: false,
       startX: event.clientX,
       startY: event.clientY,
       x: Number(object.x),
@@ -1451,9 +1756,6 @@
       width: Number(object.width),
       height: Number(object.height),
     };
-    $("#stage").setPointerCapture?.(event.pointerId);
-    document.body.classList.add("object-dragging");
-    showSnapGrid(object.snap === "on");
   }
   function moveObjectPointer(event) {
     if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
@@ -1461,6 +1763,23 @@
     const object = objectById(state.slide, activeObjectPointer.id);
     const rect = $("#stage").getBoundingClientRect();
     if (!object || !rect.width || !rect.height) return;
+    /* The drag starts on the first real movement. Capturing the pointer on the
+       way down would send the click that follows to the stage instead of the
+       box, and the browser would never report the double-click on it — and a
+       still hand would nudge the object by a pixel it never asked to move. */
+    if (!activeObjectPointer.moved) {
+      if (
+        Math.hypot(
+          event.clientX - activeObjectPointer.startX,
+          event.clientY - activeObjectPointer.startY,
+        ) < 3
+      )
+        return;
+      activeObjectPointer.moved = true;
+      $("#stage").setPointerCapture?.(activeObjectPointer.pointerId);
+      document.body.classList.add("object-dragging");
+      showSnapGrid(object.snap === "on");
+    }
     const dx = ((event.clientX - activeObjectPointer.startX) / rect.width) * 100;
     const dy = ((event.clientY - activeObjectPointer.startY) / rect.height) * 100;
     let xGuide = null,
@@ -1534,7 +1853,10 @@
   function endObjectPointer(event) {
     if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
       return;
+    const dragged = activeObjectPointer.moved;
+    $("#stage").releasePointerCapture?.(activeObjectPointer.pointerId);
     activeObjectPointer = null;
+    if (!dragged) return;
     document.body.classList.remove("object-dragging");
     showSnapGrid(false);
     save();
@@ -1544,30 +1866,56 @@
   document.addEventListener("pointermove", moveObjectPointer);
   document.addEventListener("pointerup", endObjectPointer);
   document.addEventListener("pointercancel", endObjectPointer);
-  function beginTextEditing(id) {
+  const placeCaret = (el, selectEverything) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    if (!selectEverything) range.collapse(false);
+    const selection = getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+  function beginTextEditing(id, selectEverything = false) {
     const object = objectById(state.slide, id);
     if (!object || object.type !== "text") return;
+    cancelSceneRefresh();
+    newEditSession();
     selectedObjectId = id;
     editingObjectTextId = id;
-    render();
-    requestAnimationFrame(() => {
-      const editor = $('[data-object-text-editor="true"]');
-      if (!editor) return;
-      editor.focus();
-      const range = document.createRange();
-      range.selectNodeContents(editor);
-      const selection = getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-    });
+    const openEditor = () => {
+      const el = $(
+        `.free-object[data-object-id="${CSS.escape(id)}"] .object-text`,
+      );
+      if (!el) return false;
+      el.classList.add("is-editing");
+      el.contentEditable = "true";
+      el.spellcheck = true;
+      el.dataset.objectTextEditor = "true";
+      el.setAttribute("aria-label", "עריכת הטקסט על הבמה");
+      el.focus();
+      placeCaret(el, selectEverything);
+      return true;
+    };
+    // Editing in place keeps the very node the double-click landed on. Only a
+    // box that is not on the stage yet needs the stage built first.
+    if (openEditor()) renderObjectToolbar();
+    else {
+      render();
+      requestAnimationFrame(openEditor);
+    }
   }
   function finishTextEditing() {
     if (!editingObjectTextId) return;
+    const el = $('[data-object-text-editor="true"]');
     editingObjectTextId = null;
+    if (el) {
+      el.contentEditable = "false";
+      el.classList.remove("is-editing");
+      delete el.dataset.objectTextEditor;
+      el.setAttribute("aria-label", "טקסט חופשי — לחיצה כפולה לעריכה");
+      if (document.activeElement === el) el.blur();
+    }
     save();
-    // Same reason as finishSlideTextEditing: never rebuild the stage from
-    // inside a blur, or the node being replaced is already gone.
-    requestAnimationFrame(render);
+    renderObjectToolbar();
   }
   /* Slide text is edited where it sits. Converting it into a movable object is
      a separate, deliberate action — a double-click must never move the words
@@ -1590,6 +1938,8 @@
   function beginSlideTextEditing(el) {
     const { owner, path, spec } = textTarget(el);
     if (!spec) return;
+    cancelSceneRefresh();
+    newEditSession();
     finishSlideTextEditing({ rerender: false });
     editingSlideText = { owner, path, spec, el };
     el.textContent = C.readPath(owner, path) ?? "";
@@ -1597,11 +1947,7 @@
     el.spellcheck = true;
     el.dataset.slideTextEditing = "true";
     el.focus();
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const selection = getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
+    placeCaret(el, false);
   }
   function finishSlideTextEditing({ rerender = true } = {}) {
     if (!editingSlideText) return;
@@ -1609,13 +1955,9 @@
     editingSlideText = null;
     el.contentEditable = "false";
     delete el.dataset.slideTextEditing;
+    if (document.activeElement === el) el.blur();
     if (!rerender) return;
-    // Rebuilding the stage while the browser is still unwinding a blur throws,
-    // so hand the render to the next frame.
-    requestAnimationFrame(() => {
-      render();
-      renderEditor();
-    });
+    refreshSceneSoon();
   }
   $("#slide-root").addEventListener("dblclick", (event) => {
     if (!editing) return;
@@ -1652,7 +1994,7 @@
     C.writePath(owner, path, value);
     const bound = owner.objects?.find((object) => object.bind === path);
     if (bound) bound.text = value;
-    save();
+    save(`slide-text:${path}:${editSession}`);
   });
   $("#slide-root").addEventListener("focusout", (event) => {
     if (
@@ -1663,6 +2005,7 @@
       finishTextEditing();
   });
   document.addEventListener("pointerdown", (event) => {
+    if (sceneRefresh) refreshSceneSoon();
     if (
       editingObjectTextId &&
       !event.target.closest("#slide-root, #object-toolbar")
@@ -1710,7 +2053,7 @@
         `${value.length} / ${limit}`;
       panel.querySelector(".object-select span").textContent = value.slice(0, 28);
     }
-    save();
+    save(`object-text:${object.id}:${editSession}`);
   });
   $("#slide-root").addEventListener("keydown", (event) => {
     const leaving =
@@ -1752,42 +2095,64 @@
     const button = event.target.closest("button");
     const object = currentObject();
     if (!button || !object) return;
-    if (button.dataset.toolbarEditText !== undefined) {
+    const data = button.dataset;
+    // The stepper keeps focus so it can be clicked again; everything else
+    // changes what the toolbar shows, and a focused control is never rebuilt.
+    if (data.toolbarSize === undefined) button.blur();
+    if (data.toolbarEditText !== undefined) {
       if (editingObjectTextId === object.id) finishTextEditing();
       else beginTextEditing(object.id);
-    } else if (button.dataset.toolbarDelete !== undefined) {
-      removeSelectedObject();
-    } else if (button.dataset.toolbarSnap !== undefined) {
+    } else if (data.toolbarDelete !== undefined) removeSelectedObject();
+    else if (data.toolbarSize !== undefined) {
+      object.fontSize = stepFontSize(object, Number(data.toolbarSize));
+      // Nothing takes focus away between clicks, so a run of them is one step.
+      const field = $("[data-toolbar-size-value]");
+      if (field) field.value = object.fontSize;
+      // Stepping the size must not cost the caret, so nothing is rebuilt.
+      if (!applyObjectLook(object)) renderSoon();
+      save(`object:${object.id}:fontSize:${editSession}`);
+    } else if (data.toolbarLayer !== undefined)
+      moveObjectLayer(state.slide, object.id, Number(data.toolbarLayer));
+    else if (data.toolbarDuplicate !== undefined)
+      duplicateObject(state.slide, object.id);
+    else if (data.toolbarPicture !== undefined) {
+      pendingPicturePath = `slides.${state.slide}.objects.${data.toolbarPicture}.picture`;
+      $("#picture-file").click();
+    } else if (data.toolbarSnap !== undefined) {
       object.snap = object.snap === "on" ? "off" : "on";
       save();
-      render();
+      renderObjectToolbar();
       renderEditor();
     }
   });
-  $("#object-toolbar").addEventListener("change", (event) => {
+  function updateFromToolbar(target, live) {
     const object = currentObject();
     if (!object) return;
-    let motionPreview = null;
-    if (event.target.matches("[data-toolbar-colour]")) {
-      // The colourful style is built from this colour, so choosing one must
-      // never cancel it.
-      object.color = event.target.value;
-    } else if (
-      event.target.matches("[data-toolbar-text-style]") &&
-      object.type === "text"
-    )
-      object.style = event.target.value;
-    else if (event.target.matches("[data-toolbar-object-prop]")) {
-      const key = event.target.dataset.toolbarObjectProp;
-      object[key] = event.target.value;
-      motionPreview = [key, event.target.value];
-    }
-    else return;
-    save();
-    render();
-    renderEditor();
-    if (motionPreview)
-      previewObjectMotion(object.id, motionPreview[0], motionPreview[1]);
+    let key = null;
+    if (target.matches("[data-toolbar-colour]"))
+      key = target.dataset.toolbarColour;
+    else if (target.matches("[data-toolbar-size-value]")) key = "fontSize";
+    else if (target.matches("[data-toolbar-object-prop]"))
+      key = target.dataset.toolbarObjectProp;
+    if (!key) return;
+    object[key] =
+      key === "fontSize"
+        ? String(clamp(Math.round(Number(target.value) || 8), 8, 300))
+        : target.value;
+    if (!applyObjectLook(object)) renderSoon();
+    save(live ? `object:${object.id}:${key}:${editSession}` : null);
+    if (!live) renderEditor();
+    if (!live && (key === "entrance" || key === "exit"))
+      previewObjectMotion(object.id, key, object[key]);
+  }
+  // A colour picker fires on every move: those are one decision, and the stage
+  // follows live. A select fires once, and only then is it a step of its own.
+  $("#object-toolbar").addEventListener("input", (event) => {
+    // A select fires input and change both; only the change is a decision.
+    if (!event.target.matches("select")) updateFromToolbar(event.target, true);
+  });
+  $("#object-toolbar").addEventListener("change", (event) => {
+    if (event.target.matches("select")) updateFromToolbar(event.target, false);
   });
   $("#slide-dots").addEventListener("click", (event) => {
     const b = event.target.closest("button");
@@ -1857,6 +2222,8 @@
     render();
     renderEditor();
   });
+  $("#undo").addEventListener("click", () => stepHistory(-1));
+  $("#redo").addEventListener("click", () => stepHistory(1));
   $("#appearance").addEventListener("click", () => openDialog("themes"));
   $("#help").addEventListener("click", () => openDialog("shortcuts"));
   $("#fullscreen").addEventListener("click", fullscreen);
@@ -1962,41 +2329,15 @@
       afterStructureChange();
     } else if (data.duplicateObject) {
       const [slideIndex, id] = data.duplicateObject.split(":");
-      const slide = deck.slides[+slideIndex];
-      if (slide.objects.length >= C.LIMITS.objects) return;
-      const source = objectById(+slideIndex, id);
-      if (!source) return;
-      const copy = C.clone(source);
-      copy.id = C.newId("object");
-      if (copy.type === "text") copy.bind = "";
-      copy.x = String(Math.min(100 - Number(copy.width), Number(copy.x) + 3));
-      copy.y = String(Math.min(100 - Number(copy.height), Number(copy.y) + 3));
-      slide.objects.push(copy);
-      if (!withinDocumentLimit()) {
-        slide.objects.pop();
-        documentLimitMessage();
-        return;
-      }
-      selectedObjectId = copy.id;
-      state = C.goTo(deck, +slideIndex);
-      afterStructureChange();
+      duplicateObject(+slideIndex, id);
     } else if (data.objectLayer) {
       const [slideIndex, id, direction] = data.objectLayer.split(":");
-      const slide = deck.slides[+slideIndex];
-      const position = slide.objects.findIndex((object) => object.id === id);
-      const target = position + Number(direction);
-      if (position < 0 || target < 0 || target >= slide.objects.length) return;
-      const [moved] = slide.objects.splice(position, 1);
-      slide.objects.splice(target, 0, moved);
-      selectedObjectId = id;
-      state = C.goTo(deck, +slideIndex);
-      afterStructureChange();
+      moveObjectLayer(+slideIndex, id, Number(direction));
     } else if (data.objectColour) {
       const [slideIndex, id, key, colour] = data.objectColour.split(":");
       const object = objectById(+slideIndex, id);
       if (!object) return;
       object[key] = colour;
-      if (object.type === "text" && key === "color") object.style = "solid";
       selectedObjectId = id;
       state = C.goTo(deck, +slideIndex);
       save();
@@ -2131,6 +2472,24 @@
   document.addEventListener("keydown", (e) => {
     const openDialogs = $$("dialog[open]");
     const openDialog = openDialogs.at(-1);
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      const key = e.key.toLowerCase();
+      const undoKey = key === "z" && !e.shiftKey;
+      const redoKey = key === "y" || (key === "z" && e.shiftKey);
+      if (undoKey || redoKey) {
+        // A focused text field has its own undo stack, and taking it away
+        // would make typing feel broken. Ours governs everything else.
+        if (
+          e.target.closest('input,textarea,[contenteditable="true"]') ||
+          editingObjectTextId ||
+          editingSlideText
+        )
+          return;
+        e.preventDefault();
+        stepHistory(undoKey ? -1 : 1);
+        return;
+      }
+    }
     if (e.key === "Escape" && jumpOpen) {
       e.preventDefault();
       setJumpOpen(false);
@@ -2193,6 +2552,12 @@
   document.addEventListener("pointermove", wake, { passive: true });
   document.addEventListener("pointerdown", wake, { passive: true });
   document.addEventListener("focusin", wake);
+  // Entering a field starts a session: everything typed there is one step, and
+  // coming back to it later is a step of its own.
+  document.addEventListener("focusin", (event) => {
+    if (event.target.closest("#editor-fields, #object-toolbar"))
+      newEditSession();
+  });
   document.addEventListener("fullscreenchange", () => {
     $("#fullscreen").setAttribute(
       "aria-label",

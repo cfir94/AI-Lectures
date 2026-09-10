@@ -63,8 +63,15 @@
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
     glass: "זכוכית נוזלית",
-    stars: "שדה כוכבים",
   };
+  /* Fill styles work like the text ones: a key CSS hooks onto and a Hebrew
+     name. A visual has no outline state, so it gets the shorter table. */
+  const FILL_STYLES = {
+    solid: "צבע אחיד",
+    spectrum: "צבעוני",
+    outline: "קו מתאר",
+  };
+  const VISUAL_STYLES = { solid: "צבע אחיד", spectrum: "צבעוני" };
   const OBJECT_ENTRANCES = {
     none: "בלי כניסה",
     fade: "הופעה",
@@ -92,6 +99,7 @@
     artifact: text(40),
   };
   const OBJECT_TEXT_MAX = 500;
+  const TEXT_WEIGHTS = { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" };
   const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
@@ -115,6 +123,7 @@
     beams: "קרני אור",
     waves: "גלים",
     halo: "הילה",
+    stars: "שדה כוכבים",
     picture: "תמונה משלך",
     plain: "רקע נקי",
   };
@@ -318,6 +327,7 @@
     if (type === "visual")
       return {
         ...base,
+        style: "solid",
         visual: "accordion",
         color: "#ff5a91",
         secondary: "#212121",
@@ -327,6 +337,7 @@
       };
     return {
       ...base,
+      style: "solid",
       shape: "rectangle",
       color: "#88e6ee",
       stroke: "#f6f7f8",
@@ -424,6 +435,8 @@
       if (typeof v !== "string" || !Object.hasOwn(options, v)) fail();
       return v;
     };
+    const isLegacyStars = (item) =>
+      obj(item) && item.type === "visual" && item.visual === "stars";
     const object = (item) => {
       if (!obj(item) || !Object.hasOwn(OBJECT_TYPES, item.type)) fail();
       const base = {
@@ -456,7 +469,7 @@
           ...base,
           text: str(item.text, text(OBJECT_TEXT_MAX)),
           fontSize: number(item.fontSize, 8, 300),
-          weight: ownChoice(item.weight, { 300: true, 400: true, 600: true, 800: true }),
+          weight: ownChoice(item.weight, TEXT_WEIGHTS),
           align: ownChoice(item.align, ALIGNS),
           color: colour(item.color),
           style: ownChoice(item.style, TEXT_STYLES),
@@ -473,6 +486,10 @@
       if (item.type === "visual")
         return {
           ...base,
+          style:
+            item.style === undefined
+              ? "solid"
+              : ownChoice(item.style, VISUAL_STYLES),
           visual: ownChoice(item.visual, VISUALS),
           color: colour(item.color),
           secondary: colour(item.secondary),
@@ -482,6 +499,10 @@
         };
       return {
         ...base,
+        style:
+          item.style === undefined
+            ? "solid"
+            : ownChoice(item.style, FILL_STYLES),
         shape: ownChoice(item.shape, SHAPES),
         color: colour(item.color),
         stroke: colour(item.stroke),
@@ -540,8 +561,15 @@
           });
         }
         if (type.objects) {
-          const objects = s.objects ?? [];
+          let objects = s.objects ?? [];
           if (!Array.isArray(objects) || objects.length > LIMITS.objects) fail();
+          /* A star field was a free object before it became a backdrop. Older
+             documents keep their stars — behind the slide, where they belong —
+             instead of failing on a visual that no longer exists. */
+          if (objects.some(isLegacyStars)) {
+            objects = objects.filter((item) => !isLegacyStars(item));
+            slide.backdrop = "stars";
+          }
           slide.objects = objects.map(object);
           if (
             new Set(slide.objects.map((item) => item.id)).size !==
@@ -600,6 +628,55 @@
     return result;
   }
 
+  /* Undo and redo hold whole validated documents as strings: the editor mutates
+     the deck in many places, and a snapshot is the only record that cannot go
+     out of step with it. Consecutive changes carrying the same token — one
+     typing burst, one drag — collapse into a single step, so undo returns to
+     before the sentence rather than before the last letter. */
+  function createHistory(limit = 60) {
+    let past = [],
+      future = [],
+      current = null,
+      token = null;
+    return {
+      reset(payload) {
+        past = [];
+        future = [];
+        current = payload;
+        token = null;
+      },
+      record(payload, nextToken = null) {
+        if (payload === current) return false;
+        if (current !== null && !(nextToken !== null && nextToken === token)) {
+          past.push(current);
+          if (past.length > limit) past.shift();
+          future = [];
+        }
+        token = nextToken;
+        current = payload;
+        return true;
+      },
+      undo() {
+        if (!past.length) return null;
+        future.push(current);
+        current = past.pop();
+        token = null;
+        return current;
+      },
+      redo() {
+        if (!future.length) return null;
+        past.push(current);
+        current = future.pop();
+        token = null;
+        return current;
+      },
+      canUndo: () => past.length > 0,
+      canRedo: () => future.length > 0,
+      current: () => current,
+      depth: () => past.length,
+    };
+  }
+
   function portableHTML(template, document, documentId) {
     const portable = validate({ ...clone(document), documentId });
     const start = template.indexOf('<script id="deck-data"');
@@ -656,11 +733,14 @@
     OBJECT_TYPES,
     SHAPES,
     TEXT_STYLES,
+    FILL_STYLES,
+    VISUAL_STYLES,
     VISUALS,
     OBJECT_ENTRANCES,
     OBJECT_EXITS,
     SNAP_MODES,
     ALIGNS,
+    TEXT_WEIGHTS,
     OBJECT_TEXT_MAX,
     EXAMPLE_FIELDS,
     EXAMPLE_STEP_FIELDS,
@@ -676,6 +756,7 @@
     blankObject,
     safeJSON,
     validate,
+    createHistory,
     portableHTML,
     selected,
     beats,

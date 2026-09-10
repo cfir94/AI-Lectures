@@ -112,7 +112,7 @@ test("free objects validate on every slide and reject unsafe values", () => {
     const shape = C.blankObject("shape");
     shape.shape = "arrow";
     const visual = C.blankObject("visual");
-    visual.visual = "stars";
+    visual.style = "spectrum";
     slide.objects = [text, image, shape, visual];
   }
   const valid = C.validate(document);
@@ -178,6 +178,84 @@ test("free objects validate on every slide and reject unsafe values", () => {
   assert.equal(normalized.width, "100");
   assert.equal(Number(normalized.x) + Number(normalized.width), 100);
 });
+test("a star field arrives as a backdrop, not as a component", () => {
+  assert.ok(Object.hasOwn(C.BACKDROPS, "stars"));
+  assert.ok(!Object.hasOwn(C.VISUALS, "stars"));
+  const document = C.clone(seed);
+  const stars = C.blankObject("visual");
+  stars.visual = "stars";
+  const keeper = C.blankObject("shape");
+  document.slides[0].objects = [stars, keeper];
+  document.slides[0].backdrop = "plain";
+  const valid = C.validate(document);
+  assert.equal(valid.slides[0].backdrop, "stars");
+  assert.deepEqual(
+    valid.slides[0].objects.map((object) => object.id),
+    [keeper.id],
+  );
+  // Slides that never held one are left alone.
+  assert.equal(valid.slides[1].backdrop, seed.slides[1].backdrop);
+});
+
+test("shapes and components carry a fill style with a safe default", () => {
+  const document = C.clone(seed);
+  const shape = C.blankObject("shape");
+  const outlined = C.blankObject("shape");
+  outlined.style = "outline";
+  const visual = C.blankObject("visual");
+  delete shape.style;
+  delete visual.style;
+  document.slides[0].objects = [shape, outlined, visual];
+  const valid = C.validate(document);
+  assert.deepEqual(
+    valid.slides[0].objects.map((object) => object.style),
+    ["solid", "outline", "solid"],
+  );
+  const wrong = C.clone(document);
+  wrong.slides[0].objects[0].style = "chrome";
+  assert.throws(() => C.validate(wrong));
+  // A component has no outline state, so it may not claim one.
+  const noOutline = C.clone(document);
+  noOutline.slides[0].objects[2].style = "outline";
+  assert.throws(() => C.validate(noOutline));
+});
+
+test("undo walks back through the document and redo returns", () => {
+  const history = C.createHistory();
+  history.reset("A");
+  assert.equal(history.canUndo(), false);
+  assert.ok(history.record("B"));
+  assert.ok(history.record("C"));
+  assert.equal(history.undo(), "B");
+  assert.equal(history.undo(), "A");
+  assert.equal(history.undo(), null);
+  assert.equal(history.redo(), "B");
+  assert.equal(history.canRedo(), true);
+  // A fresh change replaces the redo branch.
+  history.record("D");
+  assert.equal(history.canRedo(), false);
+  assert.equal(history.undo(), "B");
+});
+
+test("one typing burst is one undo step, and the stack has a ceiling", () => {
+  const history = C.createHistory(3);
+  history.reset("start");
+  history.record("t1", "text:a");
+  history.record("t2", "text:a");
+  history.record("t3", "text:a");
+  assert.equal(history.depth(), 1);
+  assert.equal(history.undo(), "start");
+  // A different target, and a step of its own again.
+  history.redo();
+  history.record("other", "text:b");
+  assert.equal(history.depth(), 2);
+  assert.equal(history.record("other"), false);
+  const deep = C.createHistory(3);
+  deep.reset("0");
+  for (const step of ["1", "2", "3", "4", "5"]) deep.record(step);
+  assert.equal(deep.depth(), 3);
+});
+
 test("structured slide text can bind to one movable text object", () => {
   const document = C.clone(seed);
   const object = C.blankObject("text");
@@ -384,6 +462,7 @@ test("built standalone output has no external runtime assets or unresolved marke
   assert.ok(html.includes('dir="rtl"'));
   assert.ok(html.includes("prefers-reduced-motion"));
   assert.ok(html.includes("data-slide-text"));
-  assert.ok(html.includes("data-toolbar-text-style"));
+  assert.ok(html.includes("data-toolbar-object-prop"));
+  assert.ok(html.includes("data-toolbar-size-value"));
   assert.ok(html.includes("--slide-exit-duration"));
 });
