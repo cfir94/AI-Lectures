@@ -704,6 +704,12 @@
     const result = {
       version: 2,
       documentId: str(raw.documentId, text(100)),
+      /* Stamped by the build from the content itself. A copy saved in a browser
+         wins over the published one on startup — it is the presenter's work —
+         so this is how the deck can tell that the published document has moved
+         on since that copy was taken, and offer it rather than silently showing
+         a stale talk. Older documents simply have none. */
+      revision: str(raw.revision ?? "", text(40, false)),
       theme: raw.theme,
       transition: str(raw.transition, choice(TRANSITIONS)),
       selectedExampleId: str(raw.selectedExampleId, text(100)),

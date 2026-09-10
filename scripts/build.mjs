@@ -14,7 +14,16 @@ const [shell, css, core, app, data] = await Promise.all(
     "src/content.json",
   ].map(read),
 );
-const content = globalThis.LectureCore.validate(JSON.parse(data));
+/* The revision is the content's own fingerprint, so it changes exactly when the
+   lecture changes and never because someone forgot to bump a number. */
+const { createHash } = await import("node:crypto");
+const parsed = JSON.parse(data);
+delete parsed.revision;
+parsed.revision = createHash("sha256")
+  .update(JSON.stringify(parsed))
+  .digest("hex")
+  .slice(0, 12);
+const content = globalThis.LectureCore.validate(parsed);
 const output = shell
   .replace("/*__CSS__*/", () => css)
   .replace("__DECK_JSON__", () => globalThis.LectureCore.safeJSON(content))
