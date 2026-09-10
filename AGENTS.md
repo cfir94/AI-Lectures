@@ -14,7 +14,8 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Keep the standalone HTML fully self-contained and working on `file://`. No network assets, CDN fonts, remote imports, server-only features or required service workers.
 - Keep document validation and navigation in `src/core.js`. Keep content in the versioned document schema and presentation styles in CSS theme tokens.
 - Declare a slide type once in `SLIDE_TYPES`: its fields, length limits, list and beat count. Validation, the editor and the presenter keys all read that table — do not special-case a type in the editor.
-- `MOTIONS`, `BACKDROPS` and `TRANSITIONS` work the same way: a key CSS hooks onto and a Hebrew name the editor shows. Add an option as a table row plus a CSS block, never as a branch in the render path.
+- `THEMES`, `MOTIONS`, `BACKDROPS` and `TRANSITIONS` work the same way: a key CSS hooks onto and a Hebrew name the editor shows. Add an option as a table row plus a CSS block, never as a branch in the render path.
+- `render` restores focus by `data-action` after rebuilding the stage, so blur a control *before* rendering, never after.
 - Keep the two motion layers separate: slide entrance runs on `.scene > *` and is driven by the motion class, which is stripped when only the beat changed; per-beat animation belongs on inner elements. Ambient backdrop loops must survive a restart unnoticed, because a re-render recreates them.
 - Avoid adding dependencies for capabilities already supported by the browser. There are currently no runtime or build dependencies.
 - Use real buttons, labels and dialogs. Preserve RTL key mappings, keyboard focus and reduced-motion behavior.

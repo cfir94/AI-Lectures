@@ -16,6 +16,7 @@
         })[c],
     );
   const initialHTML = document.documentElement.outerHTML;
+  const timers = new Map();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   let deck = C.clone(embedded),
@@ -24,6 +25,8 @@
     idleTimer,
     toastTimer,
     countFrame,
+    timerTick,
+    notesOpen = false,
     pendingOpenId = null,
     pendingPicturePath = null,
     renderedSlide = -1,
@@ -54,6 +57,9 @@
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 4V3H3v13h1"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    play: '<path d="M7 5.5v13l11-6.5Z"/>',
+    pause: '<path d="M9 5v14M15 5v14"/>',
+    note: '<path d="M5 3h14v18l-4-3-3 3-3-3-4 3Z"/><path d="M9 8h6m-6 4h4"/>',
     image:
       '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
@@ -95,6 +101,12 @@
     else if (kind === "rings")
       inner = [0, 1, 2, 3]
         .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
+        .join("");
+    else if (kind === "beams") inner = '<div class="beam-field"></div>';
+    else if (kind === "halo") inner = '<div class="halo"></div>';
+    else if (kind === "waves")
+      inner = [0, 1, 2]
+        .map((i) => `<div class="wave" style="--wave:${i}"></div>`)
         .join("");
     else if (kind === "particles") {
       const random = seeded(slide.id);
@@ -225,6 +237,32 @@
       `<div class="scene split-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
+  const clockText = (seconds) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  const totalOf = (slide) => Math.max(1, Number(slide.minutes)) * 60;
+  function timerState(slide) {
+    let state = timers.get(slide.id);
+    if (!state || state.total !== totalOf(slide)) {
+      state = { total: totalOf(slide), left: totalOf(slide), running: false };
+      timers.set(slide.id, state);
+    }
+    return state;
+  }
+  const secondsLeft = (state) =>
+    state.running
+      ? Math.max(0, Math.round((state.endsAt - Date.now()) / 1000))
+      : state.left;
+  function timerSlide(slide, index) {
+    const state = timerState(slide);
+    const left = secondsLeft(state);
+    return frame(
+      slide,
+      index,
+      `timer-slide ${state.running ? "running" : ""} ${left === 0 ? "elapsed" : ""}`,
+      "",
+      `<div class="scene timer-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
+    );
+  }
   function experimentSlide(slide, index, step) {
     const e = C.selected(deck),
       agent = step > 0,
@@ -248,6 +286,7 @@
     image: imageSlide,
     number: numberSlide,
     split: splitSlide,
+    timer: timerSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -309,6 +348,35 @@
     };
     countFrame = requestAnimationFrame(tick);
   }
+  // The countdown survives a re-render: its state lives outside the deck.
+  function runTimer(current, slide) {
+    clearInterval(timerTick);
+    if (slide.type !== "timer") return;
+    const state = timers.get(slide.id);
+    if (!state || !state.running) return;
+    const readout = current.querySelector("[data-timer]");
+    timerTick = setInterval(() => {
+      const left = secondsLeft(state);
+      readout.textContent = clockText(left);
+      if (left === 0) {
+        state.running = false;
+        state.left = 0;
+        clearInterval(timerTick);
+        render();
+      }
+    }, 250);
+  }
+  function toggleTimer() {
+    const current = timerState(deck.slides[state.slide]);
+    if (current.running) {
+      current.left = secondsLeft(current);
+      current.running = false;
+    } else {
+      if (current.left === 0) current.left = current.total;
+      current.endsAt = Date.now() + current.left * 1000;
+      current.running = true;
+    }
+  }
   function render() {
     const actionFocus = document.activeElement?.dataset.action;
     const slide = deck.slides[state.slide];
@@ -340,6 +408,9 @@
     if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
     countUp(current);
+    runTimer(current, slide);
+    $("#notes").hidden = !notesOpen;
+    $("#notes").textContent = slide.note || "אין הערת מרצה לשקף הזה.";
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
@@ -390,6 +461,7 @@
       render();
       return;
     }
+    document.body.classList.remove("blacked-out");
     state = C.transition(state, action, deck);
     render();
     wake();
@@ -728,8 +800,15 @@
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
     if (!b) return;
-    if (b.dataset.action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
-    else act(b.dataset.action);
+    const action = b.dataset.action;
+    if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
+    else if (action === "timer-toggle" || action === "timer-reset") {
+      // Blur first: render restores focus by data-action, so a later blur is lost.
+      b.blur();
+      if (action === "timer-reset") timers.delete(deck.slides[state.slide].id);
+      else toggleTimer();
+      render();
+    } else act(action);
   });
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
@@ -771,6 +850,12 @@
       }
     });
   });
+  $("#theme-options").innerHTML = Object.entries(C.THEMES)
+    .map(
+      ([key, theme]) =>
+        `<button data-theme-choice="${key}"><span class="theme-preview" style="background:${theme.swatch[0]};color:${theme.swatch[1]}"><i>Aa</i><b>✳</b></span><span>${esc(theme.name)}</span><small>${esc(theme.hint)}</small></button>`,
+    )
+    .join("");
   $$("[data-theme-choice]").forEach((b) =>
     b.addEventListener("click", () => {
       deck.theme = b.dataset.themeChoice;
@@ -933,6 +1018,13 @@
     } else if (e.key.toLowerCase() === "f") {
       e.preventDefault();
       fullscreen();
+    } else if (e.key.toLowerCase() === "n") {
+      e.preventDefault();
+      notesOpen = !notesOpen;
+      render();
+    } else if (e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      document.body.classList.toggle("blacked-out");
     }
   });
   document.addEventListener("pointermove", wake, { passive: true });

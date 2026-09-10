@@ -50,6 +50,54 @@
   --soft: #442937;
   --spectrum: linear-gradient(110deg, #ffeadb, #f0c9dc 55%, #ccbfed);
 }
+:root[data-theme="forest"] {
+  --bg: #16221c;
+  --surface: #16221c;
+  --raised: #24352c;
+  --text: #f2f8f4;
+  --muted: #adc3b6;
+  --accent: #7fe3b0;
+  --accent-rgb: 127, 227, 176;
+  --line: #3d5347;
+  --soft: #1e2f26;
+  --spectrum: linear-gradient(110deg, #a8f0c6, #7fe3b0 50%, #cfe89a 95%);
+}
+:root[data-theme="ember"] {
+  --bg: #221b16;
+  --surface: #221b16;
+  --raised: #362a22;
+  --text: #faf3ec;
+  --muted: #c9b6a5;
+  --accent: #f0b978;
+  --accent-rgb: 240, 185, 120;
+  --line: #53422f;
+  --soft: #2c231b;
+  --spectrum: linear-gradient(110deg, #ffd9a0, #f0b978 50%, #e79a86 95%);
+}
+:root[data-theme="ink"] {
+  --bg: #121212;
+  --surface: #121212;
+  --raised: #232323;
+  --text: #f4f1ec;
+  --muted: #a8a29a;
+  --accent: #e8e2d6;
+  --accent-rgb: 232, 226, 214;
+  --line: #3a3a38;
+  --soft: #1c1c1b;
+  --spectrum: linear-gradient(110deg, #ffffff, #e8e2d6 55%, #c9c0ad 95%);
+}
+:root[data-theme="nebula"] {
+  --bg: #1b1930;
+  --surface: #1b1930;
+  --raised: #2b2848;
+  --text: #f4f1ff;
+  --muted: #b5b0d4;
+  --accent: #b9a3ff;
+  --accent-rgb: 185, 163, 255;
+  --line: #453f6b;
+  --soft: #232041;
+  --spectrum: linear-gradient(110deg, #d3c4ff, #b9a3ff 45%, #ff9fd6 95%);
+}
 * {
   box-sizing: border-box;
 }
@@ -684,6 +732,123 @@ h1 span {
   color: var(--muted);
   font-size: clamp(0.9rem, 1.7cqw, 1.3rem);
 }
+.beam-field {
+  position: absolute;
+  inset: -35%;
+  background: repeating-linear-gradient(
+    72deg,
+    transparent 0 3.4%,
+    rgba(var(--accent-rgb), 0.1) 3.4% 4.5%,
+    transparent 4.5% 9%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 85% at 76% 6%,
+    #000 5%,
+    transparent 70%
+  );
+  animation: beam-sweep 19s ease-in-out infinite alternate;
+}
+@keyframes beam-sweep {
+  to {
+    transform: translateX(-2.5%);
+  }
+}
+.wave {
+  position: absolute;
+  left: -28%;
+  right: -28%;
+  bottom: calc(-40% + var(--wave) * 9%);
+  aspect-ratio: 2.2;
+  border-radius: 50% 50% 0 0;
+  border-top: 1px solid rgba(var(--accent-rgb), 0.24);
+  background: linear-gradient(
+    to top,
+    rgba(var(--accent-rgb), 0.05),
+    transparent 55%
+  );
+  animation: wave-rise 10s ease-in-out infinite alternate;
+  animation-delay: calc(var(--wave) * -3.3s);
+}
+@keyframes wave-rise {
+  to {
+    transform: translateY(-1.4%);
+  }
+}
+.halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    transparent 50%,
+    rgba(var(--accent-rgb), 0.26) 61%,
+    transparent 75%
+  );
+  filter: blur(20px);
+  animation: halo-breathe 12s ease-in-out infinite alternate;
+}
+@keyframes halo-breathe {
+  to {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.6;
+  }
+}
+
+/* A countdown the room can read from the back. */
+.timer-readout {
+  font-size: clamp(4rem, 22cqw, 17rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.timer-slide.running .timer-readout {
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.timer-slide.elapsed .timer-readout {
+  animation: timer-done 1.1s ease-in-out infinite alternate;
+}
+@keyframes timer-done {
+  to {
+    opacity: 0.35;
+  }
+}
+.timer-scene .scene-caption {
+  margin-top: 2.6cqw;
+}
+
+/* The presenter's own note, never on by default. */
+.notes-panel {
+  position: absolute;
+  z-index: 6;
+  inset-inline: 4%;
+  bottom: 11%;
+  max-height: 34%;
+  overflow: auto;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: clamp(0.85rem, 1.5cqw, 1.15rem);
+  line-height: 1.6;
+  box-shadow: var(--shadow);
+}
+.blacked-out .stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 9;
+}
 /* One number, filling the stage. */
 .big-number {
   display: flex;
@@ -1255,7 +1420,7 @@ summary small {
 }
 .theme-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
   gap: 12px;
   margin-top: 24px;
 }
@@ -1300,18 +1465,6 @@ summary small {
 .theme-preview b {
   font-size: 2.7rem;
   font-weight: 400;
-}
-.carbon-preview {
-  background: #10171e;
-  color: #88e6ee;
-}
-.paper-preview {
-  background: #fff;
-  color: #2359c4;
-}
-.wine-preview {
-  background: #280f1c;
-  color: #ffe2ec;
 }
 .shortcuts {
   margin: 24px 0;
@@ -1606,6 +1759,7 @@ kbd {
   <main class="theater" id="theater">
     <div class="stage" id="stage" tabindex="-1" aria-label="במת ההרצאה">
       <div id="slide-root"></div>
+      <aside id="notes" class="notes-panel" hidden></aside>
       <footer class="stage-footer">
         <div class="slide-dots" id="slide-dots" role="group" aria-label="בחירת שקף"></div>
       </footer>
@@ -1626,8 +1780,8 @@ kbd {
     <div class="editor-scroll" id="editor-fields"></div>
     <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden><input type="file" id="picture-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
   </dialog>
-  <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options"><button data-theme-choice="carbon"><span class="theme-preview carbon-preview"><i>Aa</i><b>✳</b></span><span>פחם ותכלת</span><small>עמוק · טכנולוגי</small></button><button data-theme-choice="paper"><span class="theme-preview paper-preview"><i>Aa</i><b>✳</b></span><span>לבן וכחול</span><small>בהיר · מדויק</small></button><button data-theme-choice="wine"><span class="theme-preview wine-preview"><i>Aa</i><b>✳</b></span><span>בורדו ולבן</span><small>חם · דרמטי</small></button></div><h3 class="dialog-subhead">מעבר בין שקפים</h3><p class="dialog-hint">איך שקף מחליף את זה שלפניו. תנועת הכניסה והרקע נבחרים לכל שקף בנפרד, בעורך.</p><div class="transition-options" id="transition-options" role="group" aria-label="מעבר בין שקפים"></div></dialog>
-  <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
+  <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל.</p><div class="theme-options" id="theme-options"></div><h3 class="dialog-subhead">מעבר בין שקפים</h3><p class="dialog-hint">איך שקף מחליף את זה שלפניו. תנועת הכניסה והרקע נבחרים לכל שקף בנפרד, בעורך.</p><div class="transition-options" id="transition-options" role="group" aria-label="מעבר בין שקפים"></div></dialog>
+  <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>הערות המרצה</dt><dd><kbd>N</kbd></dd></div><div><dt>החשכת המסך</dt><dd><kbd>B</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
@@ -1635,7 +1789,16 @@ kbd {
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
-  const THEMES = ["carbon", "paper", "wine"];
+  // key -> what the editor shows, plus the two swatch colours for its preview.
+  const THEMES = {
+    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#10171e", "#88e6ee"] },
+    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#ffffff", "#2359c4"] },
+    wine: { name: "בורדו ולבן", hint: "חם · דרמטי", swatch: ["#280f1c", "#ffe2ec"] },
+    forest: { name: "יער ומנטה", hint: "עמוק · רגוע", swatch: ["#101d16", "#7fe3b0"] },
+    ember: { name: "פחם וענבר", hint: "חם · ערבי", swatch: ["#1c1510", "#f0b978"] },
+    ink: { name: "דיו ונייר", hint: "מינימלי · חד", swatch: ["#0e0e0e", "#e8e2d6"] },
+    nebula: { name: "סגול ולילך", hint: "לילי · חלומי", swatch: ["#151327", "#b9a3ff"] },
+  };
   const LIMITS = {
     slides: 40,
     examples: 20,
@@ -1652,6 +1815,7 @@ kbd {
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
+  const digits = (max) => ({ max, required: true, digits: true });
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
@@ -1674,6 +1838,9 @@ kbd {
     particles: "חלקיקים",
     aurora: "זוהר",
     rings: "טבעות",
+    beams: "קרני אור",
+    waves: "גלים",
+    halo: "הילה",
     plain: "רקע נקי",
   };
   const TRANSITIONS = {
@@ -1773,6 +1940,16 @@ kbd {
       },
       beats: (slide) => slide.sides.length,
     },
+    timer: {
+      label: "טיימר",
+      hint: "ספירה לאחור על הבמה, לתרגול או להפסקה. מתחילים, עוצרים ומאפסים בכפתורים שעל השקף.",
+      fields: {
+        minutes: digits(3),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -1807,6 +1984,7 @@ kbd {
         { heading: "צד שני", line: "" },
       ],
     },
+    timer: { minutes: "10", title: "", caption: "" },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
@@ -1853,6 +2031,7 @@ kbd {
       const value = spec.required ? v : (v ?? "");
       if (typeof value !== "string" || value.length > spec.max) fail();
       if (spec.required && !value.trim()) fail();
+      if (spec.digits && !/^\d+$/.test(value)) fail();
       return value;
     };
     const group = (source, fields) => {
@@ -1861,7 +2040,8 @@ kbd {
         out[key] = str(source[key], spec);
       return out;
     };
-    if (!obj(raw) || raw.version !== 2 || !THEMES.includes(raw.theme)) fail();
+    if (!obj(raw) || raw.version !== 2 || !Object.hasOwn(THEMES, raw.theme))
+      fail();
     if (
       !Array.isArray(raw.slides) ||
       !raw.slides.length ||
@@ -2020,6 +2200,7 @@ kbd {
         })[c],
     );
   const initialHTML = document.documentElement.outerHTML;
+  const timers = new Map();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   let deck = C.clone(embedded),
@@ -2028,6 +2209,8 @@ kbd {
     idleTimer,
     toastTimer,
     countFrame,
+    timerTick,
+    notesOpen = false,
     pendingOpenId = null,
     pendingPicturePath = null,
     renderedSlide = -1,
@@ -2058,6 +2241,9 @@ kbd {
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 4V3H3v13h1"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    play: '<path d="M7 5.5v13l11-6.5Z"/>',
+    pause: '<path d="M9 5v14M15 5v14"/>',
+    note: '<path d="M5 3h14v18l-4-3-3 3-3-3-4 3Z"/><path d="M9 8h6m-6 4h4"/>',
     image:
       '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
@@ -2099,6 +2285,12 @@ kbd {
     else if (kind === "rings")
       inner = [0, 1, 2, 3]
         .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
+        .join("");
+    else if (kind === "beams") inner = '<div class="beam-field"></div>';
+    else if (kind === "halo") inner = '<div class="halo"></div>';
+    else if (kind === "waves")
+      inner = [0, 1, 2]
+        .map((i) => `<div class="wave" style="--wave:${i}"></div>`)
         .join("");
     else if (kind === "particles") {
       const random = seeded(slide.id);
@@ -2229,6 +2421,32 @@ kbd {
       `<div class="scene split-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
+  const clockText = (seconds) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  const totalOf = (slide) => Math.max(1, Number(slide.minutes)) * 60;
+  function timerState(slide) {
+    let state = timers.get(slide.id);
+    if (!state || state.total !== totalOf(slide)) {
+      state = { total: totalOf(slide), left: totalOf(slide), running: false };
+      timers.set(slide.id, state);
+    }
+    return state;
+  }
+  const secondsLeft = (state) =>
+    state.running
+      ? Math.max(0, Math.round((state.endsAt - Date.now()) / 1000))
+      : state.left;
+  function timerSlide(slide, index) {
+    const state = timerState(slide);
+    const left = secondsLeft(state);
+    return frame(
+      slide,
+      index,
+      `timer-slide ${state.running ? "running" : ""} ${left === 0 ? "elapsed" : ""}`,
+      "",
+      `<div class="scene timer-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
+    );
+  }
   function experimentSlide(slide, index, step) {
     const e = C.selected(deck),
       agent = step > 0,
@@ -2252,6 +2470,7 @@ kbd {
     image: imageSlide,
     number: numberSlide,
     split: splitSlide,
+    timer: timerSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -2313,6 +2532,35 @@ kbd {
     };
     countFrame = requestAnimationFrame(tick);
   }
+  // The countdown survives a re-render: its state lives outside the deck.
+  function runTimer(current, slide) {
+    clearInterval(timerTick);
+    if (slide.type !== "timer") return;
+    const state = timers.get(slide.id);
+    if (!state || !state.running) return;
+    const readout = current.querySelector("[data-timer]");
+    timerTick = setInterval(() => {
+      const left = secondsLeft(state);
+      readout.textContent = clockText(left);
+      if (left === 0) {
+        state.running = false;
+        state.left = 0;
+        clearInterval(timerTick);
+        render();
+      }
+    }, 250);
+  }
+  function toggleTimer() {
+    const current = timerState(deck.slides[state.slide]);
+    if (current.running) {
+      current.left = secondsLeft(current);
+      current.running = false;
+    } else {
+      if (current.left === 0) current.left = current.total;
+      current.endsAt = Date.now() + current.left * 1000;
+      current.running = true;
+    }
+  }
   function render() {
     const actionFocus = document.activeElement?.dataset.action;
     const slide = deck.slides[state.slide];
@@ -2344,6 +2592,9 @@ kbd {
     if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
     countUp(current);
+    runTimer(current, slide);
+    $("#notes").hidden = !notesOpen;
+    $("#notes").textContent = slide.note || "אין הערת מרצה לשקף הזה.";
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
@@ -2394,6 +2645,7 @@ kbd {
       render();
       return;
     }
+    document.body.classList.remove("blacked-out");
     state = C.transition(state, action, deck);
     render();
     wake();
@@ -2732,8 +2984,15 @@ kbd {
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
     if (!b) return;
-    if (b.dataset.action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
-    else act(b.dataset.action);
+    const action = b.dataset.action;
+    if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
+    else if (action === "timer-toggle" || action === "timer-reset") {
+      // Blur first: render restores focus by data-action, so a later blur is lost.
+      b.blur();
+      if (action === "timer-reset") timers.delete(deck.slides[state.slide].id);
+      else toggleTimer();
+      render();
+    } else act(action);
   });
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
@@ -2775,6 +3034,12 @@ kbd {
       }
     });
   });
+  $("#theme-options").innerHTML = Object.entries(C.THEMES)
+    .map(
+      ([key, theme]) =>
+        `<button data-theme-choice="${key}"><span class="theme-preview" style="background:${theme.swatch[0]};color:${theme.swatch[1]}"><i>Aa</i><b>✳</b></span><span>${esc(theme.name)}</span><small>${esc(theme.hint)}</small></button>`,
+    )
+    .join("");
   $$("[data-theme-choice]").forEach((b) =>
     b.addEventListener("click", () => {
       deck.theme = b.dataset.themeChoice;
@@ -2937,6 +3202,13 @@ kbd {
     } else if (e.key.toLowerCase() === "f") {
       e.preventDefault();
       fullscreen();
+    } else if (e.key.toLowerCase() === "n") {
+      e.preventDefault();
+      notesOpen = !notesOpen;
+      render();
+    } else if (e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      document.body.classList.toggle("blacked-out");
     }
   });
   document.addEventListener("pointermove", wake, { passive: true });
