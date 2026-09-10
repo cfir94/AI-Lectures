@@ -208,6 +208,102 @@ p {
   isolation: isolate;
   background: var(--surface);
 }
+.free-object-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.free-object {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20%;
+  height: 20%;
+  z-index: 1;
+  opacity: 1;
+  transform: none;
+  transform-origin: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.free-object > svg,
+.object-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.object-text {
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  color: var(--object-colour);
+  font-size: clamp(8px, calc(var(--object-size) * 0.075cqw), 300px);
+  font-weight: var(--object-weight);
+  line-height: 1.12;
+  text-align: var(--object-align);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.object-text.text-spectrum {
+  color: transparent;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.object-text.text-outline {
+  color: transparent;
+  -webkit-text-stroke: max(1px, 0.025em) var(--object-colour);
+}
+.object-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(var(--accent-rgb), 0.05);
+}
+.editing .free-object-layer {
+  pointer-events: auto;
+}
+.editing .free-object {
+  pointer-events: auto;
+  cursor: move;
+  outline: 1px dashed rgba(var(--accent-rgb), 0.42);
+  touch-action: none;
+}
+.editing .free-object.selected {
+  outline: 2px solid var(--accent);
+}
+.object-handle {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 3px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  cursor: nwse-resize;
+}
+.object-dragging,
+.object-dragging * {
+  cursor: grabbing !important;
+}
+.canvas-empty {
+  color: var(--muted);
+  opacity: 0.6;
+  font-size: clamp(1rem, 1.6cqw, 1.3rem);
+}
+.canvas-slide:has(.free-object) .canvas-empty {
+  display: none;
+}
 .scene {
   height: 100%;
   position: relative;
@@ -1163,6 +1259,8 @@ dialog::backdrop {
   border-top: 0;
   border-bottom: 0;
   border-right: 0;
+  z-index: 15;
+  transition: transform 0.25s ease;
 }
 .editor[open] {
   display: flex;
@@ -1184,6 +1282,15 @@ dialog::backdrop {
 }
 .editor-top .eyebrow {
   letter-spacing: 0;
+}
+.editor-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.editor-stage-button {
+  display: none;
+  color: var(--accent);
 }
 .editor-scroll {
   padding: 8px 24px 24px;
@@ -1247,6 +1354,131 @@ summary small {
   width: 32px;
   height: 32px;
   border: 1px solid var(--line);
+}
+.objects-panel {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.objects-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.objects-panel-head strong,
+.objects-panel-head small {
+  display: block;
+}
+.objects-panel-head strong {
+  font-size: 0.9rem;
+}
+.objects-panel-head small,
+.objects-panel-head > span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+.object-add-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 12px;
+}
+.object-add-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  font-size: 0.78rem;
+}
+.object-add-row svg {
+  width: 16px;
+  height: 16px;
+}
+.object-editor {
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.object-editor.selected {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.045);
+}
+.object-editor-header,
+.object-editor-actions {
+  display: flex;
+  align-items: center;
+}
+.object-editor-header {
+  justify-content: space-between;
+  gap: 8px;
+}
+.object-editor-actions {
+  gap: 1px;
+}
+.object-editor-actions .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.object-select {
+  min-width: 0;
+  padding: 3px;
+  background: transparent;
+  text-align: right;
+}
+.object-select span,
+.object-select small {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.object-select small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.object-transform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 12px;
+}
+.object-field {
+  display: block;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.object-field > span {
+  display: block;
+  margin-bottom: 5px;
+}
+.object-field input,
+.object-field select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 8px;
+}
+.object-field input[type="color"] {
+  min-height: 37px;
+  padding: 3px;
+}
+.object-editor > .field,
+.object-editor > .picture-field {
+  margin-top: 12px;
 }
 .slide-add {
   border-bottom: 1px solid var(--line);
@@ -1568,15 +1800,27 @@ kbd {
 }
 @keyframes drawer-in {
   from {
-    opacity: 0;
     transform: translateX(25px);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }
+@media (min-width: 951px) {
+  .editing .theater {
+    margin-right: min(440px, 34vw);
+  }
+  .editing .editor {
+    width: min(440px, 34vw);
+  }
+}
 @media (max-width: 950px) {
+  .editor-stage-button {
+    display: block;
+  }
+  .editor-stage-mode .editor {
+    transform: translateY(calc(100% - 96px));
+  }
   .theater {
     padding-bottom: 80px;
   }
@@ -1788,7 +2032,7 @@ kbd {
     <p class="keyboard-hint" id="keyboard-hint">רווח להתקדמות</p>
   </main>
   <dialog id="editor" class="editor" aria-labelledby="editor-title">
-    <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">מאחורי הקלעים</h2></div><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div>
+    <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">מאחורי הקלעים</h2></div><div class="editor-top-actions"><button id="editor-stage-toggle" class="text-button editor-stage-button">עריכת במה</button><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div></div>
     <div class="editor-scroll" id="editor-fields"></div>
     <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden><input type="file" id="picture-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
   </dialog>
@@ -1797,7 +2041,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","backdropPicture":"","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","backdropPicture":"","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","backdropPicture":"","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","backdropPicture":"","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","backdropPicture":"","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","backdropPicture":"","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","backdropPicture":"","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","backdropPicture":"","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -1815,15 +2059,24 @@ kbd {
     slides: 40,
     examples: 20,
     steps: 6,
+    objects: 40,
     note: 500,
     image: 1500000,
-    importBytes: 12000000,
+    importBytes: 2400000,
   };
   // Only raster data URIs the editor itself produced. SVG is excluded on purpose:
   // it can carry script, and nothing here needs it.
   const IMAGE_HEAD = /^data:image\/(png|jpeg|webp|gif);base64,/;
-  const NOT_BASE64 = /[^A-Za-z0-9+/=]/;
+  const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  const IMAGE_SIGNATURES = {
+    png: ["iVBORw0KGgo"],
+    jpeg: ["/9j/"],
+    webp: ["UklGR"],
+    gif: ["R0lGOD"],
+  };
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const serializedBytes = (value) =>
+    new TextEncoder().encode(JSON.stringify(value)).byteLength;
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
@@ -1831,6 +2084,26 @@ kbd {
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
+  const OBJECT_TYPES = {
+    text: "טקסט",
+    image: "תמונה",
+    shape: "צורה",
+  };
+  const SHAPES = {
+    rectangle: "מלבן",
+    circle: "עיגול",
+    line: "קו",
+    arrow: "חץ",
+    star: "כוכב",
+    blob: "כתם",
+    ring: "טבעת",
+  };
+  const TEXT_STYLES = {
+    solid: "צבע אחיד",
+    spectrum: "צבעוני",
+    outline: "קו מתאר",
+  };
+  const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
 
@@ -1964,6 +2237,13 @@ kbd {
       },
       beats: () => 1,
     },
+    canvas: {
+      label: "במה חופשית",
+      hint: "שקף ריק עם תיבות טקסט, תמונות וצורות שאפשר למקם ולשנות ישירות על הבמה.",
+      fields: {},
+      objects: true,
+      beats: () => 1,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -1971,8 +2251,10 @@ kbd {
       beats: (slide, deck) => 1 + selected(deck).steps.length,
     },
   };
-  for (const type of Object.values(SLIDE_TYPES))
+  for (const type of Object.values(SLIDE_TYPES)) {
     type.fields = { ...type.fields, ...COMMON_FIELDS };
+    type.objects = true;
+  }
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
     demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
@@ -1999,6 +2281,7 @@ kbd {
       ],
     },
     timer: { minutes: "10", title: "", caption: "" },
+    canvas: { objects: [] },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
@@ -2008,10 +2291,42 @@ kbd {
     motion: "rise",
     backdrop: "arcs",
     backdropPicture: "",
+    objects: [],
     note: "",
   });
   const blankItem = (type) =>
     clone(BLANKS[type][SLIDE_TYPES[type].list.key][0]);
+  const blankObject = (type) => {
+    const base = {
+      id: newId("object"),
+      type,
+      x: "20",
+      y: "25",
+      width: "60",
+      height: type === "text" ? "22" : "45",
+      rotation: "0",
+      opacity: "100",
+    };
+    if (type === "text")
+      return {
+        ...base,
+        text: "טקסט חופשי",
+        fontSize: "64",
+        weight: "400",
+        align: "center",
+        color: "#f6f7f8",
+        style: "solid",
+      };
+    if (type === "image")
+      return { ...base, picture: "", fit: "contain", radius: "0", alt: "" };
+    return {
+      ...base,
+      shape: "rectangle",
+      color: "#88e6ee",
+      stroke: "#f6f7f8",
+      strokeWidth: "0",
+    };
+  };
   const safeJSON = (value) =>
     JSON.stringify(value)
       .replace(/</g, "\\u003c")
@@ -2029,18 +2344,25 @@ kbd {
       if (spec.picture) {
         const value = v ?? "";
         if (typeof value !== "string" || value.length > spec.max) fail();
-        if (
-          value &&
-          (!IMAGE_HEAD.test(value) ||
-            NOT_BASE64.test(value.slice(value.indexOf(",") + 1)))
-        )
-          fail();
+        if (value) {
+          const head = value.match(IMAGE_HEAD);
+          const payload = value.slice(value.indexOf(",") + 1);
+          if (
+            !head ||
+            !payload ||
+            !BASE64.test(payload) ||
+            !IMAGE_SIGNATURES[head[1]].some((signature) =>
+              payload.startsWith(signature),
+            )
+          )
+            fail();
+        }
         return value;
       }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
         if (v === undefined) return Object.keys(spec.choice)[0];
-        if (typeof v !== "string" || !(v in spec.choice)) fail();
+        if (typeof v !== "string" || !Object.hasOwn(spec.choice, v)) fail();
         return v;
       }
       const value = spec.required ? v : (v ?? "");
@@ -2049,13 +2371,75 @@ kbd {
       if (spec.digits && !/^\d+$/.test(value)) fail();
       return value;
     };
+    const number = (v, min, max) => {
+      if (typeof v !== "string" || !/^-?\d+(\.\d+)?$/.test(v)) fail();
+      const raw = Number(v);
+      if (!Number.isFinite(raw) || raw < min || raw > max) fail();
+      return String(Math.round(raw * 10) / 10);
+    };
+    const colour = (v) => {
+      if (typeof v !== "string" || !/^#[0-9a-f]{6}$/i.test(v)) fail();
+      return v.toLowerCase();
+    };
+    const ownChoice = (v, options) => {
+      if (typeof v !== "string" || !Object.hasOwn(options, v)) fail();
+      return v;
+    };
+    const object = (item) => {
+      if (!obj(item) || !Object.hasOwn(OBJECT_TYPES, item.type)) fail();
+      const base = {
+        id: str(item.id, text(100)),
+        type: item.type,
+        x: number(item.x, 0, 100),
+        y: number(item.y, 0, 100),
+        width: number(item.width, 2, 100),
+        height: number(item.height, 2, 100),
+        rotation: number(item.rotation, -180, 180),
+        opacity: number(item.opacity, 0, 100),
+      };
+      if (
+        Number(base.x) + Number(base.width) > 100 ||
+        Number(base.y) + Number(base.height) > 100
+      )
+        fail();
+      if (item.type === "text")
+        return {
+          ...base,
+          text: str(item.text, text(500)),
+          fontSize: number(item.fontSize, 8, 300),
+          weight: ownChoice(item.weight, { 300: true, 400: true, 600: true, 800: true }),
+          align: ownChoice(item.align, ALIGNS),
+          color: colour(item.color),
+          style: ownChoice(item.style, TEXT_STYLES),
+        };
+      if (item.type === "image")
+        return {
+          ...base,
+          picture: str(item.picture, picture()),
+          fit: ownChoice(item.fit, FITS),
+          radius: number(item.radius, 0, 50),
+          alt: str(item.alt, text(120, false)),
+        };
+      return {
+        ...base,
+        shape: ownChoice(item.shape, SHAPES),
+        color: colour(item.color),
+        stroke: colour(item.stroke),
+        strokeWidth: number(item.strokeWidth, 0, 20),
+      };
+    };
     const group = (source, fields) => {
       const out = {};
       for (const [key, spec] of Object.entries(fields))
         out[key] = str(source[key], spec);
       return out;
     };
-    if (!obj(raw) || raw.version !== 2 || !Object.hasOwn(THEMES, raw.theme))
+    if (
+      !obj(raw) ||
+      serializedBytes(raw) > LIMITS.importBytes ||
+      raw.version !== 2 ||
+      !Object.hasOwn(THEMES, raw.theme)
+    )
       fail();
     if (
       !Array.isArray(raw.slides) ||
@@ -2092,6 +2476,16 @@ kbd {
             return group(item, fields);
           });
         }
+        if (type.objects) {
+          const objects = s.objects ?? [];
+          if (!Array.isArray(objects) || objects.length > LIMITS.objects) fail();
+          slide.objects = objects.map(object);
+          if (
+            new Set(slide.objects.map((item) => item.id)).size !==
+            slide.objects.length
+          )
+            fail();
+        }
         return slide;
       }),
       examples: raw.examples.map((e) => {
@@ -2120,9 +2514,13 @@ kbd {
     };
     const unique = (values) => new Set(values).size === values.length;
     const ids = result.examples.map((e) => e.id);
+    const objectIds = result.slides.flatMap((slide) =>
+      slide.objects.map((item) => item.id),
+    );
     if (
       !unique(result.slides.map((s) => s.id)) ||
       !unique(ids) ||
+      !unique(objectIds) ||
       !ids.includes(result.selectedExampleId)
     )
       fail();
@@ -2182,10 +2580,16 @@ kbd {
     BACKDROPS,
     TRANSITIONS,
     FITS,
+    OBJECT_TYPES,
+    SHAPES,
+    TEXT_STYLES,
+    ALIGNS,
     clone,
+    serializedBytes,
     newId,
     blankSlide,
     blankItem,
+    blankObject,
     safeJSON,
     validate,
     portableHTML,
@@ -2228,6 +2632,8 @@ kbd {
     notesOpen = false,
     pendingOpenId = null,
     pendingPicturePath = null,
+    selectedObjectId = null,
+    activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
@@ -2320,8 +2726,44 @@ kbd {
     }
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
+  const shapeMarkup = (object) => {
+    const common = `fill="${esc(object.color)}" stroke="${esc(object.stroke)}" stroke-width="${esc(object.strokeWidth)}" vector-effect="non-scaling-stroke"`;
+    if (object.shape === "circle")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="47" ry="47" ${common}/></svg>`;
+    if (object.shape === "line")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><line x1="4" y1="50" x2="96" y2="50" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+    if (object.shape === "arrow")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 50h78M66 26l24 24-24 24" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+    if (object.shape === "star")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="m50 4 11 31 33 1-26 20 10 33-28-19-28 19 10-33L6 36l33-1Z" ${common}/></svg>`;
+    if (object.shape === "blob")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22c13 17 9 45-7 61-16 15-43 17-59 2C1 70 4 40 19 21 34 3 68 4 82 22Z" ${common}/></svg>`;
+    if (object.shape === "ring")
+      return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="43" ry="43" fill="none" stroke="${esc(object.color)}" stroke-width="${Math.max(3, Number(object.strokeWidth))}" vector-effect="non-scaling-stroke"/></svg>`;
+    return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="8" ${common}/></svg>`;
+  };
+  const objectMarkup = (object, index) => {
+    const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;transform:rotate(${object.rotation}deg);opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
+    let body = "";
+    if (object.type === "text")
+      body = `<p class="object-text text-${object.style}" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}">${esc(object.text)}</p>`;
+    else if (object.type === "image")
+      body = object.picture
+        ? `<img class="object-image" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
+        : '<span class="object-placeholder">תמונה</span>';
+    else body = shapeMarkup(object);
+    const handles =
+      selectedObjectId === object.id
+        ? '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>'
+        : "";
+    return `<div class="free-object object-${object.type} ${selectedObjectId === object.id ? "selected" : ""}" data-object-id="${esc(object.id)}" style="${style}">${body}${handles}</div>`;
+  };
+  const freeObjects = (slide) =>
+    slide.objects?.length
+      ? `<div class="free-object-layer">${slide.objects.map(objectMarkup).join("")}</div>`
+      : "";
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}</section>`;
+    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
   const caption = (value) =>
     value ? `<p class="scene-caption">${esc(value)}</p>` : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
@@ -2466,6 +2908,15 @@ kbd {
       `<div class="scene timer-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
+  function canvasSlide(slide, index) {
+    return frame(
+      slide,
+      index,
+      "canvas-slide",
+      "",
+      '<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p></div>',
+    );
+  }
   function experimentSlide(slide, index, step) {
     const e = C.selected(deck),
       agent = step > 0,
@@ -2490,6 +2941,7 @@ kbd {
     number: numberSlide,
     split: splitSlide,
     timer: timerSlide,
+    canvas: canvasSlide,
     experiment: experimentSlide,
   };
   function exampleOptions() {
@@ -2657,6 +3109,12 @@ kbd {
       ? "נשמר במכשיר הזה · אפשר להוריד עותק לגיבוי"
       : "השמירה במכשיר אינה זמינה. יש להוריד עותק לפני הסגירה.";
   }
+  const withinDocumentLimit = () =>
+    C.serializedBytes(deck) <= C.LIMITS.importBytes;
+  const documentLimitMessage = () =>
+    notify(
+      `המצגת גדולה מדי. כדי לשמור אותה בדפדפן ובקובץ נייד, הגודל המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+    );
   function act(action) {
     if (action === "replay") {
       renderedSlide = -1;
@@ -2711,10 +3169,19 @@ kbd {
       if (!$("dialog[open]")) document.body.classList.add("controls-idle");
     }, 4500);
   }
+  function setStageEditing(active) {
+    document.body.classList.toggle("editor-stage-mode", active);
+    $("#editor-stage-toggle").textContent = active ? "חזרה לעורך" : "עריכת במה";
+    $("#editor-stage-toggle").setAttribute("aria-pressed", String(active));
+  }
   function openDialog(id) {
     wake();
-    if (id === "editor") renderEditor();
-    $(`#${id}`).showModal();
+    if (id === "editor") {
+      renderEditor();
+      document.body.classList.add("editing");
+      setStageEditing(false);
+      $(`#${id}`).show();
+    } else $(`#${id}`).showModal();
   }
   function validEditor() {
     const invalid = $$("#editor-fields input, #editor-fields textarea").find(
@@ -2729,6 +3196,10 @@ kbd {
   function closeDialog(dialog) {
     if (dialog.id === "editor" && !validEditor()) return;
     dialog.close();
+    if (dialog.id === "editor") {
+      document.body.classList.remove("editing");
+      setStageEditing(false);
+    }
     wake();
   }
   const FIELD_LABELS = {
@@ -2820,6 +3291,37 @@ kbd {
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
+  const objectName = (object) =>
+    object.type === "text"
+      ? object.text.slice(0, 28)
+      : object.type === "image"
+        ? "תמונה חופשית"
+        : C.SHAPES[object.shape];
+  const objectInput = (label, slideIndex, object, key, min, max, step = 1) =>
+    `<label class="object-field"><span>${label}</span><input type="number" value="${esc(object[key])}" min="${min}" max="${max}" step="${step}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+  const objectColour = (label, slideIndex, object, key) =>
+    `<label class="object-field colour-field"><span>${label}</span><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}"></label>`;
+  const objectPicker = (label, slideIndex, object, key, options) =>
+    `<label class="object-field"><span>${label}</span><select data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}">${Object.entries(options)
+      .map(
+        ([value, name]) =>
+          `<option value="${value}" ${value === object[key] ? "selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("")}</select></label>`;
+  function objectEditor(object, slideIndex, objectIndex) {
+    const common = `<div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
+    let specific = "";
+    if (object.type === "text")
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה", slideIndex, object, "style", C.TEXT_STYLES)}${objectColour("צבע", slideIndex, object, "color")}</div>`;
+    else if (object.type === "image")
+      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
+    else
+      specific = `<div class="object-transform-grid">${objectPicker("צורה", slideIndex, object, "shape", C.SHAPES)}${objectColour("מילוי", slideIndex, object, "color")}${objectColour("קו", slideIndex, object, "stroke")}${objectInput("עובי קו", slideIndex, object, "strokeWidth", 0, 20)}</div>`;
+    return `<section class="object-editor ${selectedObjectId === object.id ? "selected" : ""}" data-object-card="${esc(object.id)}"><div class="object-editor-header"><button class="object-select" data-select-object="${slideIndex}:${esc(object.id)}"><span>${esc(objectName(object))}</span><small>${esc(C.OBJECT_TYPES[object.type])}</small></button><div class="object-editor-actions"><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:1" aria-label="העברה קדימה">${icon("up")}</button><button class="icon-button" data-object-layer="${slideIndex}:${esc(object.id)}:-1" aria-label="העברה אחורה">${icon("down")}</button><button class="icon-button" data-duplicate-object="${slideIndex}:${esc(object.id)}" aria-label="שכפול אובייקט">${icon("copy")}</button><button class="icon-button" data-remove-object="${slideIndex}:${esc(object.id)}" aria-label="מחיקת אובייקט">${icon("trash")}</button></div></div>${specific}${common}</section>`;
+  }
+  function objectTools(slide, index) {
+    return `<section class="objects-panel"><div class="objects-panel-head"><div><strong>אובייקטים חופשיים</strong><small>אפשר לגרור ולשנות גודל ישירות על הבמה כשהעורך פתוח.</small></div><span>${slide.objects.length} / ${C.LIMITS.objects}</span></div><div class="object-add-row"><button data-add-object="${index}:text" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}טקסט</button><button data-add-object="${index}:image" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("image")}תמונה</button><button data-add-object="${index}:shape" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("plus")}צורה</button></div>${slide.objects.map((object, objectIndex) => objectEditor(object, index, objectIndex)).join("")}</section>`;
+  }
   const LOOK_KEYS = new Set(["motion", "backdrop", "backdropPicture"]);
   const splitSpecs = (specs) => {
     const content = {},
@@ -2837,6 +3339,7 @@ kbd {
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
+      ${objectTools(slide, index)}
       <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
@@ -2881,9 +3384,69 @@ kbd {
     if (p[0] === "slides") {
       const slide = deck.slides[+p[1]];
       if (p.length === 3) slide[p[2]] = value;
-      else slide[p[2]][+p[3]][p[4]] = value;
+      else if (p.length === 5) slide[p[2]][+p[3]][p[4]] = value;
+      else if (p.length === 6) slide[p[2]][+p[3]][p[4]][+p[5]] = value;
     } else if (p[0] === "example") C.selected(deck)[p[1]] = value;
     else if (p[0] === "steps") C.selected(deck).steps[+p[1]][p[2]] = value;
+  }
+  function getPath(path) {
+    const p = path.split(".");
+    if (p[0] === "slides") {
+      const slide = deck.slides[+p[1]];
+      if (p.length === 3) return slide[p[2]];
+      if (p.length === 5) return slide[p[2]][+p[3]][p[4]];
+    }
+    if (p[0] === "example") return C.selected(deck)[p[1]];
+    if (p[0] === "steps") return C.selected(deck).steps[+p[1]][p[2]];
+  }
+  const objectById = (slideIndex, id) =>
+    deck.slides[slideIndex]?.objects.find((object) => object.id === id);
+  const normalizeObjectNumber = (key, value) => {
+    const ranges = {
+      x: [0, 100],
+      y: [0, 100],
+      width: [2, 100],
+      height: [2, 100],
+      rotation: [-180, 180],
+      opacity: [0, 100],
+      fontSize: [8, 300],
+      radius: [0, 50],
+      strokeWidth: [0, 20],
+    };
+    if (!ranges[key]) return value;
+    const [min, max] = ranges[key];
+    return String(Math.min(max, Math.max(min, Number(value) || 0)));
+  };
+  function updateObjectField(input) {
+    const slideIndex = +input.dataset.objectSlide;
+    const object = objectById(slideIndex, input.dataset.objectId);
+    if (!object) return;
+    const key = input.dataset.objectProp;
+    const previous = object[key];
+    let value = normalizeObjectNumber(key, input.value);
+    if (key === "x") value = neat(Math.min(Number(value), 100 - Number(object.width)));
+    else if (key === "y")
+      value = neat(Math.min(Number(value), 100 - Number(object.height)));
+    else if (key === "width")
+      value = neat(Math.min(Number(value), 100 - Number(object.x)));
+    else if (key === "height")
+      value = neat(Math.min(Number(value), 100 - Number(object.y)));
+    object[key] = value;
+    if (!withinDocumentLimit()) {
+      object[key] = previous;
+      input.value = previous;
+      documentLimitMessage();
+      return;
+    }
+    if (input.type === "number") input.value = value;
+    if (key === "text") {
+      input.closest(".field").querySelector("small").textContent =
+        `${value.length} / 500`;
+    }
+    selectedObjectId = object.id;
+    if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
+    save();
+    render();
   }
   function updateField(input) {
     input.closest(".field").querySelector("small").textContent =
@@ -2934,7 +3497,14 @@ kbd {
         data = canvas.toDataURL("image/jpeg", 0.85);
       if (data.length > C.LIMITS.image)
         throw new Error("התמונה גדולה מדי גם אחרי הכיווץ. כדאי לנסות תמונה קטנה יותר.");
+      const previous = getPath(path);
       setPath(path, data);
+      if (!withinDocumentLimit()) {
+        setPath(path, previous);
+        throw new Error(
+          `אין מספיק מקום לעוד תמונה. הגודל המרבי של מצגת ניידת הוא ${C.LIMITS.importBytes / 1000000}MB.`,
+        );
+      }
       renderedSlide = -1;
       save();
       render();
@@ -2959,13 +3529,34 @@ kbd {
   }
   function exportHTML() {
     if (!validEditor()) return;
-    const exportId = `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    download(
-      C.portableHTML(initialHTML, deck, exportId),
-      "מצ׳אטבוט-לסוכן.html",
-      "text/html;charset=utf-8",
-    );
-    notify("העותק כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.");
+    try {
+      const exportId = `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      download(
+        C.portableHTML(initialHTML, deck, exportId),
+        "מצ׳אטבוט-לסוכן.html",
+        "text/html;charset=utf-8",
+      );
+      notify("העותק כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.");
+    } catch (err) {
+      notify(err.message);
+    }
+  }
+  async function checkImportedPictures(document) {
+    const values = new Set();
+    for (const slide of document.slides) {
+      if (slide.backdropPicture) values.add(slide.backdropPicture);
+      if (slide.picture) values.add(slide.picture);
+      for (const object of slide.objects)
+        if (object.type === "image" && object.picture) values.add(object.picture);
+    }
+    try {
+      for (const value of values) {
+        const bitmap = await createImageBitmap(await (await fetch(value)).blob());
+        bitmap.close();
+      }
+    } catch {
+      throw new Error("אחת התמונות בקובץ פגומה. התוכן שלך נשמר ללא שינוי.");
+    }
   }
   async function importJSON(file) {
     if (!file) return;
@@ -2975,6 +3566,7 @@ kbd {
           `הקובץ גדול מדי. גודל התוכן המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
         );
       const candidate = C.validate(JSON.parse(await file.text()));
+      await checkImportedPictures(candidate);
       deck = candidate;
       state = C.initialState();
       renderedDots = "";
@@ -3002,6 +3594,81 @@ kbd {
       notify("הדפדפן לא אפשר מסך מלא. אפשר להשתמש ב־F11.");
     }
   }
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const neat = (value) => String(Math.round(value * 10) / 10);
+  function applyObjectPosition(object) {
+    const el = $(`.free-object[data-object-id="${CSS.escape(object.id)}"]`);
+    if (!el) return;
+    el.style.left = `${object.x}%`;
+    el.style.top = `${object.y}%`;
+    el.style.width = `${object.width}%`;
+    el.style.height = `${object.height}%`;
+  }
+  function startObjectPointer(event) {
+    if (!$("#editor").open || event.button !== 0) return;
+    const hit = event.target.closest(".free-object");
+    if (!hit) return;
+    event.preventDefault();
+    const id = hit.dataset.objectId;
+    const object = objectById(state.slide, id);
+    if (!object) return;
+    const mode = event.target.closest("[data-object-handle]") ? "resize" : "move";
+    if (selectedObjectId !== id) {
+      selectedObjectId = id;
+      render();
+      renderEditor();
+    }
+    activeObjectPointer = {
+      id,
+      pointerId: event.pointerId,
+      mode,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: Number(object.x),
+      y: Number(object.y),
+      width: Number(object.width),
+      height: Number(object.height),
+    };
+    $("#stage").setPointerCapture?.(event.pointerId);
+    document.body.classList.add("object-dragging");
+  }
+  function moveObjectPointer(event) {
+    if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
+      return;
+    const object = objectById(state.slide, activeObjectPointer.id);
+    const rect = $("#stage").getBoundingClientRect();
+    if (!object || !rect.width || !rect.height) return;
+    const dx = ((event.clientX - activeObjectPointer.startX) / rect.width) * 100;
+    const dy = ((event.clientY - activeObjectPointer.startY) / rect.height) * 100;
+    if (activeObjectPointer.mode === "resize") {
+      object.width = neat(
+        clamp(activeObjectPointer.width + dx, 2, 100 - Number(object.x)),
+      );
+      object.height = neat(
+        clamp(activeObjectPointer.height + dy, 2, 100 - Number(object.y)),
+      );
+    } else {
+      object.x = neat(
+        clamp(activeObjectPointer.x + dx, 0, 100 - Number(object.width)),
+      );
+      object.y = neat(
+        clamp(activeObjectPointer.y + dy, 0, 100 - Number(object.height)),
+      );
+    }
+    applyObjectPosition(object);
+  }
+  function endObjectPointer(event) {
+    if (!activeObjectPointer || event.pointerId !== activeObjectPointer.pointerId)
+      return;
+    activeObjectPointer = null;
+    document.body.classList.remove("object-dragging");
+    save();
+    renderEditor();
+  }
+  $("#slide-root").addEventListener("pointerdown", startObjectPointer);
+  document.addEventListener("pointermove", moveObjectPointer);
+  document.addEventListener("pointerup", endObjectPointer);
+  document.addEventListener("pointercancel", endObjectPointer);
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
     if (!b) return;
@@ -3086,8 +3753,19 @@ kbd {
     // Selects also fire input; they are handled on change, where the value is final.
     if (e.target.matches("input[data-field], textarea[data-field]"))
       updateField(e.target);
+    else if (
+      e.target.matches(
+        "input[data-object-prop], textarea[data-object-prop]",
+      )
+    )
+      updateObjectField(e.target);
   });
   $("#editor-fields").addEventListener("change", (e) => {
+    if (e.target.matches("select[data-object-prop]")) {
+      updateObjectField(e.target);
+      renderEditor();
+      return;
+    }
     if (e.target.matches("select[data-field]")) {
       setPath(e.target.dataset.field, e.target.value);
       // Replay the entrance so the presenter sees the preset they just picked.
@@ -3112,7 +3790,68 @@ kbd {
     const button = event.target.closest("button");
     if (!button || button.tagName !== "BUTTON" || !validEditor()) return;
     const data = button.dataset;
-    if (data.pickPicture) {
+    if (data.selectObject) {
+      const [slideIndex, id] = data.selectObject.split(":");
+      selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      render();
+      renderEditor();
+    } else if (data.addObject) {
+      const [slideIndex, type] = data.addObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      if (slide.objects.length >= C.LIMITS.objects) return;
+      const added = C.blankObject(type);
+      const rootStyle = getComputedStyle(document.documentElement);
+      if (type === "text")
+        added.color = rootStyle.getPropertyValue("--text").trim();
+      else if (type === "shape") {
+        added.color = rootStyle.getPropertyValue("--accent").trim();
+        added.stroke = rootStyle.getPropertyValue("--text").trim();
+      }
+      slide.objects.push(added);
+      selectedObjectId = added.id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.removeObject) {
+      const [slideIndex, id] = data.removeObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      const position = slide.objects.findIndex((object) => object.id === id);
+      if (position < 0) return;
+      slide.objects.splice(position, 1);
+      if (selectedObjectId === id) selectedObjectId = null;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.duplicateObject) {
+      const [slideIndex, id] = data.duplicateObject.split(":");
+      const slide = deck.slides[+slideIndex];
+      if (slide.objects.length >= C.LIMITS.objects) return;
+      const source = objectById(+slideIndex, id);
+      if (!source) return;
+      const copy = C.clone(source);
+      copy.id = C.newId("object");
+      copy.x = String(Math.min(100 - Number(copy.width), Number(copy.x) + 3));
+      copy.y = String(Math.min(100 - Number(copy.height), Number(copy.y) + 3));
+      slide.objects.push(copy);
+      if (!withinDocumentLimit()) {
+        slide.objects.pop();
+        documentLimitMessage();
+        return;
+      }
+      selectedObjectId = copy.id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.objectLayer) {
+      const [slideIndex, id, direction] = data.objectLayer.split(":");
+      const slide = deck.slides[+slideIndex];
+      const position = slide.objects.findIndex((object) => object.id === id);
+      const target = position + Number(direction);
+      if (position < 0 || target < 0 || target >= slide.objects.length) return;
+      const [moved] = slide.objects.splice(position, 1);
+      slide.objects.splice(target, 0, moved);
+      selectedObjectId = id;
+      state = C.goTo(deck, +slideIndex);
+      afterStructureChange();
+    } else if (data.pickPicture) {
       pendingPicturePath = data.pickPicture;
       $("#picture-file").click();
     } else if (data.clearPicture) {
@@ -3185,6 +3924,10 @@ kbd {
     }
   });
   $("#export-html").addEventListener("click", exportHTML);
+  $("#editor-stage-toggle").addEventListener("click", () => {
+    if (!validEditor()) return;
+    setStageEditing(!document.body.classList.contains("editor-stage-mode"));
+  });
   $("#export-json").addEventListener("click", () => {
     if (validEditor())
       download(
@@ -3206,12 +3949,19 @@ kbd {
     e.target.value = "";
   });
   document.addEventListener("keydown", (e) => {
+    const openDialogs = $$("dialog[open]");
+    const openDialog = openDialogs.at(-1);
+    if (e.key === "Escape" && openDialog) {
+      e.preventDefault();
+      closeDialog(openDialog);
+      return;
+    }
     if (
       e.ctrlKey ||
       e.altKey ||
       e.metaKey ||
       e.repeat ||
-      $("dialog[open]") ||
+      openDialog ||
       e.target.closest('input,textarea,select,[contenteditable="true"]')
     )
       return;

@@ -38,7 +38,10 @@ test("portable export preserves edited content, scripts and an isolated storage 
   }
 });
 test("content import/export roundtrip preserves Hebrew and choices", () => {
-  assert.deepEqual(C.validate(JSON.parse(C.safeJSON(seed))), seed);
+  assert.deepEqual(
+    C.validate(JSON.parse(C.safeJSON(seed))),
+    C.validate(seed),
+  );
 });
 test("optional slide fields may be omitted and come back empty", () => {
   const partial = C.clone(seed);
@@ -84,11 +87,80 @@ test("pictures accept only raster data URIs, and may be empty", () => {
     "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
     "javascript:alert(1)",
     "https://example.com/photo.png",
+    "data:image/png;base64,AAAA",
+    "data:image/png;base64,iVBORw0KGgo!",
     "data:image/png;base64,not base64!",
     "data:image/png;base64," + "A".repeat(C.LIMITS.image),
     42,
   ])
     assert.throws(() => C.validate(withPicture(bad)));
+});
+test("free objects validate on every slide and reject unsafe values", () => {
+  const document = C.clone(seed);
+  document.slides.push(C.blankSlide("canvas"));
+  for (const slide of document.slides) {
+    const text = C.blankObject("text");
+    text.text = "כותרת צבעונית";
+    text.style = "spectrum";
+    const image = C.blankObject("image");
+    const shape = C.blankObject("shape");
+    shape.shape = "arrow";
+    slide.objects = [text, image, shape];
+  }
+  const valid = C.validate(document);
+  assert.ok(
+    valid.slides.every(
+      (slide) =>
+        slide.objects.map((object) => object.type).join() ===
+        "text,image,shape",
+    ),
+  );
+  assert.equal(valid.slides[0].objects[0].style, "spectrum");
+  for (const modify of [
+    (object) => (object.type = "video"),
+    (object) => (object.x = "101"),
+    (object) => (object.width = "0"),
+    (object) => {
+      object.x = "60";
+      object.width = "50";
+    },
+    (object) => {
+      object.y = "70";
+      object.height = "40";
+    },
+    (object) => (object.opacity = "NaN"),
+    (object) => (object.color = "red"),
+    (object) => (object.style = "constructor"),
+  ]) {
+    const bad = C.clone(document);
+    modify(bad.slides[0].objects[0]);
+    assert.throws(() => C.validate(bad));
+  }
+  const duplicate = C.clone(document);
+  duplicate.slides[0].objects[1].id = duplicate.slides[0].objects[0].id;
+  assert.throws(() => C.validate(duplicate));
+  const duplicateAcrossSlides = C.clone(document);
+  duplicateAcrossSlides.slides[1].objects[0].id =
+    duplicateAcrossSlides.slides[0].objects[0].id;
+  assert.throws(() => C.validate(duplicateAcrossSlides));
+  const fractional = C.clone(document);
+  fractional.slides[0].objects[0].x = "0.04";
+  fractional.slides[0].objects[0].width = "99.96";
+  const normalized = C.validate(fractional).slides[0].objects[0];
+  assert.equal(normalized.x, "0");
+  assert.equal(normalized.width, "100");
+  assert.equal(Number(normalized.x) + Number(normalized.width), 100);
+});
+test("the full portable document stays within the shared size budget", () => {
+  const oversized = C.clone(seed);
+  const bytes = Buffer.alloc(920000);
+  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(bytes);
+  const picture = `data:image/png;base64,${bytes.toString("base64")}`;
+  assert.ok(picture.length < C.LIMITS.image);
+  oversized.slides[0].backdropPicture = picture;
+  oversized.slides[1].backdropPicture = picture;
+  assert.ok(C.serializedBytes(oversized) > C.LIMITS.importBytes);
+  assert.throws(() => C.validate(oversized));
 });
 test("every listed theme validates, and inherited keys do not", () => {
   for (const theme of Object.keys(C.THEMES)) {
@@ -125,6 +197,7 @@ test("every slide type reports the beats its content implies", () => {
   assert.equal(beatsOf("image"), 1);
   assert.equal(beatsOf("number"), 1);
   assert.equal(beatsOf("timer"), 1);
+  assert.equal(beatsOf("canvas"), 1);
   assert.equal(beatsOf("tokens"), 2);
   assert.equal(beatsOf("reveal"), 3);
   assert.equal(beatsOf("split"), 2);
