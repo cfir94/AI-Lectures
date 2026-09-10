@@ -573,13 +573,20 @@
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
+  /* Emphasis inside a sentence, without opening HTML to the document. The text
+     is escaped first and only then are *asterisk pairs* turned into a marked
+     span, so nothing a document carries can become markup. The stored string
+     keeps its asterisks, and editing in place reads that stored string back —
+     the presenter edits what they wrote, not what was rendered. */
+  const EMPHASIS = /\*([^*\n]{1,60})\*/g;
+  const rich = (value) => esc(value).replace(EMPHASIS, '<b class="emph">$1</b>');
   const caption = (slide, value, key = "caption") =>
     value && !isBound(slide, key)
-      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${esc(value)}</p>`
+      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${rich(value)}</p>`
       : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
   const headline = (slide, value) =>
@@ -628,7 +635,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${controls}`,
+      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${controls}`,
     );
   }
   function revealSlide(slide, index, step) {
