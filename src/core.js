@@ -262,6 +262,7 @@
         title: text(40, false),
         caption: text(150, false),
         alt: text(120, false),
+        link: link(),
       },
       beats: () => 1,
     },
@@ -350,7 +351,7 @@
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
-    image: { picture: "", fit: "cover", title: "", caption: "", alt: "" },
+    image: { picture: "", fit: "cover", title: "", caption: "", alt: "", link: "" },
     number: { value: "100", unit: "", title: "", caption: "" },
     split: {
       title: "",

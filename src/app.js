@@ -624,12 +624,15 @@
         ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1><span data-slide-text="title">${headline(slide, imageTitle)}</span></h1>` : ""}${caption(slide, imageCaption)}</div></div>`
         : "";
     const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
+    const open = C.safeLink(slide.link)
+      ? `<div class="scene-controls image-controls"><a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת הקישור</a></div>`
+      : "";
     return frame(
       slide,
       index,
       `image-slide fit-${slide.fit} ${overlay ? "has-text" : ""}`,
       `--headline-size:${size}cqw`,
-      `<figure class="image-frame">${media}</figure>${overlay}`,
+      `<figure class="image-frame">${media}</figure>${overlay}${open}`,
     );
   }
   function numberSlide(slide, index) {
