@@ -198,6 +198,11 @@ p {
   position: relative;
   isolation: isolate;
   background: var(--surface);
+  /* The palette lives on this element, so the text colour has to be resolved
+     here too. Inheriting it from body resolves --text against the deck theme
+     instead, which went unnoticed only because every palette happened to be
+     dark with near-white text — and broke the moment one was not. */
+  color: var(--text);
 }
 .free-object-layer {
   position: absolute;
@@ -1008,6 +1013,81 @@ h1 {
 /* The one piece of emphasis a sentence can carry: heavier, and the slide's own
    accent rather than the muted grey around it. One or two per caption — three
    and the sentence stops having a point. */
+/* The swatch that hands the colour back to the slide's palette. It shows a
+   letter rather than a colour because that is exactly what it means: no colour
+   of its own. */
+/* The slide-palette half of the design panel. Same shape as the theme choices
+   above it, one step quieter, because a theme is the deck and a palette is one
+   slide. */
+.palette-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.palette-section h3 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+.palette-note {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.palette-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+}
+.palette-options button {
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  padding: 9px 6px;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--text);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.palette-options button:hover {
+  background: var(--soft);
+}
+.palette-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+.palette-preview {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 0;
+  border: 1px solid;
+  border-radius: 9px;
+  font-style: normal;
+}
+.palette-preview i {
+  font-style: normal;
+  font-weight: 500;
+}
+.swatch-auto {
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--soft);
+  border: 1px solid var(--line);
+}
+.swatch-auto[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
 .emph {
   font-weight: 600;
   color: var(--accent);
@@ -1645,14 +1725,18 @@ h1 {
    is built from the text's own colour — dimmed toward the surface for the base
    in "זוהר נודד", brightened toward it for the glare in "ברק חולף" — so both
    read on a light theme as well as a dark one. */
+/* Both sweeps run right to left, the direction Hebrew is read in. The
+   components these came from were written for English and ran the other way,
+   which reads backwards here: the light should arrive where the sentence
+   starts. */
 @keyframes text-shimmer-sweep {
-  from { background-position: 100% center; }
-  to { background-position: 0% center; }
+  from { background-position: 0% center; }
+  to { background-position: 100% center; }
 }
 @keyframes text-sheen-sweep {
-  0% { background-position-x: -100%; }
-  40% { background-position-x: 250%; }
-  100% { background-position-x: 250%; }
+  0% { background-position-x: 250%; }
+  40% { background-position-x: -100%; }
+  100% { background-position-x: -100%; }
 }
 .slide {
   --sweep-tint: var(--text);

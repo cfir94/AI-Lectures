@@ -254,10 +254,13 @@
   const paintId = (object, index) =>
     `fill-${index}-${object.id.replace(/[^A-Za-z0-9_-]/g, "")}`;
   const shapeMarkup = (object, index) => {
-    const spectrum = object.style === "spectrum";
+    const auto = object.color === "auto";
+    /* A spectrum is computed from a real hex, so a colour that follows the
+       slide cannot have one built for it; it stays the slide's own colour. */
+    const spectrum = object.style === "spectrum" && !auto;
     const outline = object.style === "outline";
     const id = paintId(object, index);
-    const paint = spectrum ? `url(#${id})` : object.color;
+    const paint = spectrum ? `url(#${id})` : resolveColour(object.color);
     const defs = spectrum
       ? `<defs><linearGradient id="${esc(id)}" x1="0" y1="0" x2="1" y2="1">${spectrumStops(
           object.color,
@@ -269,7 +272,7 @@
           .join("")}</linearGradient></defs>`
       : "";
     // Outline draws the shape in its own colour and needs a line to draw with.
-    const strokePaint = outline ? paint : object.stroke;
+    const strokePaint = outline ? paint : resolveColour(object.stroke);
     const width = outline
       ? Math.max(2, Number(object.strokeWidth))
       : Number(object.strokeWidth);
@@ -278,6 +281,22 @@
       `<svg viewBox="0 0 100 100" aria-hidden="true">${defs}${body}</svg>`;
     if (object.shape === "circle")
       return svg(`<ellipse cx="50" cy="50" rx="47" ry="47" ${common}/>`);
+    /* A field of dots and a hairline: the two quietest marks on the stage. The
+       dots are laid out on a fixed 6x4 lattice rather than at random, so the
+       shape reads as deliberate texture and stays identical between renders. */
+    if (object.shape === "dots") {
+      const cells = [];
+      for (let row = 0; row < 4; row++)
+        for (let column = 0; column < 6; column++)
+          cells.push(
+            `<circle cx="${8 + column * 16.8}" cy="${11 + row * 26}" r="${Math.max(1.2, Number(object.strokeWidth) * 0.9)}" fill="${esc(paint)}"/>`,
+          );
+      return svg(cells.join(""));
+    }
+    if (object.shape === "rule")
+      return svg(
+        `<line x1="0" y1="50" x2="100" y2="50" stroke="${esc(paint)}" stroke-width="${Math.max(0.6, Number(object.strokeWidth) * 0.5)}" vector-effect="non-scaling-stroke"/>`,
+      );
     if (object.shape === "line")
       return svg(
         `<line x1="4" y1="50" x2="96" y2="50" stroke="${esc(paint)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`,
@@ -317,7 +336,7 @@
   };
   const visualMarkup = (object) => {
     const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
-    const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
+    const style = `--visual-colour:${esc(resolveColour(object.color))};--visual-secondary:${esc(resolveColour(object.secondary))};--visual-gradient:${esc(object.color === "auto" ? "var(--spectrum)" : spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
     const body = (VISUAL_PARTS[object.visual] ?? VISUAL_PARTS.accordion)(labels);
     return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="img" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
@@ -332,7 +351,7 @@
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
-      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
+      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
@@ -455,7 +474,7 @@
     el.style.setProperty("--object-size", object.fontSize);
     el.style.setProperty("--object-weight", object.weight);
     el.style.setProperty("--object-align", object.align);
-    el.style.setProperty("--object-colour", object.color);
+    el.style.setProperty("--object-colour", resolveColour(object.color));
     el.classList.remove(...Object.keys(C.TEXT_STYLES).map((key) => `text-${key}`));
     el.classList.add(`text-${object.style}`);
     return true;
@@ -568,6 +587,8 @@
       });
     });
   }
+  /* An object either carries a colour or follows the slide it sits on. */
+  const resolveColour = (value) => (value === "auto" ? "var(--text)" : value);
   const paletteStyle = (slide) => {
     const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
@@ -1369,7 +1390,10 @@
     if (id === "editor") {
       $(`#${id}`).show();
       renderEditor();
-    } else $(`#${id}`).showModal();
+    } else {
+      if (id === "themes") renderPalettes();
+      $(`#${id}`).showModal();
+    }
   }
   function validEditor() {
     const invalid = $$("#editor-fields input, #editor-fields textarea").find(
@@ -1555,7 +1579,7 @@
     "#b9a3ff",
   ];
   const objectColour = (label, slideIndex, object, key) =>
-    `<div class="object-field colour-field"><span>${label}</span><label class="colour-picker"><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}" aria-label="${esc(label)}"><output>${esc(object[key])}</output></label><div class="colour-swatches" aria-label="צבעים מהירים">${OBJECT_SWATCHES.map((colour) => `<button type="button" style="--swatch:${colour}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:${colour}" aria-label="${colour}"></button>`).join("")}</div></div>`;
+    `<div class="object-field colour-field"><span>${label}</span><label class="colour-picker"><input type="color" value="${esc(object[key] === "auto" ? "#f6f7f8" : object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}" aria-label="${esc(label)}"><output>${object[key] === "auto" ? "לפי הערכה" : esc(object[key])}</output></label><div class="colour-swatches" aria-label="צבעים מהירים"><button type="button" class="swatch-auto" aria-pressed="${object[key] === "auto"}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:auto" title="לפי ערכת הצבעים של השקף" aria-label="לפי ערכת הצבעים של השקף">א</button>${OBJECT_SWATCHES.map((colour) => `<button type="button" style="--swatch:${colour}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:${colour}" aria-label="${colour}"></button>`).join("")}</div></div>`;
   const objectPicker = (label, slideIndex, object, key, options) =>
     `<label class="object-field"><span>${label}</span><select data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}">${Object.entries(options)
       .map(
@@ -2915,6 +2939,27 @@
       render();
     }),
   );
+  /* The same panel also sets the palette of the slide in front of you. A theme
+     dresses the whole deck; a palette dresses one slide — including a white one
+     in the middle of a dark talk — and the panel is where a presenter goes
+     looking for either. Rebuilt on open so the pressed state is the truth. */
+  function renderPalettes() {
+    const slide = deck.slides[state.slide];
+    $("#palette-options").innerHTML = Object.entries(C.PALETTES)
+      .map(([key, name]) => {
+        const p = C.PALETTE_STYLES[key];
+        return `<button data-palette-choice="${key}" aria-pressed="${slide.palette === key}" title="${esc(name)}"><span class="palette-preview" style="background:${p.surface};color:${p.text};border-color:${p.line}"><i>Aa</i><b style="color:${p.accent}">✳</b></span><span>${esc(name)}</span></button>`;
+      })
+      .join("");
+  }
+  $("#palette-options").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-palette-choice]");
+    if (!button) return;
+    deck.slides[state.slide].palette = button.dataset.paletteChoice;
+    save();
+    render();
+    renderPalettes();
+  });
   $("#editor-fields").addEventListener("input", (e) => {
     // Selects also fire input; they are handled on change, where the value is final.
     if (e.target.matches("input[data-field], textarea[data-field]"))
