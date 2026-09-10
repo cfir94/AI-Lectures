@@ -590,6 +590,9 @@
   /* An object either carries a colour or follows the slide it sits on. */
   const resolveColour = (value) => (value === "auto" ? "var(--text)" : value);
   const paletteStyle = (slide) => {
+    /* Writing nothing is what lets the deck's theme through: the tokens then
+       resolve against [data-theme] on the document instead of this element. */
+    if (slide.palette === "deck") return "";
     const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
@@ -2945,13 +2948,37 @@
      looking for either. Rebuilt on open so the pressed state is the truth. */
   function renderPalettes() {
     const slide = deck.slides[state.slide];
+    /* Counted over the slides the audience actually sees; the skipped ones are
+       released too, they are just not what the presenter is looking at. */
+    const shown = deck.slides.filter((s) => C.isShown(s));
+    const pinned = shown.filter((s) => s.palette !== "deck").length;
+    /* The first choice has no palette of its own, so its swatch is the deck's
+       current theme — which is also what makes the theme buttons above visibly
+       do something. */
+    const theme = C.THEMES[deck.theme];
     $("#palette-options").innerHTML = Object.entries(C.PALETTES)
       .map(([key, name]) => {
         const p = C.PALETTE_STYLES[key];
-        return `<button data-palette-choice="${key}" aria-pressed="${slide.palette === key}" title="${esc(name)}"><span class="palette-preview" style="background:${p.surface};color:${p.text};border-color:${p.line}"><i>Aa</i><b style="color:${p.accent}">✳</b></span><span>${esc(name)}</span></button>`;
+        const swatch = p
+          ? `background:${p.surface};color:${p.text};border-color:${p.line}`
+          : `background:${theme.swatch[0]};color:${theme.swatch[1]};border-color:${theme.swatch[1]}`;
+        const accent = p ? p.accent : theme.swatch[1];
+        return `<button data-palette-choice="${key}" aria-pressed="${slide.palette === key}" title="${esc(name)}"><span class="palette-preview" style="${swatch}"><i>Aa</i><b style="color:${accent}">✳</b></span><span>${esc(name)}</span></button>`;
       })
       .join("");
+    $("#palette-note").textContent = pinned
+      ? `${pinned} מתוך ${shown.length} השקפים נושאים ערכה משלהם, ולכן הערכה שלמעלה לא משנה אותם. שקף שמוגדר ״לפי ערכת המצגת״ משתנה יחד איתה.`
+      : "כל השקפים הולכים אחרי ערכת המצגת. בחירה כאן מצמידה לשקף שמולך ערכה משלו.";
+    $("#palette-release").hidden = !pinned;
+    $("#palette-release").textContent = "החזרת כל השקפים לערכת המצגת";
   }
+  $("#palette-release").addEventListener("click", () => {
+    for (const slide of deck.slides) slide.palette = "deck";
+    save();
+    render();
+    renderPalettes();
+    notify("כל השקפים הולכים עכשיו אחרי ערכת המצגת.");
+  });
   $("#palette-options").addEventListener("click", (event) => {
     const button = event.target.closest("[data-palette-choice]");
     if (!button) return;
