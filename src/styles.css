@@ -2235,6 +2235,45 @@ h1 {
   }
   .backdrop-neural .neural-nodes circle { opacity: 0.5; }
 }
+/* The one thing on the stage that is about the document rather than the talk.
+   It sits above the slide, stays out of the headline's way, and disappears the
+   moment the presenter answers it. */
+.superseded {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: center;
+  justify-content: center;
+  max-width: min(92%, 640px);
+  padding: 12px 18px;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--raised) 92%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(8px);
+}
+.superseded p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.superseded-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.superseded .primary-button {
+  padding: 7px 14px;
+  font-size: 0.85rem;
+}
+body.presenting .superseded {
+  display: none;
+}
 .halo {
   position: absolute;
   left: 50%;

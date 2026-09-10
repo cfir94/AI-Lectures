@@ -54,9 +54,21 @@
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
+  /* A copy saved in this browser wins, because it is the presenter's own work
+     and losing it would be unforgivable. But it also used to hide every later
+     publication with no way to tell: the deck on screen could be months behind
+     the one at the link, and looked identical. When the published revision has
+     moved on since the stored copy was taken, the stored copy is still what
+     loads — and the presenter is told, and can take the new one. */
+  let supersededBy = null;
   try {
     const stored = localStorage.getItem(storageKey);
-    if (stored) deck = C.validate(JSON.parse(stored));
+    if (stored) {
+      const saved = C.validate(JSON.parse(stored));
+      deck = saved;
+      if (embedded.revision && embedded.revision !== saved.revision)
+        supersededBy = embedded;
+    }
   } catch {
     canSave = false;
   }
@@ -3253,6 +3265,46 @@
     );
     wake();
   });
+  /* The one case where the stored copy and the published one disagree. Taking
+     the new one files the current deck away as a draft first, so a presenter
+     who has been editing loses nothing by pressing it; keeping the old one
+     records the choice against the new revision so the bar stops asking. */
+  function renderSuperseded() {
+    const bar = $("#superseded");
+    bar.hidden = !supersededBy;
+    if (!supersededBy) return;
+    bar.innerHTML =
+      '<p>יש גרסה חדשה של ההרצאה בקישור. מה שמוצג עכשיו הוא העותק ששמור במכשיר הזה.</p><div class="superseded-actions"><button class="primary-button" data-superseded="take">טעינת הגרסה החדשה</button><button class="text-button" data-superseded="keep">להישאר עם שלי</button></div>';
+  }
+  $("#superseded").addEventListener("click", (event) => {
+    const action = event.target.closest("[data-superseded]")?.dataset.superseded;
+    if (!action || !supersededBy) return;
+    if (action === "take") {
+      const list = readDrafts();
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (list.length < C.LIMITS.drafts)
+        writeDrafts([
+          ...list,
+          {
+            name: `העותק שלי · ${stamp}`,
+            savedAt: new Date().toISOString(),
+            payload: JSON.stringify(deck),
+          },
+        ]);
+      deck = C.clone(supersededBy);
+      state = C.initialState(deck);
+      history.reset(JSON.stringify(deck));
+      notify("נטענה הגרסה החדשה. העותק הקודם נשמר כטיוטה.");
+    } else {
+      deck.revision = supersededBy.revision;
+      notify("נשארנו עם העותק שלך.");
+    }
+    supersededBy = null;
+    renderSuperseded();
+    save();
+    render();
+  });
+  renderSuperseded();
   render();
   save();
   document.body.classList.add("controls-idle");
