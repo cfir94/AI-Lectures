@@ -17,6 +17,8 @@
     );
   const initialHTML = document.documentElement.outerHTML;
   const timers = new Map();
+  // A video only reaches the network once the presenter asks for it.
+  const playing = new Set();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   const history = C.createHistory();
@@ -42,6 +44,7 @@
     editingSlideText = null,
     layersOpen = false,
     cropping = false,
+    presenting = false,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -81,6 +84,8 @@
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    present:
+      '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
     layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
     undo: '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a5.5 5.5 0 0 1 0 11h-2"/>',
     redo: '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a5.5 5.5 0 0 0 0 11h2"/>',
@@ -145,45 +150,51 @@
     const [a, b, c] = spectrumStops(hex);
     return `linear-gradient(125deg, ${a}, ${b} 48%, ${c})`;
   };
+  /* One row per backdrop, keyed exactly like the table in core. Adding a look
+     is a row here plus a CSS block — never a new branch on the render path. */
+  const spread = (slide, count, build) => {
+    const random = seeded(slide.id);
+    const round = (n) => n.toFixed(2);
+    return Array.from({ length: count }, () => build(random, round)).join("");
+  };
+  const BACKDROP_PARTS = {
+    plain: () => "",
+    arcs: () =>
+      '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>',
+    grid: () => '<div class="grid-plane"></div>',
+    aurora: () =>
+      [0, 1, 2].map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`).join(""),
+    rings: () =>
+      [0, 1, 2, 3].map((i) => `<div class="ring" style="--ring:${i}"></div>`).join(""),
+    beams: () => '<div class="beam-field"></div>',
+    halo: () => '<div class="halo"></div>',
+    mesh: () =>
+      [0, 1, 2, 3].map((i) => `<div class="mesh-blob" style="--mesh:${i}"></div>`).join(""),
+    waves: () =>
+      [0, 1, 2].map((i) => `<div class="wave" style="--wave:${i}"></div>`).join(""),
+    particles: (slide) =>
+      spread(
+        slide,
+        28,
+        (random, round) =>
+          `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`,
+      ),
+    stars: (slide) =>
+      spread(
+        slide,
+        74,
+        (random, round) =>
+          `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 92)}%;--s:${round(0.8 + random() * 2.2)}px;--delay:${round(random() * -9)}s;--twinkle:${round(3.4 + random() * 4.6)}s"></i>`,
+      ),
+    picture: (slide) =>
+      slide.backdropPicture
+        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
+        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>',
+  };
   function backdrop(slide) {
     const kind = slide.backdrop;
     if (kind === "plain") return "";
-    let inner = "";
-    if (kind === "arcs")
-      inner =
-        '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>';
-    else if (kind === "grid") inner = '<div class="grid-plane"></div>';
-    else if (kind === "aurora")
-      inner = [0, 1, 2]
-        .map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`)
-        .join("");
-    else if (kind === "rings")
-      inner = [0, 1, 2, 3]
-        .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
-        .join("");
-    else if (kind === "picture")
-      inner = slide.backdropPicture
-        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
-        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>';
-    else if (kind === "beams") inner = '<div class="beam-field"></div>';
-    else if (kind === "halo") inner = '<div class="halo"></div>';
-    else if (kind === "waves")
-      inner = [0, 1, 2]
-        .map((i) => `<div class="wave" style="--wave:${i}"></div>`)
-        .join("");
-    else if (kind === "stars") {
-      const random = seeded(slide.id);
-      inner = Array.from({ length: 74 }, () => {
-        const round = (n) => n.toFixed(2);
-        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 92)}%;--s:${round(0.8 + random() * 2.2)}px;--delay:${round(random() * -9)}s;--twinkle:${round(3.4 + random() * 4.6)}s"></i>`;
-      }).join("");
-    } else if (kind === "particles") {
-      const random = seeded(slide.id);
-      inner = Array.from({ length: 28 }, () => {
-        const round = (n) => n.toFixed(2);
-        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`;
-      }).join("");
-    }
+    const inner = BACKDROP_PARTS[kind]?.(slide) ?? "";
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
   // An imported ID is any string, so it is scrubbed before it becomes a
@@ -237,13 +248,27 @@
       );
     return svg(`<rect x="2" y="2" width="96" height="96" rx="8" ${common}/>`);
   };
+  const VISUAL_PARTS = {
+    accordion: (labels) =>
+      labels.map((label) => `<p><span>${esc(label)}</span></p>`).join(""),
+    glass: (labels) =>
+      `<i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span>`,
+    // A single breathing body: the model, the idea, the thing being talked about.
+    orb: (labels) =>
+      `<i class="orb-core"></i><i class="orb-sweep"></i><span>${esc(labels[0])}</span>`,
+    // Levels that keep moving: weights, probabilities, attention.
+    bars: (labels) =>
+      `<div class="bars-row">${Array.from({ length: 7 }, (_, i) => `<i style="--bar:${i}"></i>`).join("")}</div><span>${esc(labels[0])}</span>`,
+    // A tool window without a screenshot of one.
+    window: (labels) =>
+      `<header><i></i><i></i><i></i><b>${esc(labels[0])}</b></header><div class="window-body"><p>${esc(labels[1])}</p><p class="muted">${esc(labels[2])}</p></div>`,
+  };
   const visualMarkup = (object) => {
     const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
     const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
-    if (object.visual === "glass")
-      return `<div class="visual-component visual-glass${spectrum}" style="${style}" role="img" aria-label="משטח זכוכית נוזלית"><i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span></div>`;
-    return `<div class="visual-component visual-accordion${spectrum}" style="${style}" aria-label="כרטיס אקורדיון אינטראקטיבי">${labels.map((label) => `<p><span>${esc(label)}</span></p>`).join("")}</div>`;
+    const body = (VISUAL_PARTS[object.visual] ?? VISUAL_PARTS.accordion)(labels);
+    return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="img" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
   };
   const objectMarkup = (object, index) => {
     const selected = selectedObjectId === object.id;
@@ -294,7 +319,7 @@
   function renderObjectToolbar() {
     const toolbar = $("#object-toolbar");
     const object = currentObject();
-    if (!editing || !object) {
+    if (!editing || presenting || !object) {
       toolbar.hidden = true;
       toolbar.innerHTML = "";
       toolbar.dataset.toolbarObject = "";
@@ -640,6 +665,33 @@
       `<div class="scene timer-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide, slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
+  /* The slide shows its own poster until the presenter presses play. Nothing is
+     requested from YouTube or Drive before that, so the deck still opens — and
+     still looks like the deck — with no network at all. */
+  function videoSlide(slide, index) {
+    const video = C.videoEmbed(slide.url);
+    const started = video && playing.has(slide.id);
+    const poster = slide.poster
+      ? `<img class="video-still" src="${esc(slide.poster)}" alt="">`
+      : '<span class="video-still empty"></span>';
+    const offline = navigator.onLine === false;
+    let media;
+    if (started)
+      media = `<iframe class="video-embed" src="${esc(video.embed)}" title="${esc(slide.title || "סרטון")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    else if (video)
+      media = `<button class="video-poster" data-action="play-video" aria-label="הפעלת הסרטון">${poster}<span class="video-play">${icon("play")}</span>${offline ? '<span class="video-warning">אין כרגע חיבור לאינטרנט. הסרטון לא ייטען.</span>' : ""}</button>`;
+    else
+      media = `<div class="video-poster is-empty">${poster}<p class="image-placeholder">הדביקו קישור מיוטיוב או מגוגל דרייב בעורך.</p></div>`;
+    const title = visibleText(slide, "title");
+    const size = Math.min(6.5, 260 / ((slide.title || "xx").length + 2));
+    return frame(
+      slide,
+      index,
+      `video-slide ${started ? "is-playing" : ""}`,
+      `--headline-size:${size}cqw`,
+      `<div class="scene video-scene">${title ? `<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>` : ""}<div class="video-frame">${media}</div>${caption(slide, visibleText(slide, "caption"))}</div>`,
+    );
+  }
   function canvasSlide(slide, index) {
     return frame(
       slide,
@@ -665,6 +717,7 @@
     );
   }
   const SCENES = {
+    video: videoSlide,
     statement: statementSlide,
     demo: demoSlide,
     reveal: revealSlide,
@@ -805,6 +858,7 @@
     root.dataset.transition = slide.transition;
     const html = SCENES[slide.type](slide, state.slide, state.step);
     const sameSlide = renderedSlide === state.slide;
+    if (!sameSlide) playing.clear();
     const direction = state.slide < renderedSlide ? -1 : 1;
     root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
     const previous = root.lastElementChild;
@@ -1111,7 +1165,7 @@
   document.addEventListener("pointerdown", startFloaterDrag);
   function renderStageTools() {
     const tools = $("#stage-tools");
-    if (!editing) {
+    if (!editing || presenting) {
       tools.hidden = true;
       tools.innerHTML = "";
       return;
@@ -1186,6 +1240,24 @@
       removeSelectedObject();
     }
   });
+  /* Presentation mode is the deck alone: no toolbar, no dots, no editing
+     affordances, and a pointer that gets out of the way. Everything the
+     presenter drives it with — the keys, the notes, the blackout, the controls
+     that belong to a slide — keeps working. */
+  async function setPresenting(active) {
+    presenting = active;
+    document.body.classList.toggle("presenting", active);
+    $("#present").setAttribute("aria-pressed", String(active));
+    $("#exit-present").hidden = !active;
+    if (active) {
+      if (editing) setEditing(false);
+      $$("dialog[open]").forEach((dialog) => closeDialog(dialog));
+      setJumpOpen(false);
+      if (!document.fullscreenElement) await fullscreen();
+    } else if (document.fullscreenElement) await fullscreen();
+    render();
+    wake();
+  }
   function setEditing(active) {
     editing = active;
     document.body.classList.toggle("editing", active);
@@ -1234,6 +1306,8 @@
     value: "המספר",
     unit: "יחידה",
     picture: "התמונה",
+    url: "קישור לסרטון",
+    poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",
     alt: "תיאור לקורא מסך",
     heading: "הכותרת בצד",
@@ -1268,6 +1342,23 @@
           `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
       )
       .join("")}</select></label>`;
+  // One wording for the link's state, shown when the panel is built and again
+  // on every keystroke — a note that lags is worse than no note.
+  const videoNote = (value) => {
+    const video = C.videoEmbed(value);
+    if (!value.trim())
+      return { text: "אפשר להדביק קישור רגיל מיוטיוב או מגוגל דרייב.", bad: false };
+    return video
+      ? {
+          text: `זוהה ${C.VIDEO_SOURCES[video.source]}. השקף הזה צריך אינטרנט בזמן ההרצאה.`,
+          bad: false,
+        }
+      : { text: "הקישור לא זוהה. נתמכים יוטיוב וגוגל דרייב בלבד.", bad: true };
+  };
+  const videoField = (label, path, value, max) => {
+    const note = videoNote(value);
+    return `<label class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></label>`;
+  };
   const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
   const pictureField = (label, path, value) =>
     `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
@@ -1282,7 +1373,14 @@
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.picture
+        spec.video
+          ? videoField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+            )
+          : spec.picture
           ? pictureField(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -1577,8 +1675,26 @@
       $("#save-status").textContent = "השדה הריק עדיין לא נשמר.";
       return;
     }
-    input.setCustomValidity("");
     const path = input.dataset.field.split(".");
+    if (path[0] === "slides" && path.length === 3) {
+      const spec = C.fieldSpec(deck.slides[+path[1]], path[2]);
+      if (spec?.video) {
+        const note = videoNote(input.value);
+        const line = input.closest(".field")?.querySelector(".field-note");
+        if (line) {
+          line.textContent = note.text;
+          line.classList.toggle("bad", note.bad);
+        }
+        if (note.bad) {
+          input.setCustomValidity(
+            "קישור לא מזוהה. אפשר להדביק קישור מיוטיוב או מגוגל דרייב.",
+          );
+          $("#save-status").textContent = "הקישור עדיין לא נשמר.";
+          return;
+        }
+      }
+    }
+    input.setCustomValidity("");
     setPath(input.dataset.field, input.value);
     const token = `field:${input.dataset.field}:${editSession}`;
     if (path[0] === "slides" && path.length === 3) {
@@ -2375,7 +2491,11 @@
     const b = event.target.closest("[data-action]");
     if (!b) return;
     const action = b.dataset.action;
-    if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
+    if (action === "play-video") {
+      playing.add(deck.slides[state.slide].id);
+      b.blur();
+      render();
+    } else if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
     else if (action === "timer-toggle" || action === "timer-reset") {
       // Blur first: render restores focus by data-action, so a later blur is lost.
       b.blur();
@@ -2582,6 +2702,8 @@
     render();
     renderEditor();
   });
+  $("#present").addEventListener("click", () => setPresenting(!presenting));
+  $("#exit-present").addEventListener("click", () => setPresenting(false));
   $("#undo").addEventListener("click", () => stepHistory(-1));
   $("#redo").addEventListener("click", () => stepHistory(1));
   $("#appearance").addEventListener("click", () => openDialog("themes"));
@@ -2850,6 +2972,11 @@
         return;
       }
     }
+    if (e.key === "Escape" && presenting && !jumpOpen && !openDialog) {
+      e.preventDefault();
+      setPresenting(false);
+      return;
+    }
     if (e.key === "Escape" && jumpOpen) {
       e.preventDefault();
       setJumpOpen(false);
@@ -2897,6 +3024,9 @@
     } else if (["PageUp", "ArrowRight"].includes(e.key)) {
       e.preventDefault();
       act("prev");
+    } else if (e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      setPresenting(!presenting);
     } else if (e.key.toLowerCase() === "f") {
       e.preventDefault();
       fullscreen();
@@ -2919,6 +3049,7 @@
       newEditSession();
   });
   document.addEventListener("fullscreenchange", () => {
+    if (presenting && !document.fullscreenElement) setPresenting(false);
     $("#fullscreen").setAttribute(
       "aria-label",
       document.fullscreenElement ? "יציאה ממסך מלא" : "מסך מלא",

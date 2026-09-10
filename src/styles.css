@@ -354,6 +354,214 @@ p {
   text-align: center;
   text-wrap: balance;
 }
+/* A single breathing body — the model, the idea, the thing being pointed at. */
+.visual-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #ffffff59, transparent 42%),
+    radial-gradient(circle at 68% 74%, color-mix(in srgb, var(--visual-colour) 70%, black), transparent 58%),
+    var(--visual-colour);
+  box-shadow:
+    inset 0 -14% 28% color-mix(in srgb, var(--visual-secondary) 55%, transparent),
+    0 12% 18% -6% color-mix(in srgb, var(--visual-colour) 45%, transparent);
+  animation: orb-breathe 6.5s ease-in-out infinite alternate;
+}
+.visual-orb .orb-core {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffffffb0, transparent 60%);
+  filter: blur(6px);
+}
+.visual-orb .orb-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--visual-secondary) 80%, white) 90deg,
+    transparent 200deg
+  );
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: orb-turn 11s linear infinite;
+}
+.visual-orb span {
+  position: relative;
+  z-index: 1;
+  padding: 0 8%;
+  color: #0b0f12;
+  font-size: clamp(0.75rem, 2.4cqw, 2.1rem);
+  font-weight: 600;
+  text-align: center;
+}
+.visual-orb.is-spectrum {
+  background: var(--visual-gradient);
+}
+@keyframes orb-breathe {
+  to {
+    transform: scale(1.04);
+  }
+}
+@keyframes orb-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Levels that keep moving: weights, probabilities, attention. */
+.visual-bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6%;
+  padding: 6%;
+}
+.bars-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 3.5%;
+  flex: 1;
+  min-height: 0;
+}
+.bars-row i {
+  flex: 1;
+  border-radius: 999px 999px 4px 4px;
+  background: var(--visual-colour);
+  transform-origin: bottom;
+  animation: bar-rise 2.6s ease-in-out infinite alternate;
+  animation-delay: calc(var(--bar) * -0.42s);
+  height: 100%;
+  transform: scaleY(0.3);
+}
+.visual-bars.is-spectrum .bars-row i {
+  background: var(--visual-gradient);
+}
+.visual-bars span {
+  color: var(--visual-colour);
+  font-size: clamp(0.7rem, 1.9cqw, 1.5rem);
+  text-align: center;
+}
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0.22);
+    opacity: 0.55;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* A tool window, without a screenshot of one. */
+.visual-window {
+  display: flex;
+  flex-direction: column;
+  gap: 3%;
+  padding: 0 0 4%;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--visual-colour) 45%, transparent);
+  background: var(--visual-secondary);
+  overflow: hidden;
+}
+.visual-window header {
+  display: flex;
+  align-items: center;
+  gap: 2%;
+  padding: 3% 4%;
+  background: color-mix(in srgb, var(--visual-colour) 14%, var(--visual-secondary));
+  border-bottom: 1px solid color-mix(in srgb, var(--visual-colour) 30%, transparent);
+}
+.visual-window header i {
+  width: clamp(6px, 1.1cqw, 11px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--visual-colour) 55%, transparent);
+}
+.visual-window header b {
+  margin-inline-start: 4%;
+  color: var(--visual-colour);
+  font-size: clamp(0.7rem, 1.7cqw, 1.3rem);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.window-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3%;
+  overflow: hidden;
+}
+.visual-window p {
+  margin: 0 5%;
+  color: color-mix(in srgb, var(--visual-colour) 80%, white);
+  font-size: clamp(0.72rem, 1.8cqw, 1.4rem);
+  line-height: 1.35;
+}
+.visual-window p.muted {
+  opacity: 0.6;
+}
+.visual-window.is-spectrum header {
+  background: var(--visual-gradient);
+}
+.visual-window.is-spectrum header b {
+  color: #10171e;
+}
+
+/* A slow mesh of colour — large, quiet, and never the subject of the slide. */
+.backdrop-mesh {
+  overflow: hidden;
+}
+.mesh-blob {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 46% 54% 58% 42% / 52% 46% 54% 48%;
+  filter: blur(64px);
+  opacity: 0.5;
+  background: rgb(var(--accent-rgb));
+  animation: mesh-drift calc(26s + var(--mesh) * 5s) ease-in-out infinite
+    alternate;
+  animation-delay: calc(var(--mesh) * -7s);
+}
+.mesh-blob:nth-child(1) {
+  top: -18%;
+  inset-inline-start: -12%;
+}
+.mesh-blob:nth-child(2) {
+  bottom: -24%;
+  inset-inline-end: -14%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 62%, #7b5cff);
+  opacity: 0.44;
+}
+.mesh-blob:nth-child(3) {
+  top: 18%;
+  inset-inline-end: 6%;
+  width: 44%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #ff7bb0);
+  opacity: 0.34;
+}
+.mesh-blob:nth-child(4) {
+  bottom: 4%;
+  inset-inline-start: 14%;
+  width: 38%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 70%, white);
+  opacity: 0.36;
+}
+@keyframes mesh-drift {
+  to {
+    transform: translate3d(6%, -5%, 0) scale(1.12) rotate(12deg);
+  }
+}
+
 /* The colourful fill is the object's own colour swept through a gradient, the
    same idea as the colourful text. */
 .visual-component.is-spectrum {
@@ -627,6 +835,100 @@ p {
   padding: 0;
   border: 0;
   background: transparent;
+}
+/* A video slide: the poster is the slide until the presenter presses play. */
+.video-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.2cqh;
+  width: 100%;
+  height: 100%;
+  padding: 4cqh 5cqw;
+}
+.video-frame {
+  position: relative;
+  width: min(100%, 148cqh);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #000;
+  box-shadow: 0 30px 90px #0006;
+}
+.video-embed,
+.video-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: #000;
+}
+.video-poster {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.video-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.video-still.empty {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(var(--accent-rgb), 0.16), transparent 62%),
+    var(--soft);
+}
+.video-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 12cqh;
+  height: 12cqh;
+  min-width: 54px;
+  min-height: 54px;
+  border-radius: 50%;
+  color: #0b0f12;
+  background: color-mix(in srgb, var(--accent) 92%, white);
+  box-shadow: 0 10px 40px #0007;
+  transition: transform 0.25s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+.video-poster:hover .video-play {
+  transform: scale(1.08);
+}
+.video-play svg {
+  width: 45%;
+  height: 45%;
+  margin-inline-start: 6%;
+}
+.video-warning {
+  position: absolute;
+  bottom: 8%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #000000a8;
+  color: #ffd9a0;
+  font-size: clamp(0.7rem, 1.5cqw, 0.95rem);
+}
+.video-poster.is-empty {
+  cursor: default;
+}
+.video-field input {
+  direction: ltr;
+  text-align: left;
+}
+.field-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.field-note.bad {
+  color: #f0a5a2;
 }
 .canvas-empty {
   color: var(--muted);
@@ -2002,6 +2304,44 @@ h1 {
 }
 .controls-idle .keyboard-hint {
   opacity: 0;
+}
+/* Presentation mode: the deck and nothing else. The controls that belong to a
+   slide stay, because the presenter drives the talk with them. */
+.presenting .toolbar,
+.presenting .stage-footer,
+.presenting .keyboard-hint,
+.presenting .stage-tools,
+.presenting .object-toolbar,
+.presenting .layers-panel {
+  display: none !important;
+}
+.presenting .stage {
+  border-color: transparent;
+}
+.presenting.controls-idle {
+  cursor: none;
+}
+.exit-present {
+  position: fixed;
+  z-index: 20;
+  bottom: 14px;
+  inset-inline-start: 14px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--raised) 88%, transparent);
+  color: var(--muted);
+  font-size: 0.74rem;
+  opacity: 0.75;
+  transition: opacity 0.3s;
+}
+.exit-present:hover {
+  opacity: 1;
+  color: var(--text);
+}
+.controls-idle .exit-present {
+  opacity: 0;
+  pointer-events: none;
 }
 .theater:fullscreen {
   padding: 0;

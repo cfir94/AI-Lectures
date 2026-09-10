@@ -363,6 +363,214 @@ p {
   text-align: center;
   text-wrap: balance;
 }
+/* A single breathing body — the model, the idea, the thing being pointed at. */
+.visual-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #ffffff59, transparent 42%),
+    radial-gradient(circle at 68% 74%, color-mix(in srgb, var(--visual-colour) 70%, black), transparent 58%),
+    var(--visual-colour);
+  box-shadow:
+    inset 0 -14% 28% color-mix(in srgb, var(--visual-secondary) 55%, transparent),
+    0 12% 18% -6% color-mix(in srgb, var(--visual-colour) 45%, transparent);
+  animation: orb-breathe 6.5s ease-in-out infinite alternate;
+}
+.visual-orb .orb-core {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffffffb0, transparent 60%);
+  filter: blur(6px);
+}
+.visual-orb .orb-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--visual-secondary) 80%, white) 90deg,
+    transparent 200deg
+  );
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: orb-turn 11s linear infinite;
+}
+.visual-orb span {
+  position: relative;
+  z-index: 1;
+  padding: 0 8%;
+  color: #0b0f12;
+  font-size: clamp(0.75rem, 2.4cqw, 2.1rem);
+  font-weight: 600;
+  text-align: center;
+}
+.visual-orb.is-spectrum {
+  background: var(--visual-gradient);
+}
+@keyframes orb-breathe {
+  to {
+    transform: scale(1.04);
+  }
+}
+@keyframes orb-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Levels that keep moving: weights, probabilities, attention. */
+.visual-bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6%;
+  padding: 6%;
+}
+.bars-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 3.5%;
+  flex: 1;
+  min-height: 0;
+}
+.bars-row i {
+  flex: 1;
+  border-radius: 999px 999px 4px 4px;
+  background: var(--visual-colour);
+  transform-origin: bottom;
+  animation: bar-rise 2.6s ease-in-out infinite alternate;
+  animation-delay: calc(var(--bar) * -0.42s);
+  height: 100%;
+  transform: scaleY(0.3);
+}
+.visual-bars.is-spectrum .bars-row i {
+  background: var(--visual-gradient);
+}
+.visual-bars span {
+  color: var(--visual-colour);
+  font-size: clamp(0.7rem, 1.9cqw, 1.5rem);
+  text-align: center;
+}
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0.22);
+    opacity: 0.55;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* A tool window, without a screenshot of one. */
+.visual-window {
+  display: flex;
+  flex-direction: column;
+  gap: 3%;
+  padding: 0 0 4%;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--visual-colour) 45%, transparent);
+  background: var(--visual-secondary);
+  overflow: hidden;
+}
+.visual-window header {
+  display: flex;
+  align-items: center;
+  gap: 2%;
+  padding: 3% 4%;
+  background: color-mix(in srgb, var(--visual-colour) 14%, var(--visual-secondary));
+  border-bottom: 1px solid color-mix(in srgb, var(--visual-colour) 30%, transparent);
+}
+.visual-window header i {
+  width: clamp(6px, 1.1cqw, 11px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--visual-colour) 55%, transparent);
+}
+.visual-window header b {
+  margin-inline-start: 4%;
+  color: var(--visual-colour);
+  font-size: clamp(0.7rem, 1.7cqw, 1.3rem);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.window-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3%;
+  overflow: hidden;
+}
+.visual-window p {
+  margin: 0 5%;
+  color: color-mix(in srgb, var(--visual-colour) 80%, white);
+  font-size: clamp(0.72rem, 1.8cqw, 1.4rem);
+  line-height: 1.35;
+}
+.visual-window p.muted {
+  opacity: 0.6;
+}
+.visual-window.is-spectrum header {
+  background: var(--visual-gradient);
+}
+.visual-window.is-spectrum header b {
+  color: #10171e;
+}
+
+/* A slow mesh of colour — large, quiet, and never the subject of the slide. */
+.backdrop-mesh {
+  overflow: hidden;
+}
+.mesh-blob {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 46% 54% 58% 42% / 52% 46% 54% 48%;
+  filter: blur(64px);
+  opacity: 0.5;
+  background: rgb(var(--accent-rgb));
+  animation: mesh-drift calc(26s + var(--mesh) * 5s) ease-in-out infinite
+    alternate;
+  animation-delay: calc(var(--mesh) * -7s);
+}
+.mesh-blob:nth-child(1) {
+  top: -18%;
+  inset-inline-start: -12%;
+}
+.mesh-blob:nth-child(2) {
+  bottom: -24%;
+  inset-inline-end: -14%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 62%, #7b5cff);
+  opacity: 0.44;
+}
+.mesh-blob:nth-child(3) {
+  top: 18%;
+  inset-inline-end: 6%;
+  width: 44%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #ff7bb0);
+  opacity: 0.34;
+}
+.mesh-blob:nth-child(4) {
+  bottom: 4%;
+  inset-inline-start: 14%;
+  width: 38%;
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 70%, white);
+  opacity: 0.36;
+}
+@keyframes mesh-drift {
+  to {
+    transform: translate3d(6%, -5%, 0) scale(1.12) rotate(12deg);
+  }
+}
+
 /* The colourful fill is the object's own colour swept through a gradient, the
    same idea as the colourful text. */
 .visual-component.is-spectrum {
@@ -636,6 +844,100 @@ p {
   padding: 0;
   border: 0;
   background: transparent;
+}
+/* A video slide: the poster is the slide until the presenter presses play. */
+.video-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.2cqh;
+  width: 100%;
+  height: 100%;
+  padding: 4cqh 5cqw;
+}
+.video-frame {
+  position: relative;
+  width: min(100%, 148cqh);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #000;
+  box-shadow: 0 30px 90px #0006;
+}
+.video-embed,
+.video-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: #000;
+}
+.video-poster {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.video-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.video-still.empty {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(var(--accent-rgb), 0.16), transparent 62%),
+    var(--soft);
+}
+.video-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 12cqh;
+  height: 12cqh;
+  min-width: 54px;
+  min-height: 54px;
+  border-radius: 50%;
+  color: #0b0f12;
+  background: color-mix(in srgb, var(--accent) 92%, white);
+  box-shadow: 0 10px 40px #0007;
+  transition: transform 0.25s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+.video-poster:hover .video-play {
+  transform: scale(1.08);
+}
+.video-play svg {
+  width: 45%;
+  height: 45%;
+  margin-inline-start: 6%;
+}
+.video-warning {
+  position: absolute;
+  bottom: 8%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #000000a8;
+  color: #ffd9a0;
+  font-size: clamp(0.7rem, 1.5cqw, 0.95rem);
+}
+.video-poster.is-empty {
+  cursor: default;
+}
+.video-field input {
+  direction: ltr;
+  text-align: left;
+}
+.field-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.field-note.bad {
+  color: #f0a5a2;
 }
 .canvas-empty {
   color: var(--muted);
@@ -2012,6 +2314,44 @@ h1 {
 .controls-idle .keyboard-hint {
   opacity: 0;
 }
+/* Presentation mode: the deck and nothing else. The controls that belong to a
+   slide stay, because the presenter drives the talk with them. */
+.presenting .toolbar,
+.presenting .stage-footer,
+.presenting .keyboard-hint,
+.presenting .stage-tools,
+.presenting .object-toolbar,
+.presenting .layers-panel {
+  display: none !important;
+}
+.presenting .stage {
+  border-color: transparent;
+}
+.presenting.controls-idle {
+  cursor: none;
+}
+.exit-present {
+  position: fixed;
+  z-index: 20;
+  bottom: 14px;
+  inset-inline-start: 14px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--raised) 88%, transparent);
+  color: var(--muted);
+  font-size: 0.74rem;
+  opacity: 0.75;
+  transition: opacity 0.3s;
+}
+.exit-present:hover {
+  opacity: 1;
+  color: var(--text);
+}
+.controls-idle .exit-present {
+  opacity: 0;
+  pointer-events: none;
+}
 .theater:fullscreen {
   padding: 0;
   background: var(--surface);
@@ -2951,11 +3291,13 @@ kbd {
       <button id="deck" class="tool-button" title="כל השקפים · סדר ותוכן"><span data-icon="note"></span><span>שקפים</span></button>
       <button id="appearance" class="tool-button" title="בחירת צבעים"><span data-icon="palette"></span><span>עיצוב</span></button>
       <span class="toolbar-divider"></span>
+      <button id="present" class="tool-button" title="מצב הצגה · P"><span data-icon="present"></span><span>הצגה</span></button>
       <button id="fullscreen" class="icon-button" aria-label="מסך מלא" title="מסך מלא · F"><span data-icon="expand"></span></button>
       <button id="help" class="icon-button" aria-label="מקשי קיצור ועזרה" title="מקשי קיצור"><span data-icon="keyboard"></span></button>
     </nav>
     <div id="slide-jump" class="slide-jump" role="listbox" aria-label="קפיצה לשקף" hidden></div>
     <p class="keyboard-hint" id="keyboard-hint">רווח להתקדמות</p>
+    <button id="exit-present" class="exit-present" hidden>יציאה ממצב הצגה · Esc</button>
   </main>
   <dialog id="editor" class="editor" aria-labelledby="editor-title">
     <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">כל השקפים</h2></div><div class="editor-top-actions"><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div></div>
@@ -2964,7 +3306,7 @@ kbd {
   </dialog>
   <dialog id="drafts" class="small-dialog drafts-dialog" aria-labelledby="drafts-title"><div class="dialog-top"><h2 id="drafts-title">המצגות שלך</h2><button class="icon-button" data-close="drafts" aria-label="סגירת הטיוטות"><span data-icon="close"></span></button></div><p>טיוטה נשמרת בדפדפן הזה. כדי לשמור עותק שלא תלוי בדפדפן — הורד אותה כקובץ.</p><form id="draft-save" class="draft-save"><label class="field"><span class="field-head"><span>שם הטיוטה</span></span><input type="text" id="draft-name" maxlength="60" placeholder="למשל: גרסה לסדנה של יוני" required></label><button class="primary-button" type="submit" id="draft-store">שמירת המצב הנוכחי</button></form><div id="draft-list" class="draft-list"></div><p id="draft-status" class="draft-status" role="status"></p></dialog>
   <dialog id="themes" class="small-dialog" aria-labelledby="themes-title"><div class="dialog-top"><h2 id="themes-title">אותה במה. אווירה אחרת.</h2><button class="icon-button" data-close="themes" aria-label="סגירת עיצוב"><span data-icon="close"></span></button></div><p>בחר צבעים שמתאימים לך ולחלל. מעבר בין שקפים נבחר בנפרד בתוך כל שקף בעורך.</p><div class="theme-options" id="theme-options"></div></dialog>
-  <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>הערות המרצה</dt><dd><kbd>N</kbd></dd></div><div><dt>ביטול / ביצוע חוזר</dt><dd><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></dd></div><div><dt>מחיקת אובייקט נבחר</dt><dd><kbd>Delete</kbd></dd></div><div><dt>החשכת המסך</dt><dd><kbd>B</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
+  <dialog id="shortcuts" class="small-dialog" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">הבמה בידיים שלך</h2><button class="icon-button" data-close="shortcuts" aria-label="סגירת עזרה"><span data-icon="close"></span></button></div><dl class="shortcuts"><div><dt>הצעד הבא</dt><dd><kbd>Space</kbd> / <kbd>←</kbd> / <kbd>Page Down</kbd></dd></div><div><dt>הצעד הקודם</dt><dd><kbd>→</kbd> / <kbd>Page Up</kbd></dd></div><div><dt>מצב הצגה</dt><dd><kbd>P</kbd></dd></div><div><dt>מסך מלא</dt><dd><kbd>F</kbd></dd></div><div><dt>הערות המרצה</dt><dd><kbd>N</kbd></dd></div><div><dt>ביטול / ביצוע חוזר</dt><dd><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></dd></div><div><dt>מחיקת אובייקט נבחר</dt><dd><kbd>Delete</kbd></dd></div><div><dt>החשכת המסך</dt><dd><kbd>B</kbd></dd></div><div><dt>יציאה / סגירה</dt><dd><kbd>Esc</kbd></dd></div></dl><p>ההמחשות עובדות גם בלי אינטרנט. זו הדמיה — אין כאן חיבור לכלי AI או ביצוע פעולות חיצוניות.</p></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
@@ -3003,6 +3345,41 @@ kbd {
     webp: ["UklGR"],
     gif: ["R0lGOD"],
   };
+  /* A video lives on someone else's server, so only two of them are allowed and
+     only the video's own ID is taken from what the presenter pastes. The embed
+     address is built here from that ID — a pasted URL never reaches an iframe,
+     which is the whole point. */
+  const VIDEO_SOURCES = { youtube: "יוטיוב", drive: "גוגל דרייב" };
+  const VIDEO_ID = /^[A-Za-z0-9_-]{6,64}$/;
+  const VIDEO_PATTERNS = [
+    [/^https?:\/\/(?:www\.)?youtube\.com\/watch\?(?:[^#]*&)?v=([^&#]+)/i, "youtube"],
+    [/^https?:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/(?:embed|v|shorts|live)\/([^?&#/]+)/i, "youtube"],
+    [/^https?:\/\/youtu\.be\/([^?&#/]+)/i, "youtube"],
+    [/^https?:\/\/(?:drive|docs)\.google\.com\/file\/d\/([^?&#/]+)/i, "drive"],
+    [/^https?:\/\/drive\.google\.com\/open\?(?:[^#]*&)?id=([^&#]+)/i, "drive"],
+  ];
+  function videoEmbed(url) {
+    if (typeof url !== "string") return null;
+    const clean = url.trim();
+    for (const [pattern, source] of VIDEO_PATTERNS) {
+      const found = clean.match(pattern);
+      if (!found || !VIDEO_ID.test(found[1])) continue;
+      const id = found[1];
+      return {
+        source,
+        id,
+        embed:
+          source === "youtube"
+            ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&autoplay=1`
+            : `https://drive.google.com/file/d/${id}/preview`,
+        watch:
+          source === "youtube"
+            ? `https://youtu.be/${id}`
+            : `https://drive.google.com/file/d/${id}/view`,
+      };
+    }
+    return null;
+  }
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const serializedBytes = (value) =>
     new TextEncoder().encode(JSON.stringify(value)).byteLength;
@@ -3036,6 +3413,9 @@ kbd {
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
     glass: "זכוכית נוזלית",
+    orb: "כדור זוהר",
+    bars: "עמודות חיות",
+    window: "חלון כלי",
   };
   /* Fill styles work like the text ones: a key CSS hooks onto and a Hebrew
      name. A visual has no outline state, so it gets the shorter table. */
@@ -3097,6 +3477,7 @@ kbd {
     waves: "גלים",
     halo: "הילה",
     stars: "שדה כוכבים",
+    mesh: "מרחב צבע",
     picture: "תמונה משלך",
     plain: "רקע נקי",
   };
@@ -3210,6 +3591,17 @@ kbd {
       },
       beats: () => 1,
     },
+    video: {
+      label: "סרטון",
+      hint: "סרטון מיוטיוב או מגוגל דרייב. השקף הזה — ורק הוא — צריך אינטרנט בזמן ההרצאה, אז שמרו תמונת פוסטר שתוצג עד הלחיצה על ההפעלה וגם אם אין רשת.",
+      fields: {
+        url: { max: 300, required: false, video: true },
+        poster: picture(),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
     canvas: {
       label: "במה חופשית",
       hint: "שקף ריק עם תיבות טקסט, תמונות וצורות שאפשר למקם ולשנות ישירות על הבמה.",
@@ -3254,6 +3646,7 @@ kbd {
       ],
     },
     timer: { minutes: "10", title: "", caption: "" },
+    video: { url: "", poster: "", title: "", caption: "" },
     canvas: { objects: [] },
     experiment: { title: "הנה הצעה." },
   };
@@ -3390,6 +3783,13 @@ kbd {
             fail();
         }
         return value;
+      }
+      if (spec.video) {
+        const value = v ?? "";
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        // Empty is a slide waiting for its link; anything else must resolve.
+        if (value.trim() && !videoEmbed(value)) fail();
+        return value.trim();
       }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
@@ -3714,6 +4114,8 @@ kbd {
     THEMES,
     LIMITS,
     SLIDE_TYPES,
+    VIDEO_SOURCES,
+    videoEmbed,
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
@@ -3773,6 +4175,8 @@ kbd {
     );
   const initialHTML = document.documentElement.outerHTML;
   const timers = new Map();
+  // A video only reaches the network once the presenter asks for it.
+  const playing = new Set();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   const history = C.createHistory();
@@ -3798,6 +4202,7 @@ kbd {
     editingSlideText = null,
     layersOpen = false,
     cropping = false,
+    presenting = false,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -3837,6 +4242,8 @@ kbd {
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    present:
+      '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
     layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
     undo: '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a5.5 5.5 0 0 1 0 11h-2"/>',
     redo: '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a5.5 5.5 0 0 0 0 11h2"/>',
@@ -3901,45 +4308,51 @@ kbd {
     const [a, b, c] = spectrumStops(hex);
     return `linear-gradient(125deg, ${a}, ${b} 48%, ${c})`;
   };
+  /* One row per backdrop, keyed exactly like the table in core. Adding a look
+     is a row here plus a CSS block — never a new branch on the render path. */
+  const spread = (slide, count, build) => {
+    const random = seeded(slide.id);
+    const round = (n) => n.toFixed(2);
+    return Array.from({ length: count }, () => build(random, round)).join("");
+  };
+  const BACKDROP_PARTS = {
+    plain: () => "",
+    arcs: () =>
+      '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>',
+    grid: () => '<div class="grid-plane"></div>',
+    aurora: () =>
+      [0, 1, 2].map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`).join(""),
+    rings: () =>
+      [0, 1, 2, 3].map((i) => `<div class="ring" style="--ring:${i}"></div>`).join(""),
+    beams: () => '<div class="beam-field"></div>',
+    halo: () => '<div class="halo"></div>',
+    mesh: () =>
+      [0, 1, 2, 3].map((i) => `<div class="mesh-blob" style="--mesh:${i}"></div>`).join(""),
+    waves: () =>
+      [0, 1, 2].map((i) => `<div class="wave" style="--wave:${i}"></div>`).join(""),
+    particles: (slide) =>
+      spread(
+        slide,
+        28,
+        (random, round) =>
+          `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`,
+      ),
+    stars: (slide) =>
+      spread(
+        slide,
+        74,
+        (random, round) =>
+          `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 92)}%;--s:${round(0.8 + random() * 2.2)}px;--delay:${round(random() * -9)}s;--twinkle:${round(3.4 + random() * 4.6)}s"></i>`,
+      ),
+    picture: (slide) =>
+      slide.backdropPicture
+        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
+        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>',
+  };
   function backdrop(slide) {
     const kind = slide.backdrop;
     if (kind === "plain") return "";
-    let inner = "";
-    if (kind === "arcs")
-      inner =
-        '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>';
-    else if (kind === "grid") inner = '<div class="grid-plane"></div>';
-    else if (kind === "aurora")
-      inner = [0, 1, 2]
-        .map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`)
-        .join("");
-    else if (kind === "rings")
-      inner = [0, 1, 2, 3]
-        .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
-        .join("");
-    else if (kind === "picture")
-      inner = slide.backdropPicture
-        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
-        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>';
-    else if (kind === "beams") inner = '<div class="beam-field"></div>';
-    else if (kind === "halo") inner = '<div class="halo"></div>';
-    else if (kind === "waves")
-      inner = [0, 1, 2]
-        .map((i) => `<div class="wave" style="--wave:${i}"></div>`)
-        .join("");
-    else if (kind === "stars") {
-      const random = seeded(slide.id);
-      inner = Array.from({ length: 74 }, () => {
-        const round = (n) => n.toFixed(2);
-        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 92)}%;--s:${round(0.8 + random() * 2.2)}px;--delay:${round(random() * -9)}s;--twinkle:${round(3.4 + random() * 4.6)}s"></i>`;
-      }).join("");
-    } else if (kind === "particles") {
-      const random = seeded(slide.id);
-      inner = Array.from({ length: 28 }, () => {
-        const round = (n) => n.toFixed(2);
-        return `<i style="--x:${round(random() * 100)}%;--y:${round(random() * 100)}%;--s:${round(1 + random() * 2.4)}px;--delay:${round(random() * -7)}s;--drift:${round(6 + random() * 6)}s"></i>`;
-      }).join("");
-    }
+    const inner = BACKDROP_PARTS[kind]?.(slide) ?? "";
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
   // An imported ID is any string, so it is scrubbed before it becomes a
@@ -3993,13 +4406,27 @@ kbd {
       );
     return svg(`<rect x="2" y="2" width="96" height="96" rx="8" ${common}/>`);
   };
+  const VISUAL_PARTS = {
+    accordion: (labels) =>
+      labels.map((label) => `<p><span>${esc(label)}</span></p>`).join(""),
+    glass: (labels) =>
+      `<i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span>`,
+    // A single breathing body: the model, the idea, the thing being talked about.
+    orb: (labels) =>
+      `<i class="orb-core"></i><i class="orb-sweep"></i><span>${esc(labels[0])}</span>`,
+    // Levels that keep moving: weights, probabilities, attention.
+    bars: (labels) =>
+      `<div class="bars-row">${Array.from({ length: 7 }, (_, i) => `<i style="--bar:${i}"></i>`).join("")}</div><span>${esc(labels[0])}</span>`,
+    // A tool window without a screenshot of one.
+    window: (labels) =>
+      `<header><i></i><i></i><i></i><b>${esc(labels[0])}</b></header><div class="window-body"><p>${esc(labels[1])}</p><p class="muted">${esc(labels[2])}</p></div>`,
+  };
   const visualMarkup = (object) => {
     const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
     const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
-    if (object.visual === "glass")
-      return `<div class="visual-component visual-glass${spectrum}" style="${style}" role="img" aria-label="משטח זכוכית נוזלית"><i></i><span>${esc(labels.filter(Boolean).join(" · "))}</span></div>`;
-    return `<div class="visual-component visual-accordion${spectrum}" style="${style}" aria-label="כרטיס אקורדיון אינטראקטיבי">${labels.map((label) => `<p><span>${esc(label)}</span></p>`).join("")}</div>`;
+    const body = (VISUAL_PARTS[object.visual] ?? VISUAL_PARTS.accordion)(labels);
+    return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="img" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
   };
   const objectMarkup = (object, index) => {
     const selected = selectedObjectId === object.id;
@@ -4050,7 +4477,7 @@ kbd {
   function renderObjectToolbar() {
     const toolbar = $("#object-toolbar");
     const object = currentObject();
-    if (!editing || !object) {
+    if (!editing || presenting || !object) {
       toolbar.hidden = true;
       toolbar.innerHTML = "";
       toolbar.dataset.toolbarObject = "";
@@ -4396,6 +4823,33 @@ kbd {
       `<div class="scene timer-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide, slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
+  /* The slide shows its own poster until the presenter presses play. Nothing is
+     requested from YouTube or Drive before that, so the deck still opens — and
+     still looks like the deck — with no network at all. */
+  function videoSlide(slide, index) {
+    const video = C.videoEmbed(slide.url);
+    const started = video && playing.has(slide.id);
+    const poster = slide.poster
+      ? `<img class="video-still" src="${esc(slide.poster)}" alt="">`
+      : '<span class="video-still empty"></span>';
+    const offline = navigator.onLine === false;
+    let media;
+    if (started)
+      media = `<iframe class="video-embed" src="${esc(video.embed)}" title="${esc(slide.title || "סרטון")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    else if (video)
+      media = `<button class="video-poster" data-action="play-video" aria-label="הפעלת הסרטון">${poster}<span class="video-play">${icon("play")}</span>${offline ? '<span class="video-warning">אין כרגע חיבור לאינטרנט. הסרטון לא ייטען.</span>' : ""}</button>`;
+    else
+      media = `<div class="video-poster is-empty">${poster}<p class="image-placeholder">הדביקו קישור מיוטיוב או מגוגל דרייב בעורך.</p></div>`;
+    const title = visibleText(slide, "title");
+    const size = Math.min(6.5, 260 / ((slide.title || "xx").length + 2));
+    return frame(
+      slide,
+      index,
+      `video-slide ${started ? "is-playing" : ""}`,
+      `--headline-size:${size}cqw`,
+      `<div class="scene video-scene">${title ? `<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>` : ""}<div class="video-frame">${media}</div>${caption(slide, visibleText(slide, "caption"))}</div>`,
+    );
+  }
   function canvasSlide(slide, index) {
     return frame(
       slide,
@@ -4421,6 +4875,7 @@ kbd {
     );
   }
   const SCENES = {
+    video: videoSlide,
     statement: statementSlide,
     demo: demoSlide,
     reveal: revealSlide,
@@ -4561,6 +5016,7 @@ kbd {
     root.dataset.transition = slide.transition;
     const html = SCENES[slide.type](slide, state.slide, state.step);
     const sameSlide = renderedSlide === state.slide;
+    if (!sameSlide) playing.clear();
     const direction = state.slide < renderedSlide ? -1 : 1;
     root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
     const previous = root.lastElementChild;
@@ -4867,7 +5323,7 @@ kbd {
   document.addEventListener("pointerdown", startFloaterDrag);
   function renderStageTools() {
     const tools = $("#stage-tools");
-    if (!editing) {
+    if (!editing || presenting) {
       tools.hidden = true;
       tools.innerHTML = "";
       return;
@@ -4942,6 +5398,24 @@ kbd {
       removeSelectedObject();
     }
   });
+  /* Presentation mode is the deck alone: no toolbar, no dots, no editing
+     affordances, and a pointer that gets out of the way. Everything the
+     presenter drives it with — the keys, the notes, the blackout, the controls
+     that belong to a slide — keeps working. */
+  async function setPresenting(active) {
+    presenting = active;
+    document.body.classList.toggle("presenting", active);
+    $("#present").setAttribute("aria-pressed", String(active));
+    $("#exit-present").hidden = !active;
+    if (active) {
+      if (editing) setEditing(false);
+      $$("dialog[open]").forEach((dialog) => closeDialog(dialog));
+      setJumpOpen(false);
+      if (!document.fullscreenElement) await fullscreen();
+    } else if (document.fullscreenElement) await fullscreen();
+    render();
+    wake();
+  }
   function setEditing(active) {
     editing = active;
     document.body.classList.toggle("editing", active);
@@ -4990,6 +5464,8 @@ kbd {
     value: "המספר",
     unit: "יחידה",
     picture: "התמונה",
+    url: "קישור לסרטון",
+    poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",
     alt: "תיאור לקורא מסך",
     heading: "הכותרת בצד",
@@ -5024,6 +5500,23 @@ kbd {
           `<option value="${key}" ${key === value ? "selected" : ""}>${esc(name)}</option>`,
       )
       .join("")}</select></label>`;
+  // One wording for the link's state, shown when the panel is built and again
+  // on every keystroke — a note that lags is worse than no note.
+  const videoNote = (value) => {
+    const video = C.videoEmbed(value);
+    if (!value.trim())
+      return { text: "אפשר להדביק קישור רגיל מיוטיוב או מגוגל דרייב.", bad: false };
+    return video
+      ? {
+          text: `זוהה ${C.VIDEO_SOURCES[video.source]}. השקף הזה צריך אינטרנט בזמן ההרצאה.`,
+          bad: false,
+        }
+      : { text: "הקישור לא זוהה. נתמכים יוטיוב וגוגל דרייב בלבד.", bad: true };
+  };
+  const videoField = (label, path, value, max) => {
+    const note = videoNote(value);
+    return `<label class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></label>`;
+  };
   const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
   const pictureField = (label, path, value) =>
     `<div class="field picture-field"><span class="field-head"><span>${label}</span><small>${value ? weight(value) : "אין תמונה"}</small></span>${
@@ -5038,7 +5531,14 @@ kbd {
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
-        spec.picture
+        spec.video
+          ? videoField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.max,
+            )
+          : spec.picture
           ? pictureField(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
@@ -5333,8 +5833,26 @@ kbd {
       $("#save-status").textContent = "השדה הריק עדיין לא נשמר.";
       return;
     }
-    input.setCustomValidity("");
     const path = input.dataset.field.split(".");
+    if (path[0] === "slides" && path.length === 3) {
+      const spec = C.fieldSpec(deck.slides[+path[1]], path[2]);
+      if (spec?.video) {
+        const note = videoNote(input.value);
+        const line = input.closest(".field")?.querySelector(".field-note");
+        if (line) {
+          line.textContent = note.text;
+          line.classList.toggle("bad", note.bad);
+        }
+        if (note.bad) {
+          input.setCustomValidity(
+            "קישור לא מזוהה. אפשר להדביק קישור מיוטיוב או מגוגל דרייב.",
+          );
+          $("#save-status").textContent = "הקישור עדיין לא נשמר.";
+          return;
+        }
+      }
+    }
+    input.setCustomValidity("");
     setPath(input.dataset.field, input.value);
     const token = `field:${input.dataset.field}:${editSession}`;
     if (path[0] === "slides" && path.length === 3) {
@@ -6131,7 +6649,11 @@ kbd {
     const b = event.target.closest("[data-action]");
     if (!b) return;
     const action = b.dataset.action;
-    if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
+    if (action === "play-video") {
+      playing.add(deck.slides[state.slide].id);
+      b.blur();
+      render();
+    } else if (action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
     else if (action === "timer-toggle" || action === "timer-reset") {
       // Blur first: render restores focus by data-action, so a later blur is lost.
       b.blur();
@@ -6338,6 +6860,8 @@ kbd {
     render();
     renderEditor();
   });
+  $("#present").addEventListener("click", () => setPresenting(!presenting));
+  $("#exit-present").addEventListener("click", () => setPresenting(false));
   $("#undo").addEventListener("click", () => stepHistory(-1));
   $("#redo").addEventListener("click", () => stepHistory(1));
   $("#appearance").addEventListener("click", () => openDialog("themes"));
@@ -6606,6 +7130,11 @@ kbd {
         return;
       }
     }
+    if (e.key === "Escape" && presenting && !jumpOpen && !openDialog) {
+      e.preventDefault();
+      setPresenting(false);
+      return;
+    }
     if (e.key === "Escape" && jumpOpen) {
       e.preventDefault();
       setJumpOpen(false);
@@ -6653,6 +7182,9 @@ kbd {
     } else if (["PageUp", "ArrowRight"].includes(e.key)) {
       e.preventDefault();
       act("prev");
+    } else if (e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      setPresenting(!presenting);
     } else if (e.key.toLowerCase() === "f") {
       e.preventDefault();
       fullscreen();
@@ -6675,6 +7207,7 @@ kbd {
       newEditSession();
   });
   document.addEventListener("fullscreenchange", () => {
+    if (presenting && !document.fullscreenElement) setPresenting(false);
     $("#fullscreen").setAttribute(
       "aria-label",
       document.fullscreenElement ? "יציאה ממסך מלא" : "מסך מלא",

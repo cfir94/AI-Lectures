@@ -32,6 +32,41 @@
     webp: ["UklGR"],
     gif: ["R0lGOD"],
   };
+  /* A video lives on someone else's server, so only two of them are allowed and
+     only the video's own ID is taken from what the presenter pastes. The embed
+     address is built here from that ID — a pasted URL never reaches an iframe,
+     which is the whole point. */
+  const VIDEO_SOURCES = { youtube: "יוטיוב", drive: "גוגל דרייב" };
+  const VIDEO_ID = /^[A-Za-z0-9_-]{6,64}$/;
+  const VIDEO_PATTERNS = [
+    [/^https?:\/\/(?:www\.)?youtube\.com\/watch\?(?:[^#]*&)?v=([^&#]+)/i, "youtube"],
+    [/^https?:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/(?:embed|v|shorts|live)\/([^?&#/]+)/i, "youtube"],
+    [/^https?:\/\/youtu\.be\/([^?&#/]+)/i, "youtube"],
+    [/^https?:\/\/(?:drive|docs)\.google\.com\/file\/d\/([^?&#/]+)/i, "drive"],
+    [/^https?:\/\/drive\.google\.com\/open\?(?:[^#]*&)?id=([^&#]+)/i, "drive"],
+  ];
+  function videoEmbed(url) {
+    if (typeof url !== "string") return null;
+    const clean = url.trim();
+    for (const [pattern, source] of VIDEO_PATTERNS) {
+      const found = clean.match(pattern);
+      if (!found || !VIDEO_ID.test(found[1])) continue;
+      const id = found[1];
+      return {
+        source,
+        id,
+        embed:
+          source === "youtube"
+            ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&autoplay=1`
+            : `https://drive.google.com/file/d/${id}/preview`,
+        watch:
+          source === "youtube"
+            ? `https://youtu.be/${id}`
+            : `https://drive.google.com/file/d/${id}/view`,
+      };
+    }
+    return null;
+  }
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const serializedBytes = (value) =>
     new TextEncoder().encode(JSON.stringify(value)).byteLength;
@@ -65,6 +100,9 @@
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
     glass: "זכוכית נוזלית",
+    orb: "כדור זוהר",
+    bars: "עמודות חיות",
+    window: "חלון כלי",
   };
   /* Fill styles work like the text ones: a key CSS hooks onto and a Hebrew
      name. A visual has no outline state, so it gets the shorter table. */
@@ -126,6 +164,7 @@
     waves: "גלים",
     halo: "הילה",
     stars: "שדה כוכבים",
+    mesh: "מרחב צבע",
     picture: "תמונה משלך",
     plain: "רקע נקי",
   };
@@ -239,6 +278,17 @@
       },
       beats: () => 1,
     },
+    video: {
+      label: "סרטון",
+      hint: "סרטון מיוטיוב או מגוגל דרייב. השקף הזה — ורק הוא — צריך אינטרנט בזמן ההרצאה, אז שמרו תמונת פוסטר שתוצג עד הלחיצה על ההפעלה וגם אם אין רשת.",
+      fields: {
+        url: { max: 300, required: false, video: true },
+        poster: picture(),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
     canvas: {
       label: "במה חופשית",
       hint: "שקף ריק עם תיבות טקסט, תמונות וצורות שאפשר למקם ולשנות ישירות על הבמה.",
@@ -283,6 +333,7 @@
       ],
     },
     timer: { minutes: "10", title: "", caption: "" },
+    video: { url: "", poster: "", title: "", caption: "" },
     canvas: { objects: [] },
     experiment: { title: "הנה הצעה." },
   };
@@ -419,6 +470,13 @@
             fail();
         }
         return value;
+      }
+      if (spec.video) {
+        const value = v ?? "";
+        if (typeof value !== "string" || value.length > spec.max) fail();
+        // Empty is a slide waiting for its link; anything else must resolve.
+        if (value.trim() && !videoEmbed(value)) fail();
+        return value.trim();
       }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
@@ -743,6 +801,8 @@
     THEMES,
     LIMITS,
     SLIDE_TYPES,
+    VIDEO_SOURCES,
+    videoEmbed,
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,

@@ -260,6 +260,55 @@ test("a picture carries a crop, defaulted and bounded", () => {
   }
 });
 
+test("a video link is only ever an ID from a known source", () => {
+  const good = {
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ": "youtube",
+    "https://youtu.be/dQw4w9WgXcQ?t=42": "youtube",
+    "https://www.youtube.com/shorts/abc123def45": "youtube",
+    "https://www.youtube-nocookie.com/embed/abc123def45": "youtube",
+    "https://drive.google.com/file/d/1A2b3C4d5E6f7G8h/view?usp=sharing": "drive",
+    "https://drive.google.com/open?id=1A2b3C4d5E6f7G8h": "drive",
+  };
+  for (const [url, source] of Object.entries(good)) {
+    const found = C.videoEmbed(url);
+    assert.equal(found.source, source);
+    // The embed address is built here, never taken from the pasted text.
+    assert.ok(found.embed.startsWith("https://"));
+    assert.ok(found.embed.includes(found.id));
+    assert.ok(!/[<>"']/.test(found.embed));
+  }
+  for (const bad of [
+    "https://evil.example/video",
+    "javascript:alert(1)",
+    'https://www.youtube.com/watch?v="><script>',
+    "https://youtu.be/短",
+    "not a url",
+    "",
+    null,
+  ])
+    assert.equal(C.videoEmbed(bad), null);
+});
+
+test("a video slide keeps an empty link and refuses an unknown one", () => {
+  const document = C.clone(seed);
+  const slide = C.blankSlide("video");
+  document.slides.push(slide);
+  assert.equal(C.validate(document).slides.at(-1).url, "");
+  const ok = C.clone(document);
+  ok.slides.at(-1).url = "  https://youtu.be/dQw4w9WgXcQ  ";
+  assert.equal(
+    C.validate(ok).slides.at(-1).url,
+    "https://youtu.be/dQw4w9WgXcQ",
+  );
+  for (const bad of ["https://vimeo.com/123456", "javascript:alert(1)"]) {
+    const wrong = C.clone(document);
+    wrong.slides.at(-1).url = bad;
+    assert.throws(() => C.validate(wrong));
+  }
+  // It is one beat, like any other single-idea slide.
+  assert.equal(C.beats(C.validate(document), document.slides.length - 1), 1);
+});
+
 test("undo walks back through the document and redo returns", () => {
   const history = C.createHistory();
   history.reset("A");
