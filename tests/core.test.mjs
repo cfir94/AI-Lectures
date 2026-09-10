@@ -90,6 +90,28 @@ test("pictures accept only raster data URIs, and may be empty", () => {
   ])
     assert.throws(() => C.validate(withPicture(bad)));
 });
+test("every listed theme validates, and inherited keys do not", () => {
+  for (const theme of Object.keys(C.THEMES)) {
+    const document = C.clone(seed);
+    document.theme = theme;
+    assert.equal(C.validate(document).theme, theme);
+  }
+  for (const bad of ["constructor", "toString", "__proto__", "invalid"]) {
+    const document = C.clone(seed);
+    document.theme = bad;
+    assert.throws(() => C.validate(document));
+  }
+});
+test("a timer only accepts a whole number of minutes", () => {
+  const withMinutes = (value) => {
+    const document = C.clone(seed);
+    document.slides.push({ ...C.blankSlide("timer"), minutes: value });
+    return document;
+  };
+  assert.equal(C.validate(withMinutes("45")).slides.at(-1).minutes, "45");
+  for (const bad of ["", "  ", "10 דקות", "7.5", "-3", "1234"])
+    assert.throws(() => C.validate(withMinutes(bad)));
+});
 test("every slide type reports the beats its content implies", () => {
   const document = C.clone(seed);
   document.slides = Object.keys(C.SLIDE_TYPES).map((type) =>
@@ -102,6 +124,7 @@ test("every slide type reports the beats its content implies", () => {
   assert.equal(beatsOf("demo"), 1);
   assert.equal(beatsOf("image"), 1);
   assert.equal(beatsOf("number"), 1);
+  assert.equal(beatsOf("timer"), 1);
   assert.equal(beatsOf("tokens"), 2);
   assert.equal(beatsOf("reveal"), 3);
   assert.equal(beatsOf("split"), 2);

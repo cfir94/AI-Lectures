@@ -1,7 +1,16 @@
 /* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
-  const THEMES = ["carbon", "paper", "wine"];
+  // key -> what the editor shows, plus the two swatch colours for its preview.
+  const THEMES = {
+    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#10171e", "#88e6ee"] },
+    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#ffffff", "#2359c4"] },
+    wine: { name: "בורדו ולבן", hint: "חם · דרמטי", swatch: ["#280f1c", "#ffe2ec"] },
+    forest: { name: "יער ומנטה", hint: "עמוק · רגוע", swatch: ["#101d16", "#7fe3b0"] },
+    ember: { name: "פחם וענבר", hint: "חם · ערבי", swatch: ["#1c1510", "#f0b978"] },
+    ink: { name: "דיו ונייר", hint: "מינימלי · חד", swatch: ["#0e0e0e", "#e8e2d6"] },
+    nebula: { name: "סגול ולילך", hint: "לילי · חלומי", swatch: ["#151327", "#b9a3ff"] },
+  };
   const LIMITS = {
     slides: 40,
     examples: 20,
@@ -18,6 +27,7 @@
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
+  const digits = (max) => ({ max, required: true, digits: true });
   const choice = (options) => ({ choice: options });
   const picture = () => ({ picture: true, max: LIMITS.image });
   const FITS = { cover: "ממלאת את הבמה", contain: "נכנסת בשלמותה" };
@@ -40,6 +50,9 @@
     particles: "חלקיקים",
     aurora: "זוהר",
     rings: "טבעות",
+    beams: "קרני אור",
+    waves: "גלים",
+    halo: "הילה",
     plain: "רקע נקי",
   };
   const TRANSITIONS = {
@@ -139,6 +152,16 @@
       },
       beats: (slide) => slide.sides.length,
     },
+    timer: {
+      label: "טיימר",
+      hint: "ספירה לאחור על הבמה, לתרגול או להפסקה. מתחילים, עוצרים ומאפסים בכפתורים שעל השקף.",
+      fields: {
+        minutes: digits(3),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -173,6 +196,7 @@
         { heading: "צד שני", line: "" },
       ],
     },
+    timer: { minutes: "10", title: "", caption: "" },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
@@ -219,6 +243,7 @@
       const value = spec.required ? v : (v ?? "");
       if (typeof value !== "string" || value.length > spec.max) fail();
       if (spec.required && !value.trim()) fail();
+      if (spec.digits && !/^\d+$/.test(value)) fail();
       return value;
     };
     const group = (source, fields) => {
@@ -227,7 +252,8 @@
         out[key] = str(source[key], spec);
       return out;
     };
-    if (!obj(raw) || raw.version !== 2 || !THEMES.includes(raw.theme)) fail();
+    if (!obj(raw) || raw.version !== 2 || !Object.hasOwn(THEMES, raw.theme))
+      fail();
     if (
       !Array.isArray(raw.slides) ||
       !raw.slides.length ||
