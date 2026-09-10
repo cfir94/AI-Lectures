@@ -1005,6 +1005,13 @@ h1 {
   margin-top: 2cqw;
   text-wrap: balance;
 }
+/* The one piece of emphasis a sentence can carry: heavier, and the slide's own
+   accent rather than the muted grey around it. One or two per caption — three
+   and the sentence stops having a point. */
+.emph {
+  font-weight: 600;
+  color: var(--accent);
+}
 .scene-context {
   position: absolute;
   top: 16%;

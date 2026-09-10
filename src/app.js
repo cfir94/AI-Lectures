@@ -577,9 +577,16 @@
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
+  /* Emphasis inside a sentence, without opening HTML to the document. The text
+     is escaped first and only then are *asterisk pairs* turned into a marked
+     span, so nothing a document carries can become markup. The stored string
+     keeps its asterisks, and editing in place reads that stored string back —
+     the presenter edits what they wrote, not what was rendered. */
+  const EMPHASIS = /\*([^*\n]{1,60})\*/g;
+  const rich = (value) => esc(value).replace(EMPHASIS, '<b class="emph">$1</b>');
   const caption = (slide, value, key = "caption") =>
     value && !isBound(slide, key)
-      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${esc(value)}</p>`
+      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${rich(value)}</p>`
       : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
   const headline = (slide, value) =>
