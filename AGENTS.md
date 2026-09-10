@@ -25,6 +25,7 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - `render` restores focus by `data-action` after rebuilding the stage, so blur a control *before* rendering, never after.
 - Never rebuild the stage from inside a `blur` or `focusout` handler — replacing a node the browser is still unwinding throws `NotFoundError`. Defer the render with `requestAnimationFrame`.
 - A text object bound to a slide field is the same string as that field, so it inherits the field's shorter limit. Ask `textLimit` rather than assuming `OBJECT_TEXT_MAX`.
+- A panel that covers the stage must be draggable by a grip and must not eat half the slide; a control that only exists inside another mode is a control the presenter can lose.
 - Edit mode is an explicit state with a visible control, never a side effect of some panel being open. Anything that only works "while a dialog happens to be open" is a trap: the presenter gets no feedback and reports the feature as broken.
 - Every string that reaches the stage carries `data-slide-text` (or `data-example-text`) with the path that owns it, so it can be edited where it sits. Editing must never move or resize the words the presenter aimed at; converting text into a free object is a separate, explicit action.
 - `save` distinguishes invalid content from unavailable storage. Never collapse them: telling a presenter that storage failed when the document is invalid hides the defect and eats their work.

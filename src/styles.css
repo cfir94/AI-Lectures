@@ -1103,6 +1103,7 @@ h1 {
   position: absolute;
   z-index: 8;
   bottom: 14px;
+  flex-wrap: nowrap;
   left: 50%;
   transform: translateX(-50%);
   direction: rtl;
@@ -1166,6 +1167,50 @@ h1 {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
+/* Floating panels: a grip to move them, and a compact footprint so the slide
+   underneath stays visible. */
+.drag-grip {
+  width: 14px;
+  align-self: stretch;
+  min-height: 30px;
+  cursor: grab;
+  border-radius: 5px;
+  background-image: radial-gradient(
+    circle,
+    var(--muted) 1.1px,
+    transparent 1.2px
+  );
+  background-size: 5px 5px;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+.drag-grip:hover {
+  opacity: 1;
+  background-color: var(--surface);
+}
+.object-dragging .drag-grip {
+  cursor: grabbing;
+}
+.stage-tools button.icon-only,
+.object-toolbar button.icon-only {
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+.stage-tools button.danger:hover,
+.object-toolbar button.danger:hover {
+  border-color: #e0736f;
+  color: #f0a5a2;
+}
+.stage-tools .stage-motion,
+.object-toolbar .stage-motion {
+  gap: 5px;
+  padding: 0 8px;
+}
+.stage-tools .stage-motion span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
 /* Jump straight to a slide instead of walking the whole deck. */
 .position {
   background: none;
