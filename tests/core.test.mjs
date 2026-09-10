@@ -272,10 +272,11 @@ test("a video link is only ever an ID from a known source", () => {
   for (const [url, source] of Object.entries(good)) {
     const found = C.videoEmbed(url);
     assert.equal(found.source, source);
+    assert.equal(found.kind, "iframe");
     // The embed address is built here, never taken from the pasted text.
-    assert.ok(found.embed.startsWith("https://"));
-    assert.ok(found.embed.includes(found.id));
-    assert.ok(!/[<>"']/.test(found.embed));
+    assert.ok(found.src.startsWith("https://"));
+    assert.ok(found.src.includes(found.id));
+    assert.ok(!/[<>"']/.test(found.src));
   }
   for (const bad of [
     "https://evil.example/video",
@@ -285,6 +286,33 @@ test("a video link is only ever an ID from a known source", () => {
     "not a url",
     "",
     null,
+  ])
+    assert.equal(C.videoEmbed(bad), null);
+});
+
+test("a local video is a relative path under the deck, and nothing else", () => {
+  for (const path of [
+    "videos/demo.mp4",
+    "demo.MP4",
+    "videos/הדגמה.webm",
+    "videos/second take/clip.mov",
+  ]) {
+    const found = C.videoEmbed(path);
+    assert.equal(found.source, "file");
+    assert.equal(found.kind, "file");
+    assert.equal(found.src, path);
+  }
+  // Nothing that climbs out, names a device, or is not a video.
+  for (const bad of [
+    "/etc/passwd.mp4",
+    "../../secrets/x.mp4",
+    "C:/videos/x.mp4",
+    "file:///x.mp4",
+    "//evil.example/x.mp4",
+    "videos/x.exe",
+    "videos/x.mp4?a=1",
+    "videos/x.mp4#t=1",
+    'videos/"><script>.mp4',
   ])
     assert.equal(C.videoEmbed(bad), null);
 });
@@ -300,6 +328,9 @@ test("a video slide keeps an empty link and refuses an unknown one", () => {
     C.validate(ok).slides.at(-1).url,
     "https://youtu.be/dQw4w9WgXcQ",
   );
+  const local = C.clone(document);
+  local.slides.at(-1).url = "videos/demo.mp4";
+  assert.equal(C.validate(local).slides.at(-1).url, "videos/demo.mp4");
   for (const bad of ["https://vimeo.com/123456", "javascript:alert(1)"]) {
     const wrong = C.clone(document);
     wrong.slides.at(-1).url = bad;

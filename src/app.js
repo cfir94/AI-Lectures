@@ -17,8 +17,12 @@
     );
   const initialHTML = document.documentElement.outerHTML;
   const timers = new Map();
-  // A video only reaches the network once the presenter asks for it.
+  // A video only starts once the presenter asks for it.
   const playing = new Set();
+  /* A file the presenter just picked can be played straight away from memory,
+     before they have moved anything into place. It is a convenience for this
+     session only — what the document stores is the path. */
+  const pickedVideos = new Map();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   const history = C.createHistory();
@@ -37,6 +41,7 @@
     notesOpen = false,
     pendingOpenId = null,
     pendingPicturePath = null,
+    pendingVideoPath = null,
     selectedObjectId = null,
     editing = false,
     jumpOpen = false,
@@ -674,10 +679,12 @@
     const poster = slide.poster
       ? `<img class="video-still" src="${esc(slide.poster)}" alt="">`
       : '<span class="video-still empty"></span>';
-    const offline = navigator.onLine === false;
+    const offline = navigator.onLine === false && video?.kind === "iframe";
     let media;
-    if (started)
-      media = `<iframe class="video-embed" src="${esc(video.embed)}" title="${esc(slide.title || "סרטון")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    if (started && video.kind === "file")
+      media = `<video class="video-embed" src="${esc(pickedVideos.get(slide.id) || video.src)}" controls autoplay playsinline ${slide.poster ? `poster="${esc(slide.poster)}"` : ""}></video>`;
+    else if (started)
+      media = `<iframe class="video-embed" src="${esc(video.src)}" title="${esc(slide.title || "סרטון")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
     else if (video)
       media = `<button class="video-poster" data-action="play-video" aria-label="הפעלת הסרטון">${poster}<span class="video-play">${icon("play")}</span>${offline ? '<span class="video-warning">אין כרגע חיבור לאינטרנט. הסרטון לא ייטען.</span>' : ""}</button>`;
     else
@@ -1347,17 +1354,26 @@
   const videoNote = (value) => {
     const video = C.videoEmbed(value);
     if (!value.trim())
-      return { text: "אפשר להדביק קישור רגיל מיוטיוב או מגוגל דרייב.", bad: false };
-    return video
-      ? {
-          text: `זוהה ${C.VIDEO_SOURCES[video.source]}. השקף הזה צריך אינטרנט בזמן ההרצאה.`,
-          bad: false,
-        }
-      : { text: "הקישור לא זוהה. נתמכים יוטיוב וגוגל דרייב בלבד.", bad: true };
+      return {
+        text: "בחרו קובץ מהמחשב, או הדביקו קישור מיוטיוב או מגוגל דרייב.",
+        bad: false,
+      };
+    if (!video)
+      return {
+        text: "לא זוהה. קובץ מקומי הוא נתיב כמו videos/demo.mp4 (mp4, webm, mov), או קישור מיוטיוב או מגוגל דרייב.",
+        bad: true,
+      };
+    return {
+      text:
+        video.kind === "file"
+          ? `קובץ מקומי. שימו אותו בנתיב הזה לצד קובץ המצגת — ואז השקף עובד בלי אינטרנט.`
+          : `זוהה ${C.VIDEO_SOURCES[video.source]}. השקף הזה צריך אינטרנט בזמן ההרצאה.`,
+      bad: false,
+    };
   };
   const videoField = (label, path, value, max) => {
     const note = videoNote(value);
-    return `<label class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></label>`;
+    return `<div class="field video-field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span><input type="text" dir="ltr" data-field="${path}" maxlength="${max}" value="${esc(value)}"><div class="picture-actions"><button class="duplicate-button" data-pick-video="${path}">${icon("play")}בחירת קובץ מהמחשב</button></div><small class="field-note ${note.bad ? "bad" : ""}">${esc(note.text)}</small></div>`;
   };
   const weight = (value) => `${Math.round((value.length * 0.75) / 1024)} KB`;
   const pictureField = (label, path, value) =>
@@ -2504,6 +2520,19 @@
       render();
     } else act(action);
   });
+  $("#slide-root").addEventListener(
+    "error",
+    (event) => {
+      if (!event.target.matches?.(".video-embed")) return;
+      const frame = event.target.closest(".video-frame");
+      if (frame && !frame.querySelector(".video-warning"))
+        frame.insertAdjacentHTML(
+          "beforeend",
+          '<span class="video-warning">לא הצלחתי לפתוח את קובץ הווידאו. ודאו שהוא יושב בתיקייה שליד קובץ המצגת, באותו שם בדיוק.</span>',
+        );
+    },
+    true,
+  );
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
       changeExample(event.target.value);
@@ -2839,6 +2868,9 @@
       if (editingObjectTextId === removed.id) editingObjectTextId = null;
       state = C.goTo(deck, +slideIndex);
       afterStructureChange();
+    } else if (data.pickVideo) {
+      pendingVideoPath = data.pickVideo;
+      $("#video-file").click();
     } else if (data.pickPicture) {
       pendingPicturePath = data.pickPicture;
       $("#picture-file").click();
@@ -2926,6 +2958,40 @@
   $("#import-file").addEventListener("change", (e) =>
     importJSON(e.target.files[0]),
   );
+  /* The browser never hands over a real path, so the deck stores the folder
+     convention plus the file's own name, and plays the picked file from memory
+     until the presenter has put it there. */
+  $("#video-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const path = pendingVideoPath;
+    pendingVideoPath = null;
+    e.target.value = "";
+    if (!file || !path) return;
+    const target = `videos/${file.name}`;
+    if (!C.videoEmbed(target)) {
+      notify(
+        "סוג הקובץ הזה אינו נתמך. אפשר mp4, webm, mov, m4v או ogv, ובלי תווים מיוחדים בשם.",
+      );
+      return;
+    }
+    const slideIndex = Number(path.split(".")[1]);
+    const slide = deck.slides[slideIndex];
+    setPath(path, target);
+    if (slide) {
+      pickedVideos.get(slide.id) &&
+        URL.revokeObjectURL(pickedVideos.get(slide.id));
+      pickedVideos.set(slide.id, URL.createObjectURL(file));
+      playing.add(slide.id);
+      state = C.goTo(deck, slideIndex);
+    }
+    renderedSlide = -1;
+    save();
+    render();
+    renderEditor();
+    notify(
+      `הסרטון מנוגן מכאן לבדיקה. כדי שיעבוד גם אחרי סגירה, שימו את ${file.name} בתיקייה videos שליד קובץ המצגת.`,
+    );
+  });
   $("#picture-file").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file && pendingPicturePath) loadPicture(file, pendingPicturePath);

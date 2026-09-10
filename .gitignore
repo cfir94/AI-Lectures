@@ -5,3 +5,6 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Presenter's own video files: they live beside the deck, never in the repo.
+dist/videos/

@@ -36,7 +36,17 @@
      only the video's own ID is taken from what the presenter pastes. The embed
      address is built here from that ID — a pasted URL never reaches an iframe,
      which is the whole point. */
-  const VIDEO_SOURCES = { youtube: "יוטיוב", drive: "גוגל דרייב" };
+  const VIDEO_SOURCES = {
+    file: "קובץ מהמחשב",
+    youtube: "יוטיוב",
+    drive: "גוגל דרייב",
+  };
+  /* A local video is a path relative to the deck, and only that: no scheme, no
+     drive letter, no leading slash and no climbing out with "..". A document
+     that arrives from somewhere else may not point the presenter's browser at
+     an arbitrary file on their disk. */
+  const VIDEO_FILE =
+    /^(?!\/)(?![A-Za-z]:)(?!.*\.\.)(?:[\w\-. \u0590-\u05FF]+\/)*[\w\-. \u0590-\u05FF]+\.(?:mp4|webm|m4v|mov|ogv)$/i;
   const VIDEO_ID = /^[A-Za-z0-9_-]{6,64}$/;
   const VIDEO_PATTERNS = [
     [/^https?:\/\/(?:www\.)?youtube\.com\/watch\?(?:[^#]*&)?v=([^&#]+)/i, "youtube"],
@@ -48,14 +58,17 @@
   function videoEmbed(url) {
     if (typeof url !== "string") return null;
     const clean = url.trim();
+    if (VIDEO_FILE.test(clean))
+      return { source: "file", kind: "file", id: clean, src: clean, watch: clean };
     for (const [pattern, source] of VIDEO_PATTERNS) {
       const found = clean.match(pattern);
       if (!found || !VIDEO_ID.test(found[1])) continue;
       const id = found[1];
       return {
         source,
+        kind: "iframe",
         id,
-        embed:
+        src:
           source === "youtube"
             ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&autoplay=1`
             : `https://drive.google.com/file/d/${id}/preview`,
@@ -280,7 +293,7 @@
     },
     video: {
       label: "סרטון",
-      hint: "סרטון מיוטיוב או מגוגל דרייב. השקף הזה — ורק הוא — צריך אינטרנט בזמן ההרצאה, אז שמרו תמונת פוסטר שתוצג עד הלחיצה על ההפעלה וגם אם אין רשת.",
+      hint: "סרטון מהמחשב שלכם — הקובץ יושב בתיקייה videos שליד קובץ המצגת, והשקף עובד בלי אינטרנט. אפשר גם קישור מיוטיוב או מגוגל דרייב, ואז השקף הזה צריך רשת. בכל מקרה שמרו תמונת פוסטר: היא מוצגת עד ההפעלה.",
       fields: {
         url: { max: 300, required: false, video: true },
         poster: picture(),
