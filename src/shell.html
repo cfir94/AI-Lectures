@@ -17,12 +17,13 @@
       <aside id="notes" class="notes-panel" hidden></aside>
       <div id="stage-grid" class="stage-grid" aria-hidden="true" hidden><i class="snap-guide snap-guide-x"></i><i class="snap-guide snap-guide-y"></i></div>
       <div id="object-toolbar" class="object-toolbar" aria-label="עריכת האובייקט שנבחר" hidden></div>
+      <div id="stage-tools" class="stage-tools" aria-label="עריכת השקף" hidden></div>
       <footer class="stage-footer">
         <div class="slide-dots" id="slide-dots" role="group" aria-label="בחירת שקף"></div>
       </footer>
     </div>
     <nav class="toolbar" id="toolbar" aria-label="שליטה במצגת">
-      <div class="tool-group nav-group"><button id="prev" class="icon-button" aria-label="צעד קודם" title="צעד קודם · חץ ימינה"></button><span id="position" class="position" dir="ltr">01 / 02</span><button id="next" class="icon-button" aria-label="צעד הבא" title="צעד הבא · רווח"></button></div>
+      <div class="tool-group nav-group"><button id="prev" class="icon-button" aria-label="צעד קודם" title="צעד קודם · חץ ימינה"></button><button id="position" class="position" dir="ltr" aria-haspopup="true" aria-expanded="false" title="קפיצה לשקף">01 / 02</button><button id="next" class="icon-button" aria-label="צעד הבא" title="צעד הבא · רווח"></button></div>
       <span class="toolbar-divider"></span>
       <button id="edit" class="tool-button" title="עריכת התוכן"><span data-icon="edit"></span><span>עריכה</span></button>
       <button id="appearance" class="tool-button" title="בחירת צבעים"><span data-icon="palette"></span><span>עיצוב</span></button>
@@ -30,10 +31,11 @@
       <button id="fullscreen" class="icon-button" aria-label="מסך מלא" title="מסך מלא · F"><span data-icon="expand"></span></button>
       <button id="help" class="icon-button" aria-label="מקשי קיצור ועזרה" title="מקשי קיצור"><span data-icon="keyboard"></span></button>
     </nav>
+    <div id="slide-jump" class="slide-jump" role="listbox" aria-label="קפיצה לשקף" hidden></div>
     <p class="keyboard-hint" id="keyboard-hint">רווח להתקדמות</p>
   </main>
   <dialog id="editor" class="editor" aria-labelledby="editor-title">
-    <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">מאחורי הקלעים</h2></div><div class="editor-top-actions"><button id="editor-stage-toggle" class="text-button editor-stage-button">עריכת במה</button><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div></div>
+    <div class="editor-top"><div><span class="eyebrow">ההרצאה שלך</span><h2 id="editor-title">כל השקפים</h2></div><div class="editor-top-actions"><button class="icon-button" data-close="editor" aria-label="סגירת העורך"><span data-icon="close"></span></button></div></div>
     <div class="editor-scroll" id="editor-fields"></div>
     <div class="editor-bottom"><p id="save-status" role="status">השינויים נשמרים במכשיר הזה</p><div class="export-primary"><button id="export-html" class="primary-button"><span data-icon="download"></span>הורדת ההרצאה למחשב</button></div><div class="file-actions"><button id="export-json" class="text-button">ייצוא תוכן</button><button id="import-json" class="text-button">ייבוא תוכן</button></div><input type="file" id="import-file" accept=".json,application/json" hidden><input type="file" id="picture-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
   </dialog>
