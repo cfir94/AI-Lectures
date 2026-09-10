@@ -248,6 +248,12 @@ p {
 .slide.object-exits-only > :not(.free-object-layer) {
   visibility: hidden;
 }
+.object-crop {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 .free-object > svg,
 .object-image {
   display: block;
@@ -437,8 +443,11 @@ p {
   color: var(--muted);
   background: rgba(var(--accent-rgb), 0.05);
 }
+/* The layer covers the whole stage. If it takes pointer events itself, one
+   free object is enough to make every headline under it unreachable — only the
+   objects may be clickable. */
 .editing .free-object-layer {
-  pointer-events: auto;
+  pointer-events: none;
 }
 .editing .free-object {
   pointer-events: auto;
@@ -1244,6 +1253,11 @@ h1 {
   font-size: 0.8rem;
   padding: 0 4px;
 }
+.stage-tools .tool-cluster {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 .stage-tools-divider {
   width: 1px;
   height: 20px;
@@ -1304,6 +1318,173 @@ h1 {
   color: var(--muted);
   font-size: 0.72rem;
 }
+/* Layers: the stack of one slide, front row first. */
+.layers-panel {
+  position: absolute;
+  z-index: 9;
+  top: 74px;
+  inset-inline-start: 14px;
+  width: min(272px, 42%);
+  max-height: min(62%, 420px);
+  overflow: auto;
+  direction: rtl;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--raised) 95%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+.layers-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.layers-head strong {
+  font-size: 0.85rem;
+}
+.layers-head small {
+  margin-inline-start: auto;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.layers-head .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.layer-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.layer-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+.layer-list li.selected {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+.layer-pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font-size: 0.78rem;
+  text-align: start;
+}
+.layer-pick:hover {
+  background: var(--surface);
+}
+.layer-icon svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+}
+.layer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.layer-actions {
+  display: flex;
+  gap: 2px;
+}
+.layer-actions .icon-button {
+  width: 26px;
+  height: 26px;
+}
+.layer-actions .icon-button svg {
+  width: 15px;
+  height: 15px;
+}
+.layer-actions .icon-button.danger:hover {
+  color: #f0a5a2;
+}
+.layers-note {
+  margin: 8px 2px 2px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.editing .free-object-image.selected .object-crop {
+  outline: 1px dashed rgba(var(--accent-rgb), 0.5);
+}
+
+/* Saved drafts. */
+.drafts-dialog {
+  width: min(560px, 92vw);
+}
+.draft-save {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 4px 0 14px;
+}
+.draft-save .field {
+  flex: 1;
+  margin: 0;
+}
+.draft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 44vh;
+  overflow: auto;
+}
+.draft-row {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.draft-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.draft-head small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.draft-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.draft-actions .icon-button {
+  margin-inline-start: auto;
+}
+.draft-status {
+  min-height: 1.2em;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+@media (max-width: 700px) {
+  .layers-panel {
+    top: 66px;
+    width: min(240px, 70%);
+  }
+}
+
 /* Jump straight to a slide instead of walking the whole deck. */
 .position {
   background: none;
@@ -2525,10 +2706,13 @@ kbd {
    They stay in one row that scrolls sideways instead, so nothing is lost. */
 @media (max-width: 700px) {
   .object-toolbar,
-  .object-toolbar .tool-cluster {
+  .object-toolbar .tool-cluster,
+  .stage-tools,
+  .stage-tools .tool-cluster {
     flex-wrap: nowrap;
   }
-  .object-toolbar {
+  .object-toolbar,
+  .stage-tools {
     justify-content: flex-start;
     overflow-x: auto;
     scrollbar-width: thin;

@@ -15,6 +15,7 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Keep document validation and navigation in `src/core.js`. Keep content in the versioned document schema and presentation styles in CSS theme tokens.
 - Declare a slide type once in `SLIDE_TYPES`: its fields, length limits, list and beat count. Validation, the editor and the presenter keys all read that table — do not special-case a type in the editor.
 - `THEMES`, `MOTIONS`, `BACKDROPS` and `TRANSITIONS` work the same way: a key CSS hooks onto and a Hebrew name the editor shows. Add an option as a table row plus a CSS block, never as a branch in the render path.
+- The free-object layer covers the whole stage. It must never take pointer events itself — only the objects inside it — or one object is enough to make every structured string on that slide unclickable.
 - Free composition is an additive `objects` layer on every slide, plus the blank `canvas` slide type. Keep the structured slide scenes intact; presenters use a canvas slide when every element needs free placement. Declare object, shape, visual and text-style choices in `OBJECT_TYPES`, `SHAPES`, `VISUALS` and `TEXT_STYLES`.
 - Object geometry is stored as strings in stage percentages (`x`, `y`, `width`, `height`) so it scales with the 16:9 canvas. Keep direct manipulation and numeric editor fields in sync, preserve layer order, and validate every imported coordinate, colour and object ID before rendering.
 - Keep the 5% grid and object-edge/centre snapping in stage coordinates. `snap`, `entrance` and `exit` are per-object choices. Structured text converted to a free box uses one validated `bind`; keep its source field and object text synchronized and never render both copies.
@@ -41,7 +42,8 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Enforce the aggregate portable-document budget on import, image upload, duplication and export. Check Base64 structure and raster signatures in core, then decode every imported picture in the browser before replacing the active document.
 - Slides must stay opaque and occlude each other; a transparent slide makes any crossfade show two headlines at once.
 - Escape untrusted text and embedded JSON. Validate the entire imported document before replacing the active one. Never put secrets into a downloadable HTML file.
-- Local storage is a convenience, not portable storage; preserve JSON and HTML export and a clear storage-failure message.
+- Local storage is a convenience, not portable storage; preserve JSON and HTML export and a clear storage-failure message. Saved drafts live in the same convenience: name them, let each one be downloaded as JSON and as a standalone HTML file, and say plainly that the browser is not a backup.
+- A `download` filename must be ASCII. Chromium drops a non-ASCII one on a `file://` page and saves the file as `download`, with no extension — which is how a presenter loses an export without being told.
 
 ## Verifying in a browser
 

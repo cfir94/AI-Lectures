@@ -4,6 +4,8 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 import "../src/core.js";
 const C = globalThis.LectureCore;
+const tinyPng =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=";
 const seed = JSON.parse(
   await readFile(new URL("../src/content.json", import.meta.url), "utf8"),
 );
@@ -218,6 +220,44 @@ test("shapes and components carry a fill style with a safe default", () => {
   const noOutline = C.clone(document);
   noOutline.slides[0].objects[2].style = "outline";
   assert.throws(() => C.validate(noOutline));
+});
+
+test("a picture carries a crop, defaulted and bounded", () => {
+  const document = C.clone(seed);
+  const image = C.blankObject("image");
+  image.picture = tinyPng;
+  const legacy = C.blankObject("image");
+  legacy.picture = tinyPng;
+  delete legacy.zoom;
+  delete legacy.focusX;
+  delete legacy.focusY;
+  document.slides[0].objects = [image, legacy];
+  const valid = C.validate(document);
+  assert.deepEqual(
+    valid.slides[0].objects.map((o) => [o.zoom, o.focusX, o.focusY]),
+    [
+      ["100", "50", "50"],
+      ["100", "50", "50"],
+    ],
+  );
+  const cropped = C.clone(document);
+  Object.assign(cropped.slides[0].objects[0], {
+    zoom: "240",
+    focusX: "12.5",
+    focusY: "0",
+  });
+  const out = C.validate(cropped).slides[0].objects[0];
+  assert.deepEqual([out.zoom, out.focusX, out.focusY], ["240", "12.5", "0"]);
+  for (const [key, value] of [
+    ["zoom", "99"],
+    ["zoom", "401"],
+    ["focusX", "-1"],
+    ["focusY", "101"],
+  ]) {
+    const bad = C.clone(document);
+    bad.slides[0].objects[0][key] = value;
+    assert.throws(() => C.validate(bad));
+  }
 });
 
 test("undo walks back through the document and redo returns", () => {
@@ -463,6 +503,7 @@ test("built standalone output has no external runtime assets or unresolved marke
   assert.ok(html.includes("prefers-reduced-motion"));
   assert.ok(html.includes("data-slide-text"));
   assert.ok(html.includes("data-toolbar-object-prop"));
-  assert.ok(html.includes("data-toolbar-size-value"));
+  assert.ok(html.includes("data-toolbar-step-value"));
+  assert.ok(html.includes("layers-panel"));
   assert.ok(html.includes("--slide-exit-duration"));
 });

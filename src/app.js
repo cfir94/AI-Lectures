@@ -40,6 +40,8 @@
     jumpOpen = false,
     editingObjectTextId = null,
     editingSlideText = null,
+    layersOpen = false,
+    cropping = false,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -78,6 +80,8 @@
     shape: '<rect x="3" y="3" width="9" height="9" rx="1.5"/><circle cx="16.5" cy="16.5" r="4.5"/>',
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
+    crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
     undo: '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a5.5 5.5 0 0 1 0 11h-2"/>',
     redo: '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a5.5 5.5 0 0 0 0 11h2"/>',
     minus: '<path d="M5 12h14"/>',
@@ -254,7 +258,7 @@
       body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
-        ? `<img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
+        ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
         : '<span class="object-placeholder">תמונה</span>';
     else if (object.type === "visual") body = visualMarkup(object);
     else body = shapeMarkup(object, index);
@@ -284,15 +288,16 @@
     `<label class="stage-motion" title="${esc(label)}">${showLabel ? `<span>${esc(label)}</span>` : ""}<select data-toolbar-object-prop="${key}" aria-label="${esc(label)}">${optionMarkup(options, value)}</select></label>`;
   const toolbarColour = (label, key, value) =>
     `<label class="stage-colour" title="${esc(label)}"><span>${esc(label)}</span><input type="color" value="${esc(value)}" data-toolbar-colour="${key}" aria-label="${esc(label)}"></label>`;
-  const sizeStepper = (object) =>
-    `<div class="stage-stepper" role="group" aria-label="גודל הטקסט"><button class="icon-only" data-toolbar-size="-1" title="הקטנת הטקסט" aria-label="הקטנת הטקסט">${icon("minus")}</button><input type="number" min="8" max="300" step="1" value="${esc(object.fontSize)}" data-toolbar-size-value aria-label="גודל הטקסט" title="גודל הטקסט"><button class="icon-only" data-toolbar-size="1" title="הגדלת הטקסט" aria-label="הגדלת הטקסט">${icon("plus")}</button></div>`;
+  const stepper = (label, key, value, min, max) =>
+    `<div class="stage-stepper" role="group" aria-label="${esc(label)}"><button class="icon-only" data-toolbar-step="${key}:-1" title="הקטנה" aria-label="הקטנת ${esc(label)}">${icon("minus")}</button><input type="number" min="${min}" max="${max}" step="1" value="${esc(value)}" data-toolbar-step-value="${key}" aria-label="${esc(label)}" title="${esc(label)}"><button class="icon-only" data-toolbar-step="${key}:1" title="הגדלה" aria-label="הגדלת ${esc(label)}">${icon("plus")}</button></div>`;
+  const STEP_RANGES = { fontSize: [8, 300], zoom: [100, 400] };
   function renderObjectToolbar() {
     const toolbar = $("#object-toolbar");
     const object = currentObject();
     if (!editing || !object) {
       toolbar.hidden = true;
       toolbar.innerHTML = "";
-      toolbar.dataset.objectId = "";
+      toolbar.dataset.toolbarObject = "";
       return;
     }
     /* Never rebuild a control that is being held. A colour picker dragged
@@ -300,7 +305,7 @@
        input on the first of them ends the gesture. Buttons that change what
        the toolbar says blur themselves first, so they still refresh. */
     if (
-      toolbar.dataset.objectId === object.id &&
+      toolbar.dataset.toolbarObject === object.id &&
       toolbar.contains(document.activeElement)
     )
       return;
@@ -311,7 +316,7 @@
     if (object.type === "text")
       specific =
         `<button data-toolbar-edit-text aria-pressed="${editingThis}">${editingThis ? "סיום טקסט" : "עריכת טקסט"}</button>` +
-        sizeStepper(object) +
+        stepper("גודל הטקסט", "fontSize", object.fontSize, 8, 300) +
         toolbarSelect("משקל", "weight", C.TEXT_WEIGHTS, object.weight) +
         toolbarSelect("יישור", "align", C.ALIGNS, object.align) +
         toolbarSelect("מראה", "style", C.TEXT_STYLES, object.style) +
@@ -331,6 +336,11 @@
     else
       specific =
         toolbarSelect("התאמה", "fit", C.FITS, object.fit) +
+        `<button data-toolbar-crop aria-pressed="${cropping}" title="חיתוך: גרירת התמונה בתוך המסגרת">${icon("crop")}חיתוך</button>` +
+        (cropping
+          ? stepper("הגדלת התמונה", "zoom", object.zoom, 100, 400) +
+            `<button data-toolbar-crop-reset title="איפוס החיתוך">${icon("replay")}איפוס</button>`
+          : "") +
         `<button data-toolbar-picture="${index}">${icon("image")}${object.picture ? "החלפת תמונה" : "בחירת תמונה"}</button>`;
     toolbar.innerHTML =
       `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span><span class="tool-cluster">${specific}</span><span class="stage-tools-divider"></span><span class="tool-cluster">` +
@@ -343,7 +353,7 @@
       ) +
       toolbarSelect("יציאה", "exit", C.OBJECT_EXITS, object.exit, true) +
       `</span><span class="stage-tools-divider"></span><span class="tool-cluster"><button class="icon-only" data-toolbar-layer="1" title="העברה קדימה" aria-label="העברה קדימה" ${index >= slide.objects.length - 1 ? "disabled" : ""}>${icon("up")}</button><button class="icon-only" data-toolbar-layer="-1" title="העברה אחורה" aria-label="העברה אחורה" ${index <= 0 ? "disabled" : ""}>${icon("down")}</button><button class="icon-only" data-toolbar-duplicate title="שכפול האובייקט" aria-label="שכפול האובייקט" ${slide.objects.length >= C.LIMITS.objects ? "disabled" : ""}>${icon("copy")}</button><button data-toolbar-snap aria-pressed="${object.snap === "on"}" title="הצמדה לגריד">${object.snap === "on" ? "גריד" : "חופשי"}</button><button class="icon-only danger" data-toolbar-delete title="מחיקת האובייקט · Delete" aria-label="מחיקת האובייקט">${icon("trash")}</button></span>`;
-    toolbar.dataset.objectId = object.id;
+    toolbar.dataset.toolbarObject = object.id;
     toolbar.hidden = false;
     placeFloater(toolbar);
     avoidSelection(toolbar);
@@ -365,6 +375,15 @@
     el.classList.add(`text-${object.style}`);
     return true;
   }
+  function applyObjectCrop(object) {
+    const image = $(
+      `.free-object[data-object-id="${CSS.escape(object.id)}"] .object-image`,
+    );
+    if (!image) return false;
+    image.style.objectPosition = `${object.focusX}% ${object.focusY}%`;
+    image.style.transform = `scale(${Number(object.zoom) / 100})`;
+    return true;
+  }
   let renderFrame = null;
   function renderSoon() {
     if (renderFrame) return;
@@ -373,10 +392,11 @@
       render();
     });
   }
-  function stepFontSize(object, direction) {
-    const current = Number(object.fontSize);
+  function stepValue(object, key, direction) {
+    const [min, max] = STEP_RANGES[key];
+    const current = Number(object[key]);
     const step = Math.max(2, Math.round(current * 0.08));
-    return String(clamp(current + step * direction, 8, 300));
+    return String(clamp(current + step * direction, min, max));
   }
   function moveObjectLayer(slideIndex, id, direction) {
     const slide = deck.slides[slideIndex];
@@ -837,6 +857,7 @@
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
     renderDots();
     renderStageTools();
+    renderLayers();
     renderJumpList();
     $("#prev").disabled = state.slide === 0 && state.step === 0;
     $("#next").disabled =
@@ -1057,7 +1078,7 @@
   function startFloaterDrag(event) {
     const grip = event.target.closest("[data-drag-grip]");
     if (!grip || event.button !== 0) return;
-    const el = grip.closest(".stage-tools, .object-toolbar");
+    const el = grip.closest(".stage-tools, .object-toolbar, .layers-panel");
     if (!el) return;
     event.preventDefault();
     const stage = $("#stage").getBoundingClientRect();
@@ -1103,10 +1124,68 @@
           `<button class="icon-only" data-stage-add="${type}" title="הוספת ${esc(name)}" aria-label="הוספת ${esc(name)}" ${full ? "disabled" : ""}>${icon(type)}</button>`,
       )
       .join("");
-    tools.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span>${add}<span class="stage-tools-divider"></span><label class="stage-motion"><span>טקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><span class="stage-tools-divider"></span><button class="icon-only" data-stage-open-deck title="כל השקפים" aria-label="כל השקפים">${icon("note")}</button><button data-stage-done title="סיום עריכה">${icon("check")}סיום</button>`;
+    const slideActions = `<span class="tool-cluster"><label class="stage-motion" title="סוג השקף שיתווסף"><span>שקף</span><select data-stage-slide-type aria-label="סוג השקף החדש">${optionMarkup(
+      Object.fromEntries(
+        Object.entries(C.SLIDE_TYPES).map(([key, type]) => [key, type.label]),
+      ),
+      slide.type,
+    )}</select></label><button class="icon-only" data-stage-slide-add title="הוספת שקף אחרי הנוכחי" aria-label="הוספת שקף אחרי הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}</button><button class="icon-only" data-stage-slide-duplicate title="שכפול השקף הנוכחי" aria-label="שכפול השקף הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("copy")}</button><button class="icon-only danger" data-stage-slide-remove title="מחיקת השקף הנוכחי" aria-label="מחיקת השקף הנוכחי" ${deck.slides.length <= 1 ? "disabled" : ""}>${icon("trash")}</button></span>`;
+    tools.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span><span class="tool-cluster">${add}</span><span class="stage-tools-divider"></span>${slideActions}<span class="stage-tools-divider"></span><label class="stage-motion"><span>טקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><span class="stage-tools-divider"></span><button class="icon-only" data-stage-layers aria-pressed="${layersOpen}" title="שכבות השקף" aria-label="שכבות השקף">${icon("layers")}</button><button class="icon-only" data-stage-open-deck title="כל השקפים" aria-label="כל השקפים">${icon("note")}</button><button data-stage-done title="סיום עריכה">${icon("check")}סיום</button>`;
     tools.hidden = false;
     placeFloater(tools);
   }
+  /* Stacking only makes sense if the stack is visible. The panel lists the
+     slide's objects from the front of the stage to the back — the order they
+     are painted in, reversed — and every row is the object itself: click to
+     select it, arrows to move it through the stack, and a bin to remove it. */
+  function renderLayers() {
+    const panel = $("#layers");
+    if (!editing || !layersOpen) {
+      panel.hidden = true;
+      panel.innerHTML = "";
+      return;
+    }
+    const slide = deck.slides[state.slide];
+    const last = slide.objects.length - 1;
+    const rows = slide.objects
+      .map((object, index) => ({ object, index }))
+      .reverse()
+      .map(
+        ({ object, index }) =>
+          `<li class="${object.id === selectedObjectId ? "selected" : ""}"><button class="layer-pick" data-layer-select="${esc(object.id)}"><span class="layer-icon">${icon(object.type)}</span><span class="layer-name">${esc(objectName(object) || C.OBJECT_TYPES[object.type])}</span></button><span class="layer-actions"><button class="icon-button" data-layer-move="${esc(object.id)}:1" aria-label="קדימה" title="קדימה" ${index === last ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-layer-move="${esc(object.id)}:-1" aria-label="אחורה" title="אחורה" ${index === 0 ? "disabled" : ""}>${icon("down")}</button><button class="icon-button danger" data-layer-remove="${esc(object.id)}" aria-label="מחיקה" title="מחיקה">${icon("trash")}</button></span></li>`,
+      )
+      .join("");
+    panel.innerHTML = `<div class="layers-head"><span class="drag-grip" data-drag-grip title="גרירת הפאנל" aria-hidden="true"></span><strong>שכבות</strong><small>${slide.objects.length} / ${C.LIMITS.objects}</small><button class="icon-button" data-layers-close aria-label="סגירת השכבות">${icon("close")}</button></div>${
+      slide.objects.length
+        ? `<ol class="layer-list">${rows}</ol><p class="layers-note">העליון ברשימה הוא הקדמי על הבמה.</p>`
+        : '<p class="layers-note">אין עדיין אובייקטים בשקף הזה. הוסיפו אחד מסרגל השקף.</p>'
+    }`;
+    panel.hidden = false;
+    placeFloater(panel);
+  }
+  $("#layers").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const data = button.dataset;
+    if (data.layersClose !== undefined) {
+      layersOpen = false;
+      renderLayers();
+      renderStageTools();
+    } else if (data.layerSelect) {
+      cropping = false;
+      selectedObjectId = data.layerSelect;
+      editingObjectTextId = null;
+      render();
+      renderEditor();
+    } else if (data.layerMove) {
+      const [id, direction] = data.layerMove.split(":");
+      selectedObjectId = id;
+      moveObjectLayer(state.slide, id, Number(direction));
+    } else if (data.layerRemove) {
+      selectedObjectId = data.layerRemove;
+      removeSelectedObject();
+    }
+  });
   function setEditing(active) {
     editing = active;
     document.body.classList.toggle("editing", active);
@@ -1114,6 +1193,8 @@
     if (!active) {
       selectedObjectId = null;
       editingObjectTextId = null;
+      cropping = false;
+      layersOpen = false;
       finishSlideTextEditing({ rerender: false });
     }
     render();
@@ -1268,7 +1349,7 @@
       const limit = C.textLimit(deck.slides[slideIndex], object);
       specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", C.TEXT_WEIGHTS)}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
     } else if (object.type === "image")
-      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
+      specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}${objectInput("הגדלה לחיתוך", slideIndex, object, "zoom", 100, 400)}${objectInput("מוקד אופקי", slideIndex, object, "focusX", 0, 100)}${objectInput("מוקד אנכי", slideIndex, object, "focusY", 0, 100)}</div>`;
     else if (object.type === "visual")
       specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}${objectPicker("מראה", slideIndex, object, "style", C.VISUAL_STYLES)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
     else
@@ -1437,6 +1518,9 @@
       fontSize: [8, 300],
       radius: [0, 50],
       strokeWidth: [0, 20],
+      zoom: [100, 400],
+      focusX: [0, 100],
+      focusY: [0, 100],
     };
     if (!ranges[key]) return value;
     const [min, max] = ranges[key];
@@ -1589,7 +1673,187 @@
       );
     }
   }
-  function download(text, filename, type) {
+  /* Saved drafts. The browser keeps them, so the panel says so plainly and
+     every draft can be taken out as a file — a draft that exists only in one
+     browser profile is not a backup. */
+  const draftsKey = "lecture-stage:drafts";
+  const readDrafts = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(draftsKey));
+      return Array.isArray(raw)
+        ? raw.filter(
+            (draft) =>
+              draft &&
+              typeof draft.name === "string" &&
+              typeof draft.payload === "string",
+          )
+        : [];
+    } catch {
+      return [];
+    }
+  };
+  const writeDrafts = (list) => {
+    try {
+      localStorage.setItem(draftsKey, JSON.stringify(list));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const draftStatus = (message) => {
+    $("#draft-status").textContent = message;
+  };
+  const when = (iso) => {
+    const date = new Date(iso);
+    return Number.isNaN(date.valueOf())
+      ? ""
+      : `${String(date.getDate()).padStart(2, "0")}.${String(date.getMonth() + 1).padStart(2, "0")}.${date.getFullYear()} · ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  };
+  /* Chromium drops a non-ASCII `download` name on a file:// page and saves the
+     file as "download", with no extension at all. Everything here is named in
+     Hebrew, so the file gets an ASCII name that still says what it is. */
+  const fileName = (name, extension) => {
+    const ascii = String(name)
+      .replace(/[^A-Za-z0-9 _-]+/g, " ")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 50);
+    return `${ascii || `lecture-${new Date().toISOString().slice(0, 10)}`}.${extension}`;
+  };
+  function renderDrafts() {
+    const list = readDrafts();
+    $("#draft-list").innerHTML = list.length
+      ? list
+          .map(
+            (draft, index) =>
+              `<article class="draft-row"><div class="draft-head"><strong>${esc(draft.name)}</strong><small>${esc(when(draft.savedAt))} · ${weight(draft.payload)}</small></div><div class="draft-actions"><button class="duplicate-button" data-draft-load="${index}">פתיחה</button><button class="text-button" data-draft-update="${index}">עדכון לגרסה הנוכחית</button><button class="text-button" data-draft-json="${index}">קובץ תוכן</button><button class="text-button" data-draft-html="${index}">קובץ מצגת</button><button class="icon-button danger" data-draft-remove="${index}" aria-label="מחיקת הטיוטה ${esc(draft.name)}">${icon("trash")}</button></div></article>`,
+          )
+          .join("")
+      : '<p class="editor-note">אין עדיין טיוטות שמורות. שמור את המצב הנוכחי בשם, וכל שינוי מכאן והלאה לא ידרוס אותו.</p>';
+  }
+  function storeDraft(name, index = -1) {
+    let payload;
+    try {
+      payload = JSON.stringify(C.validate(deck));
+    } catch {
+      draftStatus("התוכן הנוכחי אינו תקין ולכן לא נשמר. תקנו את השדה המסומן ונסו שוב.");
+      return;
+    }
+    const list = readDrafts();
+    const existing =
+      index >= 0 ? index : list.findIndex((draft) => draft.name === name);
+    const entry = { name, savedAt: new Date().toISOString(), payload };
+    if (existing >= 0) list[existing] = entry;
+    else if (list.length >= C.LIMITS.drafts) {
+      draftStatus(
+        `אפשר להחזיק עד ${C.LIMITS.drafts} טיוטות. מחקו אחת כדי לשמור חדשה.`,
+      );
+      return;
+    } else list.push(entry);
+    if (!writeDrafts(list)) {
+      draftStatus(
+        "אין מספיק מקום בדפדפן. הורידו טיוטה כקובץ ומחקו אותה מכאן, ואז נסו שוב.",
+      );
+      return;
+    }
+    renderDrafts();
+    draftStatus(
+      existing >= 0 ? `הטיוטה ״${name}״ עודכנה.` : `הטיוטה ״${name}״ נשמרה.`,
+    );
+  }
+  function loadDraft(index) {
+    const draft = readDrafts()[index];
+    if (!draft) return;
+    let restored;
+    try {
+      restored = C.validate(JSON.parse(draft.payload));
+    } catch {
+      draftStatus("הטיוטה הזאת אינה תקינה ולא נפתחה.");
+      return;
+    }
+    finishSlideTextEditing({ rerender: false });
+    editingObjectTextId = null;
+    selectedObjectId = null;
+    cancelSceneRefresh();
+    deck = restored;
+    state = C.goTo(deck, 0);
+    renderedDots = "";
+    renderedSlide = -1;
+    renderedSceneKey = null;
+    // Recorded like any other change, so Ctrl+Z goes back to what was open.
+    save();
+    render();
+    renderEditor();
+    draftStatus(`״${draft.name}״ נפתחה. אפשר לבטל בכפתור החזרה.`);
+    notify(`נפתחה הטיוטה ״${draft.name}״.`);
+  }
+  function draftDocument(index) {
+    const draft = readDrafts()[index];
+    if (!draft) return null;
+    try {
+      return { draft, document: C.validate(JSON.parse(draft.payload)) };
+    } catch {
+      draftStatus("הטיוטה הזאת אינה תקינה ולכן לא ניתן להוריד אותה.");
+      return null;
+    }
+  }
+  $("#open-drafts").addEventListener("click", () => {
+    renderDrafts();
+    draftStatus("");
+    $("#draft-name").value = "";
+    openDialog("drafts");
+  });
+  $("#draft-save").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = $("#draft-name").value.trim();
+    if (!name) return;
+    storeDraft(name.slice(0, C.LIMITS.draftName));
+    $("#draft-name").value = "";
+  });
+  $("#draft-list").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const data = button.dataset;
+    if (data.draftLoad !== undefined) loadDraft(+data.draftLoad);
+    else if (data.draftUpdate !== undefined) {
+      const draft = readDrafts()[+data.draftUpdate];
+      if (draft) storeDraft(draft.name, +data.draftUpdate);
+    } else if (data.draftRemove !== undefined) {
+      const list = readDrafts();
+      const [removed] = list.splice(+data.draftRemove, 1);
+      writeDrafts(list);
+      renderDrafts();
+      draftStatus(removed ? `הטיוטה ״${removed.name}״ נמחקה.` : "");
+    } else if (data.draftJson !== undefined) {
+      const found = draftDocument(+data.draftJson);
+      if (found)
+        download(
+          JSON.stringify(found.document, null, 2),
+          fileName(found.draft.name, "json"),
+          "application/json;charset=utf-8",
+          (saved) => draftStatus(`הקובץ ${saved} ירד למחשב.`),
+        );
+    } else if (data.draftHtml !== undefined) {
+      const found = draftDocument(+data.draftHtml);
+      if (!found) return;
+      try {
+        download(
+          C.portableHTML(
+            initialHTML,
+            found.document,
+            `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          ),
+          fileName(found.draft.name, "html"),
+          "text/html;charset=utf-8",
+          (saved) =>
+            draftStatus(`הקובץ ${saved} ירד למחשב, ונפתח בכל דפדפן גם בלי אינטרנט.`),
+        );
+      } catch (err) {
+        draftStatus(err.message);
+      }
+    }
+  });
+  function download(text, filename, type, done) {
     const url = URL.createObjectURL(new Blob([text], { type }));
     const a = document.createElement("a");
     a.href = url;
@@ -1598,17 +1862,19 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
+    done?.(filename);
   }
   function exportHTML() {
     if (!validEditor()) return;
     try {
       const exportId = `portable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const name = fileName("chatbot-to-agent", "html");
       download(
         C.portableHTML(initialHTML, deck, exportId),
-        "מצ׳אטבוט-לסוכן.html",
+        name,
         "text/html;charset=utf-8",
       );
-      notify("העותק כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.");
+      notify(`${name} ירד למחשב. הוא כולל את התוכן הנוכחי ונפתח גם בלי אינטרנט.`);
     } catch (err) {
       notify(err.message);
     }
@@ -1722,10 +1988,12 @@
       // pointing at something the presenter is no longer working on.
       if (selectedObjectId && !event.target.closest("[data-slide-text]")) {
         selectedObjectId = null;
+        cropping = false;
         $$(".free-object.selected").forEach((el) =>
           el.classList.remove("selected"),
         );
         renderObjectToolbar();
+        renderLayers();
         renderEditor();
       }
       return;
@@ -1734,14 +2002,22 @@
     const id = hit.dataset.objectId;
     const object = objectById(state.slide, id);
     if (!object) return;
-    const mode = event.target.closest("[data-object-handle]") ? "resize" : "move";
+    /* While cropping, dragging inside the picture moves the picture within its
+       frame rather than moving the frame across the stage. */
+    const mode = event.target.closest("[data-object-handle]")
+      ? "resize"
+      : cropping && object.type === "image" && object.picture
+        ? "crop"
+        : "move";
     if (selectedObjectId !== id) {
+      cropping = false;
       selectedObjectId = id;
       hit.classList.add("selected");
       $$(".free-object.selected").forEach((object) => {
         if (object !== hit) object.classList.remove("selected");
       });
       renderObjectToolbar();
+      renderLayers();
       renderEditor();
     }
     activeObjectPointer = {
@@ -1755,6 +2031,8 @@
       y: Number(object.y),
       width: Number(object.width),
       height: Number(object.height),
+      focusX: Number(object.focusX ?? 50),
+      focusY: Number(object.focusY ?? 50),
     };
   }
   function moveObjectPointer(event) {
@@ -1784,6 +2062,25 @@
     const dy = ((event.clientY - activeObjectPointer.startY) / rect.height) * 100;
     let xGuide = null,
       yGuide = null;
+    if (activeObjectPointer.mode === "crop") {
+      // The drag is in stage percent; the picture is panned in its own.
+      object.focusX = neat(
+        clamp(
+          activeObjectPointer.focusX - (dx * 100) / Number(object.width),
+          0,
+          100,
+        ),
+      );
+      object.focusY = neat(
+        clamp(
+          activeObjectPointer.focusY - (dy * 100) / Number(object.height),
+          0,
+          100,
+        ),
+      );
+      applyObjectCrop(object);
+      return;
+    }
     if (activeObjectPointer.mode === "resize") {
       let width = clamp(
         activeObjectPointer.width + dx,
@@ -2103,14 +2400,28 @@
       if (editingObjectTextId === object.id) finishTextEditing();
       else beginTextEditing(object.id);
     } else if (data.toolbarDelete !== undefined) removeSelectedObject();
-    else if (data.toolbarSize !== undefined) {
-      object.fontSize = stepFontSize(object, Number(data.toolbarSize));
+    else if (data.toolbarStep !== undefined) {
+      const [key, direction] = data.toolbarStep.split(":");
+      object[key] = stepValue(object, key, Number(direction));
       // Nothing takes focus away between clicks, so a run of them is one step.
-      const field = $("[data-toolbar-size-value]");
-      if (field) field.value = object.fontSize;
-      // Stepping the size must not cost the caret, so nothing is rebuilt.
-      if (!applyObjectLook(object)) renderSoon();
-      save(`object:${object.id}:fontSize:${editSession}`);
+      const field = $(`[data-toolbar-step-value="${key}"]`);
+      if (field) field.value = object[key];
+      // Stepping must not cost the caret or the crop, so nothing is rebuilt.
+      if (!applyObjectLook(object) && !applyObjectCrop(object)) renderSoon();
+      save(`object:${object.id}:${key}:${editSession}`);
+    } else if (data.toolbarCrop !== undefined) {
+      cropping = !cropping;
+      renderObjectToolbar();
+      notify(
+        cropping
+          ? "גררו את התמונה בתוך המסגרת כדי לבחור מה נראה, והגדילו אותה בכפתורים."
+          : "החיתוך ננעל. גרירה מזיזה שוב את התמונה עצמה.",
+      );
+    } else if (data.toolbarCropReset !== undefined) {
+      Object.assign(object, { zoom: "100", focusX: "50", focusY: "50" });
+      save();
+      render();
+      renderEditor();
     } else if (data.toolbarLayer !== undefined)
       moveObjectLayer(state.slide, object.id, Number(data.toolbarLayer));
     else if (data.toolbarDuplicate !== undefined)
@@ -2131,15 +2442,21 @@
     let key = null;
     if (target.matches("[data-toolbar-colour]"))
       key = target.dataset.toolbarColour;
-    else if (target.matches("[data-toolbar-size-value]")) key = "fontSize";
+    else if (target.matches("[data-toolbar-step-value]"))
+      key = target.dataset.toolbarStepValue;
     else if (target.matches("[data-toolbar-object-prop]"))
       key = target.dataset.toolbarObjectProp;
     if (!key) return;
-    object[key] =
-      key === "fontSize"
-        ? String(clamp(Math.round(Number(target.value) || 8), 8, 300))
-        : target.value;
-    if (!applyObjectLook(object)) renderSoon();
+    object[key] = STEP_RANGES[key]
+      ? String(
+          clamp(
+            Math.round(Number(target.value) || STEP_RANGES[key][0]),
+            ...STEP_RANGES[key],
+          ),
+        )
+      : target.value;
+    if (!applyObjectLook(object) && !(key === "zoom" && applyObjectCrop(object)))
+      renderSoon();
     save(live ? `object:${object.id}:${key}:${editSession}` : null);
     if (!live) renderEditor();
     if (!live && (key === "entrance" || key === "exit"))
@@ -2206,11 +2523,54 @@
     const index = deck.slides[slideIndex].objects.indexOf(added);
     await loadPicture(file, `slides.${slideIndex}.objects.${index}.picture`);
   });
+  function insertSlide(slide, at) {
+    if (deck.slides.length >= C.LIMITS.slides) {
+      notify(`אפשר עד ${C.LIMITS.slides} שקפים במצגת אחת.`);
+      return;
+    }
+    deck.slides.splice(at, 0, slide);
+    selectedObjectId = null;
+    state = C.goTo(deck, at);
+    afterStructureChange();
+  }
   $("#stage-tools").addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (!button) return;
     if (button.dataset.stageAdd) addObject(state.slide, button.dataset.stageAdd);
-    else if (button.hasAttribute("data-stage-open-deck")) openDialog("editor");
+    else if (button.hasAttribute("data-stage-slide-add")) {
+      const type = $("[data-stage-slide-type]")?.value;
+      if (C.SLIDE_TYPES[type]) insertSlide(C.blankSlide(type), state.slide + 1);
+    } else if (button.hasAttribute("data-stage-slide-duplicate")) {
+      const copy = C.clone(deck.slides[state.slide]);
+      copy.id = C.newId("slide");
+      // Two slides may not share an object ID anywhere in the document.
+      copy.objects = copy.objects.map((object) => ({
+        ...object,
+        id: C.newId("object"),
+      }));
+      insertSlide(copy, state.slide + 1);
+      if (!withinDocumentLimit()) {
+        deck.slides.splice(state.slide, 1);
+        state = C.goTo(deck, Math.max(0, state.slide - 1));
+        afterStructureChange();
+        documentLimitMessage();
+      }
+    } else if (button.hasAttribute("data-stage-slide-remove")) {
+      if (deck.slides.length <= 1) return;
+      const removed = deck.slides.splice(state.slide, 1)[0];
+      selectedObjectId = null;
+      state = C.goTo(deck, Math.max(0, state.slide - 1));
+      afterStructureChange();
+      notify(
+        `השקף ״${slideName(removed)}״ נמחק. אפשר להחזיר אותו בכפתור הביטול.`,
+      );
+    }
+    else if (button.hasAttribute("data-stage-layers")) {
+      layersOpen = !layersOpen;
+      button.blur();
+      renderLayers();
+      renderStageTools();
+    } else if (button.hasAttribute("data-stage-open-deck")) openDialog("editor");
     else if (button.hasAttribute("data-stage-done")) setEditing(false);
   });
   $("#stage-tools").addEventListener("change", (event) => {

@@ -12,6 +12,8 @@
     nebula: { name: "סגול ולילך", hint: "לילי · חלומי", swatch: ["#151327", "#b9a3ff"] },
   };
   const LIMITS = {
+    drafts: 25,
+    draftName: 60,
     slides: 40,
     examples: 20,
     steps: 6,
@@ -323,7 +325,16 @@
         bind: "",
       };
     if (type === "image")
-      return { ...base, picture: "", fit: "contain", radius: "0", alt: "" };
+      return {
+        ...base,
+        picture: "",
+        fit: "contain",
+        radius: "0",
+        zoom: "100",
+        focusX: "50",
+        focusY: "50",
+        alt: "",
+      };
     if (type === "visual")
       return {
         ...base,
@@ -481,6 +492,12 @@
           picture: str(item.picture, picture()),
           fit: ownChoice(item.fit, FITS),
           radius: number(item.radius, 0, 50),
+          // Absent in documents written before cropping existed.
+          zoom: item.zoom === undefined ? "100" : number(item.zoom, 100, 400),
+          focusX:
+            item.focusX === undefined ? "50" : number(item.focusX, 0, 100),
+          focusY:
+            item.focusY === undefined ? "50" : number(item.focusY, 0, 100),
           alt: str(item.alt, text(120, false)),
         };
       if (item.type === "visual")
