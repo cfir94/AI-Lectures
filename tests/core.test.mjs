@@ -234,6 +234,50 @@ test("a timer only accepts a whole number of minutes", () => {
   for (const bad of ["", "  ", "10 דקות", "7.5", "-3", "1234"])
     assert.throws(() => C.validate(withMinutes(bad)));
 });
+test("a bound text object may not outgrow the slide field it writes into", () => {
+  const slide = C.validate(seed).slides[0];
+  assert.equal(C.textLimit(slide, { bind: "title" }), C.SLIDE_TYPES.statement.fields.title.max);
+  assert.equal(C.textLimit(slide, { bind: "" }), C.OBJECT_TEXT_MAX);
+  assert.ok(C.OBJECT_TEXT_MAX > C.SLIDE_TYPES.statement.fields.title.max);
+
+  // The pair has to stay in step, and both have to fit the shorter limit.
+  const document = C.clone(seed);
+  const object = C.blankObject("text");
+  object.bind = "title";
+  const overlong = "א".repeat(C.SLIDE_TYPES.statement.fields.title.max + 1);
+  object.text = overlong;
+  document.slides[0].title = overlong;
+  document.slides[0].objects = [object];
+  assert.throws(() => C.validate(document));
+});
+test("every projected string resolves to a spec, and reads and writes back", () => {
+  const document = C.validate(seed);
+  const reveal = document.slides[indexOfType("reveal")];
+  assert.equal(C.fieldSpec(reveal, "title"), C.SLIDE_TYPES.reveal.fields.title);
+  assert.equal(
+    C.fieldSpec(reveal, "items.0.word").max,
+    C.SLIDE_TYPES.reveal.list.fields.word.max,
+  );
+  assert.equal(C.readPath(reveal, "items.1.word"), reveal.items[1].word);
+  C.writePath(reveal, "items.1.word", "חדש.");
+  assert.equal(reveal.items[1].word, "חדש.");
+  assert.doesNotThrow(() => C.validate(document));
+  for (const bad of ["nope", "items.0.nope", "items.nope.word", "objects.0.text"])
+    assert.equal(C.fieldSpec(reveal, bad), null);
+});
+test("the slide-wide text style is a choice with a safe default", () => {
+  const document = C.clone(seed);
+  delete document.slides[0].textStyle;
+  assert.equal(C.validate(document).slides[0].textStyle, Object.keys(C.TEXT_STYLES)[0]);
+  for (const style of Object.keys(C.TEXT_STYLES)) {
+    const good = C.clone(seed);
+    good.slides[0].textStyle = style;
+    assert.equal(C.validate(good).slides[0].textStyle, style);
+  }
+  const bad = C.clone(seed);
+  bad.slides[0].textStyle = "rainbow";
+  assert.throws(() => C.validate(bad));
+});
 test("every slide type reports the beats its content implies", () => {
   const document = C.clone(seed);
   document.slides = Object.keys(C.SLIDE_TYPES).map((type) =>

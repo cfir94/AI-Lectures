@@ -444,9 +444,11 @@ p {
   outline: 2px solid var(--accent);
 }
 .editing .object-text[data-editable-text="true"],
-.editing [data-slide-text] {
+.editing [data-slide-text],
+.editing [data-example-text] {
   cursor: text;
 }
+.editing [data-example-text]:hover,
 .editing [data-slide-text]:hover {
   outline: 1px dashed rgba(var(--accent-rgb), 0.62);
   outline-offset: 7px;
@@ -582,7 +584,7 @@ h1 {
   line-height: 1.24;
   max-width: 100%;
 }
-h1 span {
+.headline-accent {
   color: var(--accent);
   background: var(--spectrum);
   -webkit-background-clip: text;
@@ -1053,6 +1055,42 @@ h1 span {
   }
 }
 
+/* A slide-wide text style, so a headline can be the colourful one without
+   turning it into a free object first. The accent word keeps its own gradient. */
+.slide-text-spectrum h1,
+.slide-text-spectrum .scene-eyebrow,
+.slide-text-spectrum .split-heading,
+.slide-text-spectrum .reveal-list li[data-state="now"],
+.slide-text-spectrum .token-sentence,
+.slide-text-spectrum .scene-word {
+  color: transparent;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.slide-text-outline h1,
+.slide-text-outline .split-heading,
+.slide-text-outline .scene-word {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: max(1px, 0.02em) var(--text);
+}
+
+/* Editing a projected string in place: it must stay exactly where it was. */
+[data-slide-text-editing="true"] {
+  cursor: text;
+  user-select: text;
+  touch-action: auto;
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 4px;
+  -webkit-text-fill-color: currentColor;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.editing [data-slide-text] {
+  cursor: text;
+}
 /* A picture that is the slide. */
 .image-frame {
   position: absolute;
@@ -2224,7 +2262,7 @@ kbd {
   h1 {
     font-size: clamp(2.7rem, 12vw, 5.8rem);
   }
-  h1 span {
+  .headline-accent {
     display: block;
   }
   .statement-scene .scene-caption {
@@ -2439,7 +2477,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","textStyle":"solid","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","textStyle":"solid","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","textStyle":"solid","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","textStyle":"solid","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -2523,6 +2561,17 @@ kbd {
     wipe: "סגירה",
   };
   const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
+  const EXAMPLE_FIELDS = {
+    name: text(40),
+    task: text(110),
+    answer: text(180),
+  };
+  const EXAMPLE_STEP_FIELDS = {
+    label: text(18),
+    detail: text(120),
+    artifact: text(40),
+  };
+  const OBJECT_TEXT_MAX = 500;
   const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
@@ -2556,6 +2605,7 @@ kbd {
     cut: "חיתוך",
   };
   const COMMON_FIELDS = {
+    textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
     backdropPicture: picture(),
@@ -2763,6 +2813,39 @@ kbd {
       strokeWidth: "0",
     };
   };
+  /* A bound text object and the slide field it writes into are the same string,
+     so the shorter of the two limits governs. Without this the editor happily
+     accepts 500 characters into a 40-character title and the document stops
+     validating — which reads to the presenter as "saving is unavailable". */
+  const textLimit = (slide, object) => {
+    const spec =
+      object.bind && SLIDE_TYPES[slide.type]?.fields?.[object.bind];
+    return spec?.max ?? OBJECT_TEXT_MAX;
+  };
+  /* Every projected string on a slide can be edited in place, so the editor
+     needs the spec behind a dotted path such as "title" or "items.0.word". */
+  const fieldSpec = (slide, path) => {
+    const type = SLIDE_TYPES[slide.type];
+    if (!type) return null;
+    const parts = String(path).split(".");
+    if (parts.length === 1) return type.fields[parts[0]] ?? null;
+    if (parts.length !== 3 || !type.list || parts[0] !== type.list.key)
+      return null;
+    if (!/^\d+$/.test(parts[1]) || !slide[parts[0]]?.[Number(parts[1])])
+      return null;
+    return type.list.fields[parts[2]] ?? null;
+  };
+  const readPath = (slide, path) => {
+    const parts = String(path).split(".");
+    return parts.length === 1
+      ? slide[parts[0]]
+      : slide[parts[0]]?.[Number(parts[1])]?.[parts[2]];
+  };
+  const writePath = (slide, path, value) => {
+    const parts = String(path).split(".");
+    if (parts.length === 1) slide[parts[0]] = value;
+    else slide[parts[0]][Number(parts[1])][parts[2]] = value;
+  };
   const safeJSON = (value) =>
     JSON.stringify(value)
       .replace(/</g, "\\u003c")
@@ -2851,7 +2934,7 @@ kbd {
       if (item.type === "text")
         return {
           ...base,
-          text: str(item.text, text(500)),
+          text: str(item.text, text(OBJECT_TEXT_MAX)),
           fontSize: number(item.fontSize, 8, 300),
           weight: ownChoice(item.weight, { 300: true, 400: true, 600: true, 800: true }),
           align: ownChoice(item.align, ALIGNS),
@@ -2974,16 +3057,10 @@ kbd {
           fail();
         return {
           id: str(e.id, text(100)),
-          name: str(e.name, text(40)),
-          task: str(e.task, text(110)),
-          answer: str(e.answer, text(180)),
+          ...group(e, EXAMPLE_FIELDS),
           steps: e.steps.map((s) => {
             if (!obj(s)) fail();
-            return group(s, {
-              label: text(18),
-              detail: text(120),
-              artifact: text(40),
-            });
+            return group(s, EXAMPLE_STEP_FIELDS);
           }),
         };
       }),
@@ -3064,6 +3141,13 @@ kbd {
     OBJECT_EXITS,
     SNAP_MODES,
     ALIGNS,
+    OBJECT_TEXT_MAX,
+    EXAMPLE_FIELDS,
+    EXAMPLE_STEP_FIELDS,
+    textLimit,
+    fieldSpec,
+    readPath,
+    writePath,
     clone,
     serializedBytes,
     newId,
@@ -3114,6 +3198,7 @@ kbd {
     pendingPicturePath = null,
     selectedObjectId = null,
     editingObjectTextId = null,
+    editingSlideText = null,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -3348,7 +3433,7 @@ kbd {
     });
   }
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
+    `<section class="slide ${classes} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -3384,7 +3469,7 @@ kbd {
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1 data-slide-text="title">${headline(slide, title)}${accent ? ` <span data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -3399,14 +3484,14 @@ kbd {
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1 data-slide-text="title">${headline(slide, title)}</h1>${caption(slide, slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
     const words = slide.items
       .map(
         (item, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}">${esc(item.word)}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}" data-slide-text="items.${i}.word">${esc(item.word)}</li>`,
       )
       .join("");
     const size = Math.min(
@@ -3418,14 +3503,14 @@ kbd {
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, "")}</div>`,
+      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, `items.${step}.caption`)}</div>`,
     );
   }
   function tokensSlide(slide, index, step) {
     const body =
       step === 0
         ? `<p class="token-sentence">${esc(slide.chunks.map((c) => c.text).join(""))}</p>`
-        : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}">${esc(c.text)}</span>`).join("")}</p>`;
+        : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}" data-slide-text="chunks.${i}.text">${esc(c.text)}</span>`).join("")}</p>`;
     return frame(
       slide,
       index,
@@ -3442,7 +3527,7 @@ kbd {
     const imageCaption = visibleText(slide, "caption");
     const overlay =
       imageTitle || imageCaption
-        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1 data-slide-text="title">${headline(slide, imageTitle)}</h1>` : ""}${caption(slide, imageCaption)}</div></div>`
+        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1><span data-slide-text="title">${headline(slide, imageTitle)}</span></h1>` : ""}${caption(slide, imageCaption)}</div></div>`
         : "";
     const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
     return frame(
@@ -3460,14 +3545,14 @@ kbd {
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-slide-text="value">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
     const sides = slide.sides
       .map(
         (side, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line">${esc(side.line)}</span>` : ""}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading" data-slide-text="sides.${i}.heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line" data-slide-text="sides.${i}.line">${esc(side.line)}</span>` : ""}</li>`,
       )
       .join("");
     return frame(
@@ -3525,7 +3610,7 @@ kbd {
       index,
       `experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}`,
       `--scene-size:${size}cqw;--phase:${Math.max(0, step - 1)}`,
-      `<div class="scene experiment-scene"><p class="scene-context">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word">${esc(heading)}</h2><p class="scene-caption">${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
+      `<div class="scene experiment-scene"><p class="scene-context" data-example-text="task">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word" ${agent ? `data-example-text="steps.${step - 1}.label"` : 'data-slide-text="title"'}>${esc(heading)}</h2><p class="scene-caption" ${agent ? `data-example-text="steps.${step - 1}.artifact"` : 'data-example-text="answer"'}>${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
     );
   }
   const SCENES = {
@@ -3710,9 +3795,20 @@ kbd {
       4500,
     );
   }
+  /* Two very different failures used to share one message. Invalid content is a
+     defect in this app, not a storage problem, and saying so is what lets it be
+     found instead of quietly eating the presenter's work. */
   function save() {
+    let payload;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(C.validate(deck)));
+      payload = JSON.stringify(C.validate(deck));
+    } catch {
+      $("#save-status").textContent =
+        "השינוי האחרון אינו תקין ולכן לא נשמר. בטלו אותו כדי להמשיך לשמור.";
+      return;
+    }
+    try {
+      localStorage.setItem(storageKey, payload);
       canSave = true;
     } catch {
       canSave = false;
@@ -3834,6 +3930,7 @@ kbd {
     motion: "תנועת הכניסה",
     backdrop: "רקע הבמה",
     transition: "מעבר לשקף הזה",
+    textStyle: "מראה הטקסט",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -3937,9 +4034,10 @@ kbd {
   function objectEditor(object, slideIndex, objectIndex) {
     const common = `<div class="object-animation-grid">${objectPicker("כניסה", slideIndex, object, "entrance", C.OBJECT_ENTRANCES)}${objectPicker("יציאה", slideIndex, object, "exit", C.OBJECT_EXITS)}${objectPicker("הצמדה", slideIndex, object, "snap", C.SNAP_MODES)}</div><div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
     let specific = "";
-    if (object.type === "text")
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
-    else if (object.type === "image")
+    if (object.type === "text") {
+      const limit = C.textLimit(deck.slides[slideIndex], object);
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+    } else if (object.type === "image")
       specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
     else if (object.type === "visual")
       specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
@@ -4012,6 +4110,7 @@ kbd {
       .join("")}</div></section>`;
   }
   const LOOK_KEYS = new Set([
+    "textStyle",
     "motion",
     "backdrop",
     "backdropPicture",
@@ -4035,7 +4134,7 @@ kbd {
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -4128,7 +4227,6 @@ kbd {
       value = neat(Math.min(Number(value), 100 - Number(object.y)));
     object[key] = value;
     if (key === "text" && object.bind) deck.slides[slideIndex][object.bind] = value;
-    if (key === "color" && object.type === "text") object.style = "solid";
     if (!withinDocumentLimit()) {
       object[key] = previous;
       input.value = previous;
@@ -4138,15 +4236,11 @@ kbd {
     if (input.type === "number") input.value = value;
     if (key === "text") {
       input.closest(".field").querySelector("small").textContent =
-        `${value.length} / 500`;
+        `${value.length} / ${C.textLimit(deck.slides[slideIndex], object)}`;
     }
     if (key === "color") {
       const output = input.closest(".colour-picker")?.querySelector("output");
       if (output) output.textContent = value;
-      const style = input
-        .closest(".object-editor")
-        ?.querySelector('select[data-object-prop="style"]');
-      if (style && object.type === "text") style.value = "solid";
     }
     selectedObjectId = object.id;
     if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
@@ -4500,21 +4594,94 @@ kbd {
     if (!editingObjectTextId) return;
     editingObjectTextId = null;
     save();
-    render();
+    // Same reason as finishSlideTextEditing: never rebuild the stage from
+    // inside a blur, or the node being replaced is already gone.
+    requestAnimationFrame(render);
+  }
+  /* Slide text is edited where it sits. Converting it into a movable object is
+     a separate, deliberate action — a double-click must never move the words
+     the presenter just aimed at. */
+  const textTarget = (el) => {
+    if (el.dataset.slideText !== undefined)
+      return {
+        owner: deck.slides[state.slide],
+        path: el.dataset.slideText,
+        spec: C.fieldSpec(deck.slides[state.slide], el.dataset.slideText),
+      };
+    const path = el.dataset.exampleText;
+    const parts = path.split(".");
+    const spec =
+      parts.length === 1
+        ? C.EXAMPLE_FIELDS[parts[0]]
+        : C.EXAMPLE_STEP_FIELDS[parts[2]];
+    return { owner: C.selected(deck), path, spec };
+  };
+  function beginSlideTextEditing(el) {
+    const { owner, path, spec } = textTarget(el);
+    if (!spec) return;
+    finishSlideTextEditing({ rerender: false });
+    editingSlideText = { owner, path, spec, el };
+    el.textContent = C.readPath(owner, path) ?? "";
+    el.contentEditable = "true";
+    el.spellcheck = true;
+    el.dataset.slideTextEditing = "true";
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const selection = getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  function finishSlideTextEditing({ rerender = true } = {}) {
+    if (!editingSlideText) return;
+    const { el } = editingSlideText;
+    editingSlideText = null;
+    el.contentEditable = "false";
+    delete el.dataset.slideTextEditing;
+    if (!rerender) return;
+    // Rebuilding the stage while the browser is still unwinding a blur throws,
+    // so hand the render to the next frame.
+    requestAnimationFrame(() => {
+      render();
+      renderEditor();
+    });
   }
   $("#slide-root").addEventListener("dblclick", (event) => {
-    const text = event.target.closest(".object-text");
     if (!$("#editor").open) return;
+    const text = event.target.closest(".object-text");
     if (text) {
       event.preventDefault();
       beginTextEditing(text.closest(".free-object").dataset.objectId);
       return;
     }
-    const structured = event.target.closest("[data-slide-text]");
+    const structured = event.target.closest(
+      "[data-slide-text], [data-example-text]",
+    );
     if (!structured) return;
     event.preventDefault();
-    const object = convertSlideText(state.slide, structured.dataset.slideText);
-    if (object) beginTextEditing(object.id);
+    beginSlideTextEditing(structured);
+  });
+  $("#slide-root").addEventListener("input", (event) => {
+    const el = event.target.closest("[data-slide-text-editing='true']");
+    if (!el || !editingSlideText || el !== editingSlideText.el) return;
+    const { owner, path, spec } = editingSlideText;
+    let value = el.textContent.replace(/\r/g, "");
+    if (value.length > spec.max) {
+      value = value.slice(0, spec.max);
+      el.textContent = value;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      notify(`הטקסט הזה מוגבל ל־${spec.max} תווים.`);
+    }
+    if (spec.required && !value.trim()) return;
+    C.writePath(owner, path, value);
+    const bound = owner.objects?.find((object) => object.bind === path);
+    if (bound) bound.text = value;
+    save();
   });
   $("#slide-root").addEventListener("focusout", (event) => {
     if (
@@ -4530,14 +4697,28 @@ kbd {
       !event.target.closest("#slide-root, #object-toolbar")
     )
       finishTextEditing();
+    if (
+      editingSlideText &&
+      !event.target.closest("[data-slide-text-editing='true']")
+    )
+      finishSlideTextEditing();
+  });
+  $("#slide-root").addEventListener("focusout", (event) => {
+    if (
+      editingSlideText &&
+      event.target === editingSlideText.el &&
+      !event.relatedTarget?.closest?.("#object-toolbar")
+    )
+      finishSlideTextEditing();
   });
   $("#slide-root").addEventListener("input", (event) => {
     if (!event.target.matches('[data-object-text-editor="true"]')) return;
     const object = currentObject();
     if (!object || object.type !== "text") return;
+    const limit = C.textLimit(deck.slides[state.slide], object);
     let value = event.target.textContent.replace(/\r/g, "");
-    if (value.length > 500) {
-      value = value.slice(0, 500);
+    if (value.length > limit) {
+      value = value.slice(0, limit);
       event.target.textContent = value;
       const range = document.createRange();
       range.selectNodeContents(event.target);
@@ -4553,14 +4734,25 @@ kbd {
     if (field) {
       field.value = value;
       panel.querySelector(".field-head small").textContent =
-        `${value.length} / 500`;
+        `${value.length} / ${limit}`;
       panel.querySelector(".object-select span").textContent = value.slice(0, 28);
     }
     save();
   });
   $("#slide-root").addEventListener("keydown", (event) => {
+    const leaving =
+      event.key === "Escape" || (event.ctrlKey && event.key === "Enter");
+    if (event.target.matches("[data-slide-text-editing='true']")) {
+      if (event.key === "Enter" && !event.shiftKey) event.preventDefault();
+      if (leaving || (event.key === "Enter" && !event.shiftKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishSlideTextEditing();
+      }
+      return;
+    }
     if (!event.target.matches('[data-object-text-editor="true"]')) return;
-    if (event.key === "Escape" || (event.ctrlKey && event.key === "Enter")) {
+    if (leaving) {
       event.preventDefault();
       event.stopPropagation();
       finishTextEditing();
@@ -4735,6 +4927,9 @@ kbd {
         added.color = rootStyle.getPropertyValue("--accent").trim();
         added.stroke = rootStyle.getPropertyValue("--text").trim();
       }
+      const offset = (slide.objects.length % 6) * 4;
+      added.x = String(Math.min(Number(added.x) + offset, 100 - Number(added.width)));
+      added.y = String(Math.min(Number(added.y) + offset, 100 - Number(added.height)));
       slide.objects.push(added);
       selectedObjectId = added.id;
       state = C.goTo(deck, +slideIndex);

@@ -23,6 +23,10 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - `transition` is chosen per destination slide. Keep the document-level value only as an import fallback for older version-2 files; do not restore a global transition control.
 - Keep every object fully inside the stage, keep object IDs unique across the entire document, and preserve the mobile stage-editing mode that collapses the inspector while direct manipulation is active.
 - `render` restores focus by `data-action` after rebuilding the stage, so blur a control *before* rendering, never after.
+- Never rebuild the stage from inside a `blur` or `focusout` handler — replacing a node the browser is still unwinding throws `NotFoundError`. Defer the render with `requestAnimationFrame`.
+- A text object bound to a slide field is the same string as that field, so it inherits the field's shorter limit. Ask `textLimit` rather than assuming `OBJECT_TEXT_MAX`.
+- Every string that reaches the stage carries `data-slide-text` (or `data-example-text`) with the path that owns it, so it can be edited where it sits. Editing must never move or resize the words the presenter aimed at; converting text into a free object is a separate, explicit action.
+- `save` distinguishes invalid content from unavailable storage. Never collapse them: telling a presenter that storage failed when the document is invalid hides the defect and eats their work.
 - Keep the two motion layers separate: slide entrance runs on `.scene > *` and is driven by the motion class, which is stripped when only the beat changed; per-beat animation belongs on inner elements. Ambient backdrop loops must survive a restart unnoticed, because a re-render recreates them.
 - Avoid adding dependencies for capabilities already supported by the browser. There are currently no runtime or build dependencies.
 - Use real buttons, labels and dialogs. Preserve RTL key mappings, keyboard focus and reduced-motion behavior.
