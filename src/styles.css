@@ -400,8 +400,12 @@ p {
   -webkit-text-stroke: max(1px, 0.025em) var(--object-colour);
 }
 .object-text.is-editing {
+  position: relative;
+  z-index: 2;
+  min-height: 1em;
   cursor: text;
   user-select: text;
+  touch-action: auto;
   overflow: auto;
   outline: 2px solid var(--accent);
   outline-offset: 6px;
@@ -429,6 +433,14 @@ p {
 }
 .editing .free-object.selected {
   outline: 2px solid var(--accent);
+}
+.editing .object-text[data-editable-text="true"],
+.editing [data-slide-text] {
+  cursor: text;
+}
+.editing [data-slide-text]:hover {
+  outline: 1px dashed rgba(var(--accent-rgb), 0.62);
+  outline-offset: 7px;
 }
 .object-handle {
   position: absolute;
@@ -882,16 +894,16 @@ h1 span {
   pointer-events: none;
 }
 [data-transition="fade"] .slide.leaving {
-  animation: t-fade-out 0.34s cubic-bezier(0.4, 0, 1, 1) both;
+  animation: t-fade-out var(--slide-exit-duration, 0.34s) cubic-bezier(0.4, 0, 1, 1) both;
 }
 [data-transition="push"] .slide.leaving {
-  animation: t-push-out 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-push-out var(--slide-exit-duration, 0.44s) cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="push"] .slide.entering {
   animation: t-push-in 0.44s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.leaving {
-  animation: t-zoom-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: t-zoom-out var(--slide-exit-duration, 0.4s) cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.entering {
   animation: t-zoom-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;

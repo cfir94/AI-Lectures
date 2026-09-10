@@ -339,4 +339,7 @@ test("built standalone output has no external runtime assets or unresolved marke
   assert.ok(!html.includes("/*__CSS__*/"));
   assert.ok(html.includes('dir="rtl"'));
   assert.ok(html.includes("prefers-reduced-motion"));
+  assert.ok(html.includes("data-slide-text"));
+  assert.ok(html.includes("data-toolbar-text-style"));
+  assert.ok(html.includes("--slide-exit-duration"));
 });

@@ -164,7 +164,7 @@
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
-      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="plaintext-only" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : ""}>${esc(object.text)}</p>`;
+      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<img class="object-image" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};border-radius:${object.radius}%">`
@@ -206,10 +206,63 @@
         : "";
     const textTools =
       object.type === "text"
-        ? `<button data-toolbar-edit-text aria-pressed="${editingObjectTextId === object.id}">${editingObjectTextId === object.id ? "סיום טקסט" : "עריכת טקסט"}</button><button data-toolbar-spectrum aria-pressed="${object.style === "spectrum"}">צבעוני</button>`
+        ? `<button data-toolbar-edit-text aria-pressed="${editingObjectTextId === object.id}">${editingObjectTextId === object.id ? "סיום טקסט" : "עריכת טקסט"}</button><label class="stage-text-style"><span>מראה הטקסט</span><select data-toolbar-text-style>${optionMarkup(C.TEXT_STYLES, object.style)}</select></label>`
         : "";
     toolbar.innerHTML = `${textTools}${colour}<label class="stage-motion"><span>כניסה</span><select data-toolbar-object-prop="entrance">${optionMarkup(C.OBJECT_ENTRANCES, object.entrance)}</select></label><label class="stage-motion"><span>יציאה</span><select data-toolbar-object-prop="exit">${optionMarkup(C.OBJECT_EXITS, object.exit)}</select></label><button data-toolbar-snap aria-pressed="${object.snap === "on"}">${object.snap === "on" ? "גריד פעיל" : "בלי הצמדה"}</button>`;
     toolbar.hidden = false;
+  }
+  function previewObjectMotion(id, phase, preset) {
+    requestAnimationFrame(() => {
+      const element = $(`.free-object[data-object-id="${CSS.escape(id)}"]`);
+      if (!element || preset === "none" || reducedMotion() || !element.animate)
+        return;
+      const rotation = "rotate(var(--object-rotation, 0deg))";
+      const opacity = "var(--object-opacity, 1)";
+      const entrance = {
+        fade: [{ opacity: 0 }, { opacity }],
+        rise: [
+          { opacity: 0, transform: `${rotation} translateY(28px)` },
+          { opacity, transform: rotation },
+        ],
+        zoom: [
+          { opacity: 0, transform: `${rotation} scale(0.78)` },
+          { opacity, transform: rotation },
+        ],
+        wipe: [
+          { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+          { opacity, clipPath: "inset(0)" },
+        ],
+        pop: [
+          { opacity: 0, transform: `${rotation} scale(0.72)` },
+          { opacity, transform: `${rotation} scale(1.05)`, offset: 0.72 },
+          { opacity, transform: rotation },
+        ],
+      };
+      const exit = {
+        fade: [{ opacity }, { opacity: 0 }],
+        fall: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} translateY(34px)` },
+        ],
+        shrink: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} scale(0.72)` },
+        ],
+        wipe: [
+          { opacity, clipPath: "inset(0)" },
+          { opacity: 0, clipPath: "inset(0 0 0 100%)" },
+        ],
+      };
+      const frames = (phase === "entrance" ? entrance : exit)[preset];
+      if (!frames) return;
+      element.animate(frames, {
+        duration: phase === "entrance" ? 720 : 520,
+        easing:
+          phase === "entrance"
+            ? "cubic-bezier(0.22, 0.7, 0.3, 1)"
+            : "cubic-bezier(0.4, 0, 1, 1)",
+      });
+    });
   }
   const frame = (slide, index, classes, style, body) =>
     `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
@@ -218,7 +271,7 @@
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
   const caption = (slide, value, key = "caption") =>
     value && !isBound(slide, key)
-      ? `<p class="scene-caption">${esc(value)}</p>`
+      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${esc(value)}</p>`
       : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
   const headline = (slide, value) =>
@@ -248,7 +301,7 @@
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1>${headline(slide, title)}${accent ? ` <span>${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1 data-slide-text="title">${headline(slide, title)}${accent ? ` <span data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -263,7 +316,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool">${esc(tool)}</span>` : ""}<h1>${headline(slide, title)}</h1>${caption(slide, slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1 data-slide-text="title">${headline(slide, title)}</h1>${caption(slide, slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
@@ -282,7 +335,7 @@
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, "")}</div>`,
+      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, "")}</div>`,
     );
   }
   function tokensSlide(slide, index, step) {
@@ -295,7 +348,7 @@
       index,
       "tokens-slide",
       "",
-      `<div class="scene tokens-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}${body}${step === 1 ? caption(slide, slide.caption) : ""}</div>`,
+      `<div class="scene tokens-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}${body}${step === 1 ? caption(slide, slide.caption) : ""}</div>`,
     );
   }
   function imageSlide(slide, index) {
@@ -306,7 +359,7 @@
     const imageCaption = visibleText(slide, "caption");
     const overlay =
       imageTitle || imageCaption
-        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1>${headline(slide, imageTitle)}</h1>` : ""}${caption(slide, imageCaption)}</div></div>`
+        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1 data-slide-text="title">${headline(slide, imageTitle)}</h1>` : ""}${caption(slide, imageCaption)}</div></div>`
         : "";
     const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
     return frame(
@@ -324,7 +377,7 @@
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em>${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
@@ -339,7 +392,7 @@
       index,
       "split-slide",
       `--sides:${slide.sides.length}`,
-      `<div class="scene split-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
+      `<div class="scene split-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="split-list">${sides}</ol></div>`,
     );
   }
   const clockText = (seconds) =>
@@ -365,7 +418,7 @@
       index,
       `timer-slide ${state.running ? "running" : ""} ${left === 0 ? "elapsed" : ""}`,
       "",
-      `<div class="scene timer-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide, slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
+      `<div class="scene timer-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="timer-readout" data-timer dir="ltr">${clockText(left)}</p>${caption(slide, slide.caption)}</div><div class="scene-controls timer-controls"><button class="quiet-button" data-action="timer-toggle">${icon(state.running ? "pause" : "play")}${state.running ? "עצירה" : left === 0 ? "שוב" : "התחלה"}</button><button class="quiet-button" data-action="timer-reset">${icon("replay")}איפוס</button></div>`,
     );
   }
   function canvasSlide(slide, index) {
@@ -507,6 +560,10 @@
       previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
     const exitsOnly =
       previous && !sameSlide && slide.transition === "cut" && hasObjectExits;
+    const slideExitTime = { cut: 0, fade: 340, push: 440, zoom: 400 }[
+      slide.transition
+    ];
+    const outgoingTime = Math.max(slideExitTime, hasObjectExits ? 520 : 0);
     if (
       previous &&
       !sameSlide &&
@@ -514,6 +571,8 @@
       (slide.transition !== "cut" || exitsOnly)
     ) {
       previous.classList.add("leaving");
+      if (hasObjectExits)
+        previous.style.setProperty("--slide-exit-duration", "0.52s");
       if (exitsOnly) previous.classList.add("object-exits-only");
       const drop = () => previous.remove();
       // animationend bubbles, so only the slide's own exit may retire it.
@@ -521,9 +580,13 @@
         previous.addEventListener("animationend", (event) => {
           if (event.target === previous) drop();
         });
-      setTimeout(drop, 900);
+      setTimeout(drop, outgoingTime + 80);
       root.insertAdjacentHTML("beforeend", html);
       root.lastElementChild.classList.add("entering");
+      root.lastElementChild.style.setProperty(
+        "--enter-delay",
+        `${(outgoingTime + 40) / 1000}s`,
+      );
     } else root.innerHTML = html;
     const current = root.lastElementChild;
     current.style.setProperty("--dir", direction);
@@ -792,7 +855,7 @@
     const common = `<div class="object-animation-grid">${objectPicker("כניסה", slideIndex, object, "entrance", C.OBJECT_ENTRANCES)}${objectPicker("יציאה", slideIndex, object, "exit", C.OBJECT_EXITS)}${objectPicker("הצמדה", slideIndex, object, "snap", C.SNAP_MODES)}</div><div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
     let specific = "";
     if (object.type === "text")
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
     else if (object.type === "image")
       specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
     else if (object.type === "visual")
@@ -811,6 +874,47 @@
     "tool",
     "unit",
   ]);
+  const TEXT_BOX_LAYOUTS = {
+    title: ["15", "18", "70", "24", "72", "400"],
+    accent: ["20", "35", "60", "18", "68", "600"],
+    caption: ["20", "68", "60", "14", "30", "400"],
+    tool: ["35", "12", "30", "10", "24", "600"],
+    unit: ["62", "55", "22", "13", "42", "400"],
+  };
+  function convertSlideText(slideIndex, key) {
+    const slide = deck.slides[slideIndex];
+    const layout = TEXT_BOX_LAYOUTS[key];
+    if (
+      !slide ||
+      !layout ||
+      !slide[key] ||
+      slide.objects.length >= C.LIMITS.objects
+    )
+      return null;
+    const existing = slide.objects.find((object) => object.bind === key);
+    if (existing) return existing;
+    const object = C.blankObject("text");
+    const [x, y, width, height, fontSize, weight] = layout;
+    Object.assign(object, {
+      bind: key,
+      text: slide[key],
+      x,
+      y,
+      width,
+      height,
+      fontSize,
+      weight,
+      color: getComputedStyle(document.documentElement)
+        .getPropertyValue(key === "accent" ? "--accent" : "--text")
+        .trim(),
+      style: key === "accent" ? "spectrum" : "solid",
+    });
+    slide.objects.push(object);
+    selectedObjectId = object.id;
+    state = C.goTo(deck, slideIndex);
+    afterStructureChange();
+    return object;
+  }
   function projectableTextTools(slide, index, specs) {
     if (slide.type === "experiment") return "";
     const keys = Object.keys(specs).filter(
@@ -965,6 +1069,8 @@
     if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
     save();
     render();
+    if (key === "entrance" || key === "exit")
+      previewObjectMotion(object.id, key, value);
   }
   function updateField(input) {
     input.closest(".field").querySelector("small").textContent =
@@ -1162,6 +1268,13 @@
   }
   function startObjectPointer(event) {
     if (!$("#editor").open || event.button !== 0) return;
+    if (
+      editingObjectTextId &&
+      !event.target.closest('[data-object-text-editor="true"]')
+    ) {
+      finishTextEditing();
+      return;
+    }
     const hit = event.target.closest(".free-object");
     if (!hit) return;
     if (event.target.closest('[contenteditable="true"]')) return;
@@ -1171,9 +1284,12 @@
     if (!object) return;
     const mode = event.target.closest("[data-object-handle]") ? "resize" : "move";
     if (selectedObjectId !== id) {
-      editingObjectTextId = null;
       selectedObjectId = id;
-      render();
+      hit.classList.add("selected");
+      $$(".free-object.selected").forEach((object) => {
+        if (object !== hit) object.classList.remove("selected");
+      });
+      renderObjectToolbar();
       renderEditor();
     }
     activeObjectPointer = {
@@ -1302,13 +1418,35 @@
     editingObjectTextId = null;
     save();
     render();
-    renderEditor();
   }
   $("#slide-root").addEventListener("dblclick", (event) => {
     const text = event.target.closest(".object-text");
-    if (!text || !$("#editor").open) return;
+    if (!$("#editor").open) return;
+    if (text) {
+      event.preventDefault();
+      beginTextEditing(text.closest(".free-object").dataset.objectId);
+      return;
+    }
+    const structured = event.target.closest("[data-slide-text]");
+    if (!structured) return;
     event.preventDefault();
-    beginTextEditing(text.closest(".free-object").dataset.objectId);
+    const object = convertSlideText(state.slide, structured.dataset.slideText);
+    if (object) beginTextEditing(object.id);
+  });
+  $("#slide-root").addEventListener("focusout", (event) => {
+    if (
+      event.target.matches('[data-object-text-editor="true"]') &&
+      !event.relatedTarget?.matches?.('[data-object-text-editor="true"]') &&
+      !event.relatedTarget?.closest?.("#object-toolbar")
+    )
+      finishTextEditing();
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (
+      editingObjectTextId &&
+      !event.target.closest("#slide-root, #object-toolbar")
+    )
+      finishTextEditing();
   });
   $("#slide-root").addEventListener("input", (event) => {
     if (!event.target.matches('[data-object-text-editor="true"]')) return;
@@ -1369,11 +1507,6 @@
     if (button.dataset.toolbarEditText !== undefined) {
       if (editingObjectTextId === object.id) finishTextEditing();
       else beginTextEditing(object.id);
-    } else if (button.dataset.toolbarSpectrum !== undefined) {
-      object.style = object.style === "spectrum" ? "solid" : "spectrum";
-      save();
-      render();
-      renderEditor();
     } else if (button.dataset.toolbarSnap !== undefined) {
       object.snap = object.snap === "on" ? "off" : "on";
       save();
@@ -1384,15 +1517,26 @@
   $("#object-toolbar").addEventListener("change", (event) => {
     const object = currentObject();
     if (!object) return;
+    let motionPreview = null;
     if (event.target.matches("[data-toolbar-colour]")) {
       object.color = event.target.value;
       if (object.type === "text") object.style = "solid";
-    } else if (event.target.matches("[data-toolbar-object-prop]"))
-      object[event.target.dataset.toolbarObjectProp] = event.target.value;
+    } else if (
+      event.target.matches("[data-toolbar-text-style]") &&
+      object.type === "text"
+    )
+      object.style = event.target.value;
+    else if (event.target.matches("[data-toolbar-object-prop]")) {
+      const key = event.target.dataset.toolbarObjectProp;
+      object[key] = event.target.value;
+      motionPreview = [key, event.target.value];
+    }
     else return;
     save();
     render();
     renderEditor();
+    if (motionPreview)
+      previewObjectMotion(object.id, motionPreview[0], motionPreview[1]);
   });
   $("#slide-dots").addEventListener("click", (event) => {
     const b = event.target.closest("button");
@@ -1566,42 +1710,8 @@
       renderEditor();
     } else if (data.convertText) {
       const [slideIndex, key] = data.convertText.split(":");
-      const slide = deck.slides[+slideIndex];
-      if (
-        !slide[key] ||
-        slide.objects.length >= C.LIMITS.objects ||
-        slide.objects.some((object) => object.bind === key)
-      )
-        return;
-      const object = C.blankObject("text");
-      const layouts = {
-        title: ["15", "18", "70", "24", "72", "400"],
-        accent: ["20", "35", "60", "18", "68", "600"],
-        caption: ["20", "68", "60", "14", "30", "400"],
-        tool: ["35", "12", "30", "10", "24", "600"],
-        unit: ["62", "55", "22", "13", "42", "400"],
-      };
-      if (!layouts[key]) return;
-      const [x, y, width, height, fontSize, weight] = layouts[key];
-      Object.assign(object, {
-        bind: key,
-        text: slide[key],
-        x,
-        y,
-        width,
-        height,
-        fontSize,
-        weight,
-        color: getComputedStyle(document.documentElement)
-          .getPropertyValue(key === "accent" ? "--accent" : "--text")
-          .trim(),
-        style: key === "accent" ? "spectrum" : "solid",
-      });
-      slide.objects.push(object);
-      selectedObjectId = object.id;
-      state = C.goTo(deck, +slideIndex);
-      afterStructureChange();
-      beginTextEditing(object.id);
+      const object = convertSlideText(+slideIndex, key);
+      if (object) beginTextEditing(object.id);
     } else if (data.unbindText) {
       const [slideIndex, key] = data.unbindText.split(":");
       const slide = deck.slides[+slideIndex];
