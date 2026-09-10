@@ -214,8 +214,9 @@
       object.type === "text"
         ? `<button data-toolbar-edit-text aria-pressed="${editingObjectTextId === object.id}">${editingObjectTextId === object.id ? "סיום טקסט" : "עריכת טקסט"}</button><label class="stage-text-style"><span>מראה הטקסט</span><select data-toolbar-text-style>${optionMarkup(C.TEXT_STYLES, object.style)}</select></label>`
         : "";
-    toolbar.innerHTML = `${textTools}${colour}<label class="stage-motion"><span>כניסה</span><select data-toolbar-object-prop="entrance">${optionMarkup(C.OBJECT_ENTRANCES, object.entrance)}</select></label><label class="stage-motion"><span>יציאה</span><select data-toolbar-object-prop="exit">${optionMarkup(C.OBJECT_EXITS, object.exit)}</select></label><button data-toolbar-snap aria-pressed="${object.snap === "on"}">${object.snap === "on" ? "גריד פעיל" : "בלי הצמדה"}</button>`;
+    toolbar.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span>${textTools}${colour}<label class="stage-motion"><span>כניסה</span><select data-toolbar-object-prop="entrance">${optionMarkup(C.OBJECT_ENTRANCES, object.entrance)}</select></label><label class="stage-motion"><span>יציאה</span><select data-toolbar-object-prop="exit">${optionMarkup(C.OBJECT_EXITS, object.exit)}</select></label><button data-toolbar-snap aria-pressed="${object.snap === "on"}">${object.snap === "on" ? "גריד פעיל" : "בלי הצמדה"}</button><button class="icon-only danger" data-toolbar-delete title="מחיקת האובייקט · Delete" aria-label="מחיקת האובייקט">${icon("trash")}</button>`;
     toolbar.hidden = false;
+    placeFloater(toolbar);
   }
   function previewObjectMotion(id, phase, preset) {
     requestAnimationFrame(() => {
@@ -562,6 +563,17 @@
       }
     }, 250);
   }
+  function removeSelectedObject() {
+    const object = currentObject();
+    if (!object) return false;
+    const slide = deck.slides[state.slide];
+    slide.objects.splice(slide.objects.indexOf(object), 1);
+    if (editingObjectTextId === object.id) editingObjectTextId = null;
+    selectedObjectId = null;
+    afterStructureChange();
+    notify("האובייקט נמחק.");
+    return true;
+  }
   function toggleTimer() {
     const current = timerState(deck.slides[state.slide]);
     if (current.running) {
@@ -739,6 +751,58 @@
       if (!$("dialog[open]")) document.body.classList.add("controls-idle");
     }, 4500);
   }
+  /* Both stage panels cover the slide, so they float: dragged by their grip and
+     kept where they were left. The position is a UI preference, not content, so
+     it lives beside the deck rather than inside it. */
+  const floaterKey = "lecture-stage:floaters";
+  let floaters = {};
+  try {
+    floaters = JSON.parse(localStorage.getItem(floaterKey)) || {};
+  } catch {
+    floaters = {};
+  }
+  function placeFloater(el) {
+    const spot = floaters[el.id];
+    if (!spot) return;
+    el.style.left = `${spot.x}%`;
+    el.style.top = `${spot.y}%`;
+    el.style.bottom = "auto";
+    el.style.transform = "none";
+  }
+  function startFloaterDrag(event) {
+    const grip = event.target.closest("[data-drag-grip]");
+    if (!grip || event.button !== 0) return;
+    const el = grip.closest(".stage-tools, .object-toolbar");
+    if (!el) return;
+    event.preventDefault();
+    const stage = $("#stage").getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    const grabX = event.clientX - box.left;
+    const grabY = event.clientY - box.top;
+    const move = (e) => {
+      const x = clamp(e.clientX - grabX - stage.left, 0, stage.width - box.width);
+      const y = clamp(e.clientY - grabY - stage.top, 0, stage.height - box.height);
+      floaters[el.id] = {
+        x: neat((x / stage.width) * 100),
+        y: neat((y / stage.height) * 100),
+      };
+      placeFloater(el);
+    };
+    const stop = () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", stop);
+      document.body.classList.remove("object-dragging");
+      try {
+        localStorage.setItem(floaterKey, JSON.stringify(floaters));
+      } catch {
+        // A full or blocked store only costs the remembered spot.
+      }
+    };
+    document.body.classList.add("object-dragging");
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", stop);
+  }
+  document.addEventListener("pointerdown", startFloaterDrag);
   function renderStageTools() {
     const tools = $("#stage-tools");
     if (!editing) {
@@ -751,11 +815,12 @@
     const add = Object.entries(C.OBJECT_TYPES)
       .map(
         ([type, name]) =>
-          `<button data-stage-add="${type}" ${full ? "disabled" : ""}>${icon(type)}${esc(name)}</button>`,
+          `<button class="icon-only" data-stage-add="${type}" title="הוספת ${esc(name)}" aria-label="הוספת ${esc(name)}" ${full ? "disabled" : ""}>${icon(type)}</button>`,
       )
       .join("");
-    tools.innerHTML = `<span class="stage-tools-label">${esc(slideName(slide))}</span><span class="stage-tools-divider"></span>${add}<span class="stage-tools-divider"></span><label class="stage-motion"><span>מראה הטקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><button data-stage-open-deck>${icon("note")}כל השקפים</button><button data-stage-done>${icon("check")}סיום עריכה</button>`;
+    tools.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span>${add}<span class="stage-tools-divider"></span><label class="stage-motion"><span>טקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><span class="stage-tools-divider"></span><button class="icon-only" data-stage-open-deck title="כל השקפים" aria-label="כל השקפים">${icon("note")}</button><button data-stage-done title="סיום עריכה">${icon("check")}סיום</button>`;
     tools.hidden = false;
+    placeFloater(tools);
   }
   function setEditing(active) {
     editing = active;
@@ -1690,6 +1755,8 @@
     if (button.dataset.toolbarEditText !== undefined) {
       if (editingObjectTextId === object.id) finishTextEditing();
       else beginTextEditing(object.id);
+    } else if (button.dataset.toolbarDelete !== undefined) {
+      removeSelectedObject();
     } else if (button.dataset.toolbarSnap !== undefined) {
       object.snap = object.snap === "on" ? "off" : "on";
       save();
@@ -1734,6 +1801,9 @@
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
   $("#edit").addEventListener("click", () => setEditing(!editing));
+  $("#deck").addEventListener("click", () =>
+    $("#editor").open ? closeDialog($("#editor")) : openDialog("editor"),
+  );
   $("#position").addEventListener("click", () => setJumpOpen(!jumpOpen));
   $("#slide-jump").addEventListener("click", (event) => {
     const button = event.target.closest("[data-jump]");
@@ -2069,6 +2139,17 @@
     if (e.key === "Escape" && openDialog) {
       e.preventDefault();
       closeDialog(openDialog);
+      return;
+    }
+    if (
+      editing &&
+      !editingObjectTextId &&
+      !editingSlideText &&
+      ["Delete", "Backspace"].includes(e.key) &&
+      !e.target.closest('input,textarea,select,[contenteditable="true"]') &&
+      removeSelectedObject()
+    ) {
+      e.preventDefault();
       return;
     }
     if (
