@@ -32,7 +32,7 @@
   let editSession = 0;
   const newEditSession = () => ++editSession;
   let deck = C.clone(embedded),
-    state = C.initialState(),
+    state = C.initialState(embedded),
     canSave = true,
     idleTimer,
     toastTimer,
@@ -89,6 +89,8 @@
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    eye: '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/>',
+    eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.4 3.9M6.3 7.9A17 17 0 0 0 2 12s3.6 6 10 6a9.8 9.8 0 0 0 3.4-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     open: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',
     present:
       '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
@@ -523,7 +525,7 @@
     });
   }
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
+    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"}" motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -788,7 +790,7 @@
     list.innerHTML = deck.slides
       .map(
         (slide, i) =>
-          `<button role="option" aria-selected="${i === state.slide}" data-jump="${i}"><span class="jump-number" dir="ltr">${String(i + 1).padStart(2, "0")}</span><span class="jump-name">${esc(slideName(slide))}</span><small>${esc(C.SLIDE_TYPES[slide.type].label)}</small></button>`,
+          `<button role="option" aria-selected="${i === state.slide}" data-jump="${i}" class="${C.isShown(slide) ? "" : "is-hidden-slide"}"><span class="jump-number" dir="ltr">${String(i + 1).padStart(2, "0")}</span><span class="jump-name">${esc(slideName(slide))}</span><small>${esc(C.isShown(slide) ? C.SLIDE_TYPES[slide.type].label : "מדולג")}</small></button>`,
       )
       .join("");
     list.hidden = false;
@@ -801,13 +803,14 @@
     if (open) wake();
   }
   function renderDots() {
-    const key = deck.slides.map((s) => s.id).join("|");
+    const key = deck.slides.map((s) => `${s.id}:${s.visibility}`).join("|");
     if (key !== renderedDots) {
       renderedDots = key;
       $("#slide-dots").innerHTML = deck.slides
-        .map(
-          (s, i) =>
-            `<button data-slide="${i}" aria-label="שקף ${i + 1}: ${esc(slideName(s))}"></button>`,
+        .map((s, i) =>
+          C.isShown(s)
+            ? `<button data-slide="${i}" aria-label="שקף ${C.shownPosition(deck, i)}: ${esc(slideName(s))}"></button>`
+            : "",
         )
         .join("");
     }
@@ -931,15 +934,19 @@
     $("#notes").textContent = slide.note || "אין הערת מרצה לשקף הזה.";
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
-    $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
+    const shown = C.shownCount(deck);
+    $("#position").textContent = C.isShown(slide)
+      ? `${pad(C.shownPosition(deck, state.slide))} / ${pad(shown)}`
+      : `-- / ${pad(shown)}`;
     renderDots();
     renderStageTools();
     renderLayers();
     renderJumpList();
-    $("#prev").disabled = state.slide === 0 && state.step === 0;
+    $("#prev").disabled =
+      state.step === 0 && C.nextShown(deck, state.slide, -1) < 0;
     $("#next").disabled =
-      state.slide === deck.slides.length - 1 &&
-      state.step === C.beats(deck, state.slide) - 1;
+      state.step === C.beats(deck, state.slide) - 1 &&
+      C.nextShown(deck, state.slide, 1) < 0;
     $$("[data-theme-choice]").forEach((b) =>
       b.setAttribute(
         "aria-pressed",
@@ -1206,7 +1213,7 @@
         Object.entries(C.SLIDE_TYPES).map(([key, type]) => [key, type.label]),
       ),
       slide.type,
-    )}</select></label><button class="icon-only" data-stage-slide-add title="הוספת שקף אחרי הנוכחי" aria-label="הוספת שקף אחרי הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}</button><button class="icon-only" data-stage-slide-duplicate title="שכפול השקף הנוכחי" aria-label="שכפול השקף הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("copy")}</button><button class="icon-only danger" data-stage-slide-remove title="מחיקת השקף הנוכחי" aria-label="מחיקת השקף הנוכחי" ${deck.slides.length <= 1 ? "disabled" : ""}>${icon("trash")}</button></span>`;
+    )}</select></label><button class="icon-only" data-stage-slide-add title="הוספת שקף אחרי הנוכחי" aria-label="הוספת שקף אחרי הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}</button><button class="icon-only" data-stage-slide-duplicate title="שכפול השקף הנוכחי" aria-label="שכפול השקף הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("copy")}</button><button class="icon-only" data-stage-slide-hide aria-pressed="${!C.isShown(slide)}" title="${C.isShown(slide) ? "דילוג על השקף בהרצאה" : "החזרת השקף להרצאה"}" aria-label="דילוג על השקף בהרצאה">${icon(C.isShown(slide) ? "eye" : "eyeOff")}</button><button class="icon-only danger" data-stage-slide-remove title="מחיקת השקף הנוכחי" aria-label="מחיקת השקף הנוכחי" ${deck.slides.length <= 1 ? "disabled" : ""}>${icon("trash")}</button></span>`;
     tools.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span><span class="tool-cluster">${add}</span><span class="stage-tools-divider"></span>${slideActions}<span class="stage-tools-divider"></span><label class="stage-motion"><span>טקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><span class="stage-tools-divider"></span><button class="icon-only" data-stage-layers aria-pressed="${layersOpen}" title="שכבות השקף" aria-label="שכבות השקף">${icon("layers")}</button><button class="icon-only" data-stage-open-deck title="כל השקפים" aria-label="כל השקפים">${icon("note")}</button><button data-stage-done title="סיום עריכה">${icon("check")}סיום</button>`;
     tools.hidden = false;
     placeFloater(tools);
@@ -1340,6 +1347,7 @@
     backdrop: "רקע הבמה",
     transition: "מעבר לשקף הזה",
     textStyle: "מראה הטקסט",
+    visibility: "הצגה בהרצאה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -1571,6 +1579,7 @@
       .join("")}</div></section>`;
   }
   const LOOK_KEYS = new Set([
+    "visibility",
     "textStyle",
     "motion",
     "backdrop",
@@ -1589,13 +1598,13 @@
     const last = deck.slides.length - 1;
     const { content, look } = splitSpecs(type.fields);
     return `<details data-open-key="${esc(slide.id)}" ${open ? "open" : ""}><summary><span class="slide-editor-name">${index + 1}. ${esc(slideName(slide))}</span><small>${esc(type.label)}</small></summary>
-      <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
+      <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-hide-slide="${index}" aria-pressed="${!C.isShown(slide)}" aria-label="${C.isShown(slide) ? "דילוג על השקף" : "החזרת השקף"}" title="${C.isShown(slide) ? "דילוג על השקף" : "החזרת השקף"}">${icon(C.isShown(slide) ? "eye" : "eyeOff")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -2090,7 +2099,7 @@
       const candidate = C.validate(JSON.parse(await file.text()));
       await checkImportedPictures(candidate);
       deck = candidate;
-      state = C.initialState();
+      state = C.initialState(deck);
       renderedDots = "";
       save();
       render();
@@ -2756,6 +2765,19 @@
         afterStructureChange();
         documentLimitMessage();
       }
+    } else if (button.hasAttribute("data-stage-slide-hide")) {
+      const slide = deck.slides[state.slide];
+      slide.visibility = C.isShown(slide) ? "hidden" : "shown";
+      button.blur();
+      renderedDots = "";
+      save();
+      render();
+      renderEditor();
+      notify(
+        C.isShown(slide)
+          ? "השקף חזר להרצאה."
+          : "השקף מדולג. הוא נשאר בעורך, וההצגה תעבור מעליו.",
+      );
     } else if (button.hasAttribute("data-stage-slide-remove")) {
       if (deck.slides.length <= 1) return;
       const removed = deck.slides.splice(state.slide, 1)[0];
@@ -2940,6 +2962,13 @@
       deck.slides.splice(target, 0, moved);
       state = C.goTo(deck, target);
       afterStructureChange();
+    } else if (data.hideSlide !== undefined) {
+      const slide = deck.slides[+data.hideSlide];
+      slide.visibility = C.isShown(slide) ? "hidden" : "shown";
+      renderedDots = "";
+      save();
+      render();
+      renderEditor();
     } else if (data.removeSlide !== undefined) {
       if (deck.slides.length <= 1) return;
       deck.slides.splice(+data.removeSlide, 1);

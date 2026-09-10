@@ -560,6 +560,37 @@ test("reject malformed imports, duplicate IDs, oversized fields and unsupported 
     assert.equal(seed.slides.length, 11);
   }
 });
+test("a hidden slide stays in the document and is walked past", () => {
+  const document = C.clone(seed);
+  // Absent in documents written before slides could be skipped.
+  assert.ok(C.validate(document).slides.every((slide) => C.isShown(slide)));
+  document.slides[1].visibility = "hidden";
+  const deck = C.validate(document);
+  assert.equal(deck.slides.length, document.slides.length);
+  assert.equal(deck.slides[1].visibility, "hidden");
+  assert.equal(C.shownCount(deck), deck.slides.length - 1);
+
+  // Forward from the slide before it lands on the one after it.
+  let state = { slide: 0, step: C.beats(deck, 0) - 1 };
+  state = C.transition(state, "next", deck);
+  assert.equal(state.slide, 2);
+  // And back again, on that slide's last beat.
+  state = C.transition({ slide: 2, step: 0 }, "prev", deck);
+  assert.deepEqual(state, { slide: 0, step: C.beats(deck, 0) - 1 });
+
+  // A deck that opens on hidden slides starts on the first shown one.
+  const first = C.clone(deck);
+  first.slides[0].visibility = "hidden";
+  assert.equal(C.initialState(first).slide, 2);
+  // Counting is by what an audience sees.
+  assert.equal(C.shownPosition(deck, 2), 2);
+  assert.equal(C.nextShown(deck, 0, 1), 2);
+  assert.equal(C.nextShown(deck, deck.slides.length - 1, 1), -1);
+  const wrong = C.clone(document);
+  wrong.slides[1].visibility = "maybe";
+  assert.throws(() => C.validate(wrong));
+});
+
 test("navigation walks every beat of every slide and stops at both ends", () => {
   const total = seed.slides.reduce((sum, _, i) => sum + C.beats(seed, i), 0);
   const visited = new Set();

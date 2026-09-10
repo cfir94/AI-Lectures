@@ -939,6 +939,37 @@ p {
 .field-note.bad {
   color: #f0a5a2;
 }
+/* A skipped slide is marked only for the person editing it. */
+.skipped-badge {
+  position: absolute;
+  z-index: 6;
+  top: 12px;
+  inset-inline-start: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--raised) 90%, transparent);
+  color: var(--muted);
+  font-size: 0.72rem;
+  display: none;
+}
+.editing .skipped-badge {
+  display: block;
+}
+.editing .slide.is-skipped .scene {
+  opacity: 0.55;
+}
+.slide-jump button.is-hidden-slide .jump-name,
+.slide-jump button.is-hidden-slide .jump-number {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.slide-editor-tools .icon-button[aria-pressed="true"],
+.stage-tools .icon-only[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
 .canvas-empty {
   color: var(--muted);
   opacity: 0.6;
@@ -3351,7 +3382,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","link":"","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","link":"","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","textStyle":"solid","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","textStyle":"solid","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","link":"","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","textStyle":"solid","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","textStyle":"solid","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","visibility":"shown","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה.","objects":[]},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","link":"","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","visibility":"shown","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה.","objects":[]},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","visibility":"shown","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}],"objects":[]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","link":"","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","visibility":"shown","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך.","objects":[]},{"id":"llm","type":"reveal","title":"מודל שפה גדול","visibility":"shown","textStyle":"solid","motion":"cascade","backdrop":"plain","backdropPicture":"","transition":"fade","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}],"objects":[]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","visibility":"shown","textStyle":"solid","motion":"blur","backdrop":"particles","backdropPicture":"","transition":"fade","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה.","objects":[]},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","visibility":"shown","textStyle":"solid","motion":"rise","backdrop":"plain","backdropPicture":"","transition":"fade","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}],"objects":[]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","link":"","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","visibility":"shown","textStyle":"solid","motion":"wipe","backdrop":"grid","backdropPicture":"","transition":"fade","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה.","objects":[]},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","visibility":"shown","textStyle":"solid","motion":"blur","backdrop":"aurora","backdropPicture":"","transition":"fade","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים.","objects":[]},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","visibility":"shown","textStyle":"solid","motion":"zoom","backdrop":"rings","backdropPicture":"","transition":"fade","note":"מעבר לחלק השני. מכאן הניסוי החי.","objects":[]},{"id":"experiment","type":"experiment","title":"הנה הצעה.","visibility":"shown","textStyle":"solid","motion":"rise","backdrop":"arcs","backdropPicture":"","transition":"fade","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו.","objects":[]}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -3548,7 +3579,11 @@ kbd {
     zoom: "זום",
     cut: "חיתוך",
   };
+  /* A slide the presenter is not showing this time. It stays in the document
+     and in the editor, and the deck simply walks past it. */
+  const VISIBILITY = { shown: "מוצג בהרצאה", hidden: "מדולג" };
   const COMMON_FIELDS = {
+    visibility: choice(VISIBILITY),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
@@ -4162,11 +4197,24 @@ kbd {
     );
   }
 
+  const isShown = (slide) => slide?.visibility !== "hidden";
+  const shownCount = (deck) => deck.slides.filter(isShown).length;
+  // Where the presenter is, counted only in slides an audience will see.
+  const shownPosition = (deck, index) =>
+    deck.slides.slice(0, index + 1).filter(isShown).length;
+  const nextShown = (deck, from, direction) => {
+    for (let i = from + direction; i >= 0 && i < deck.slides.length; i += direction)
+      if (isShown(deck.slides[i])) return i;
+    return -1;
+  };
   const beats = (deck, index) => {
     const slide = deck.slides[index];
     return SLIDE_TYPES[slide.type].beats(slide, deck);
   };
-  const initialState = () => ({ slide: 0, step: 0 });
+  const initialState = (deck) => ({
+    slide: deck ? Math.max(0, deck.slides.findIndex(isShown)) : 0,
+    step: 0,
+  });
   const goTo = (deck, index) => ({
     slide: Math.min(Math.max(index, 0), deck.slides.length - 1),
     step: 0,
@@ -4175,15 +4223,21 @@ kbd {
     let { slide, step } = state;
     if (action === "next") {
       if (step + 1 < beats(deck, slide)) step++;
-      else if (slide < deck.slides.length - 1) {
-        slide++;
-        step = 0;
+      else {
+        const target = nextShown(deck, slide, 1);
+        if (target >= 0) {
+          slide = target;
+          step = 0;
+        }
       }
     } else if (action === "prev") {
       if (step > 0) step--;
-      else if (slide > 0) {
-        slide--;
-        step = beats(deck, slide) - 1;
+      else {
+        const target = nextShown(deck, slide, -1);
+        if (target >= 0) {
+          slide = target;
+          step = beats(deck, target) - 1;
+        }
       }
     } else if (action === "chat" || action === "reset") step = 0;
     else if (action === "agent") step = 1;
@@ -4198,6 +4252,11 @@ kbd {
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    VISIBILITY,
+    isShown,
+    shownCount,
+    shownPosition,
+    nextShown,
     FITS,
     OBJECT_TYPES,
     SHAPES,
@@ -4270,7 +4329,7 @@ kbd {
   let editSession = 0;
   const newEditSession = () => ++editSession;
   let deck = C.clone(embedded),
-    state = C.initialState(),
+    state = C.initialState(embedded),
     canSave = true,
     idleTimer,
     toastTimer,
@@ -4327,6 +4386,8 @@ kbd {
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     crop: '<path d="M6 2v16h16M2 6h16v16"/>',
+    eye: '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/>',
+    eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.4 3.9M6.3 7.9A17 17 0 0 0 2 12s3.6 6 10 6a9.8 9.8 0 0 0 3.4-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     open: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',
     present:
       '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/><path d="m10 8 5 2.5L10 13Z"/>',
@@ -4761,7 +4822,7 @@ kbd {
     });
   }
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
+    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"}" motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -5026,7 +5087,7 @@ kbd {
     list.innerHTML = deck.slides
       .map(
         (slide, i) =>
-          `<button role="option" aria-selected="${i === state.slide}" data-jump="${i}"><span class="jump-number" dir="ltr">${String(i + 1).padStart(2, "0")}</span><span class="jump-name">${esc(slideName(slide))}</span><small>${esc(C.SLIDE_TYPES[slide.type].label)}</small></button>`,
+          `<button role="option" aria-selected="${i === state.slide}" data-jump="${i}" class="${C.isShown(slide) ? "" : "is-hidden-slide"}"><span class="jump-number" dir="ltr">${String(i + 1).padStart(2, "0")}</span><span class="jump-name">${esc(slideName(slide))}</span><small>${esc(C.isShown(slide) ? C.SLIDE_TYPES[slide.type].label : "מדולג")}</small></button>`,
       )
       .join("");
     list.hidden = false;
@@ -5039,13 +5100,14 @@ kbd {
     if (open) wake();
   }
   function renderDots() {
-    const key = deck.slides.map((s) => s.id).join("|");
+    const key = deck.slides.map((s) => `${s.id}:${s.visibility}`).join("|");
     if (key !== renderedDots) {
       renderedDots = key;
       $("#slide-dots").innerHTML = deck.slides
-        .map(
-          (s, i) =>
-            `<button data-slide="${i}" aria-label="שקף ${i + 1}: ${esc(slideName(s))}"></button>`,
+        .map((s, i) =>
+          C.isShown(s)
+            ? `<button data-slide="${i}" aria-label="שקף ${C.shownPosition(deck, i)}: ${esc(slideName(s))}"></button>`
+            : "",
         )
         .join("");
     }
@@ -5169,15 +5231,19 @@ kbd {
     $("#notes").textContent = slide.note || "אין הערת מרצה לשקף הזה.";
     $("#slide-announcement").textContent = announce(slide, state.step);
     const pad = (n) => String(n).padStart(2, "0");
-    $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
+    const shown = C.shownCount(deck);
+    $("#position").textContent = C.isShown(slide)
+      ? `${pad(C.shownPosition(deck, state.slide))} / ${pad(shown)}`
+      : `-- / ${pad(shown)}`;
     renderDots();
     renderStageTools();
     renderLayers();
     renderJumpList();
-    $("#prev").disabled = state.slide === 0 && state.step === 0;
+    $("#prev").disabled =
+      state.step === 0 && C.nextShown(deck, state.slide, -1) < 0;
     $("#next").disabled =
-      state.slide === deck.slides.length - 1 &&
-      state.step === C.beats(deck, state.slide) - 1;
+      state.step === C.beats(deck, state.slide) - 1 &&
+      C.nextShown(deck, state.slide, 1) < 0;
     $$("[data-theme-choice]").forEach((b) =>
       b.setAttribute(
         "aria-pressed",
@@ -5444,7 +5510,7 @@ kbd {
         Object.entries(C.SLIDE_TYPES).map(([key, type]) => [key, type.label]),
       ),
       slide.type,
-    )}</select></label><button class="icon-only" data-stage-slide-add title="הוספת שקף אחרי הנוכחי" aria-label="הוספת שקף אחרי הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}</button><button class="icon-only" data-stage-slide-duplicate title="שכפול השקף הנוכחי" aria-label="שכפול השקף הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("copy")}</button><button class="icon-only danger" data-stage-slide-remove title="מחיקת השקף הנוכחי" aria-label="מחיקת השקף הנוכחי" ${deck.slides.length <= 1 ? "disabled" : ""}>${icon("trash")}</button></span>`;
+    )}</select></label><button class="icon-only" data-stage-slide-add title="הוספת שקף אחרי הנוכחי" aria-label="הוספת שקף אחרי הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}</button><button class="icon-only" data-stage-slide-duplicate title="שכפול השקף הנוכחי" aria-label="שכפול השקף הנוכחי" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("copy")}</button><button class="icon-only" data-stage-slide-hide aria-pressed="${!C.isShown(slide)}" title="${C.isShown(slide) ? "דילוג על השקף בהרצאה" : "החזרת השקף להרצאה"}" aria-label="דילוג על השקף בהרצאה">${icon(C.isShown(slide) ? "eye" : "eyeOff")}</button><button class="icon-only danger" data-stage-slide-remove title="מחיקת השקף הנוכחי" aria-label="מחיקת השקף הנוכחי" ${deck.slides.length <= 1 ? "disabled" : ""}>${icon("trash")}</button></span>`;
     tools.innerHTML = `<span class="drag-grip" data-drag-grip title="גרירת הסרגל" aria-hidden="true"></span><span class="tool-cluster">${add}</span><span class="stage-tools-divider"></span>${slideActions}<span class="stage-tools-divider"></span><label class="stage-motion"><span>טקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><span class="stage-tools-divider"></span><button class="icon-only" data-stage-layers aria-pressed="${layersOpen}" title="שכבות השקף" aria-label="שכבות השקף">${icon("layers")}</button><button class="icon-only" data-stage-open-deck title="כל השקפים" aria-label="כל השקפים">${icon("note")}</button><button data-stage-done title="סיום עריכה">${icon("check")}סיום</button>`;
     tools.hidden = false;
     placeFloater(tools);
@@ -5578,6 +5644,7 @@ kbd {
     backdrop: "רקע הבמה",
     transition: "מעבר לשקף הזה",
     textStyle: "מראה הטקסט",
+    visibility: "הצגה בהרצאה",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -5809,6 +5876,7 @@ kbd {
       .join("")}</div></section>`;
   }
   const LOOK_KEYS = new Set([
+    "visibility",
     "textStyle",
     "motion",
     "backdrop",
@@ -5827,13 +5895,13 @@ kbd {
     const last = deck.slides.length - 1;
     const { content, look } = splitSpecs(type.fields);
     return `<details data-open-key="${esc(slide.id)}" ${open ? "open" : ""}><summary><span class="slide-editor-name">${index + 1}. ${esc(slideName(slide))}</span><small>${esc(type.label)}</small></summary>
-      <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
+      <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-hide-slide="${index}" aria-pressed="${!C.isShown(slide)}" aria-label="${C.isShown(slide) ? "דילוג על השקף" : "החזרת השקף"}" title="${C.isShown(slide) ? "דילוג על השקף" : "החזרת השקף"}">${icon(C.isShown(slide) ? "eye" : "eyeOff")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -6328,7 +6396,7 @@ kbd {
       const candidate = C.validate(JSON.parse(await file.text()));
       await checkImportedPictures(candidate);
       deck = candidate;
-      state = C.initialState();
+      state = C.initialState(deck);
       renderedDots = "";
       save();
       render();
@@ -6994,6 +7062,19 @@ kbd {
         afterStructureChange();
         documentLimitMessage();
       }
+    } else if (button.hasAttribute("data-stage-slide-hide")) {
+      const slide = deck.slides[state.slide];
+      slide.visibility = C.isShown(slide) ? "hidden" : "shown";
+      button.blur();
+      renderedDots = "";
+      save();
+      render();
+      renderEditor();
+      notify(
+        C.isShown(slide)
+          ? "השקף חזר להרצאה."
+          : "השקף מדולג. הוא נשאר בעורך, וההצגה תעבור מעליו.",
+      );
     } else if (button.hasAttribute("data-stage-slide-remove")) {
       if (deck.slides.length <= 1) return;
       const removed = deck.slides.splice(state.slide, 1)[0];
@@ -7178,6 +7259,13 @@ kbd {
       deck.slides.splice(target, 0, moved);
       state = C.goTo(deck, target);
       afterStructureChange();
+    } else if (data.hideSlide !== undefined) {
+      const slide = deck.slides[+data.hideSlide];
+      slide.visibility = C.isShown(slide) ? "hidden" : "shown";
+      renderedDots = "";
+      save();
+      render();
+      renderEditor();
     } else if (data.removeSlide !== undefined) {
       if (deck.slides.length <= 1) return;
       deck.slides.splice(+data.removeSlide, 1);

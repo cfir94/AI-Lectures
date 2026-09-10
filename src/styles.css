@@ -930,6 +930,37 @@ p {
 .field-note.bad {
   color: #f0a5a2;
 }
+/* A skipped slide is marked only for the person editing it. */
+.skipped-badge {
+  position: absolute;
+  z-index: 6;
+  top: 12px;
+  inset-inline-start: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--raised) 90%, transparent);
+  color: var(--muted);
+  font-size: 0.72rem;
+  display: none;
+}
+.editing .skipped-badge {
+  display: block;
+}
+.editing .slide.is-skipped .scene {
+  opacity: 0.55;
+}
+.slide-jump button.is-hidden-slide .jump-name,
+.slide-jump button.is-hidden-slide .jump-number {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.slide-editor-tools .icon-button[aria-pressed="true"],
+.stage-tools .icon-only[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
 .canvas-empty {
   color: var(--muted);
   opacity: 0.6;

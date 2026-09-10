@@ -194,7 +194,11 @@
     zoom: "זום",
     cut: "חיתוך",
   };
+  /* A slide the presenter is not showing this time. It stays in the document
+     and in the editor, and the deck simply walks past it. */
+  const VISIBILITY = { shown: "מוצג בהרצאה", hidden: "מדולג" };
   const COMMON_FIELDS = {
+    visibility: choice(VISIBILITY),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
@@ -808,11 +812,24 @@
     );
   }
 
+  const isShown = (slide) => slide?.visibility !== "hidden";
+  const shownCount = (deck) => deck.slides.filter(isShown).length;
+  // Where the presenter is, counted only in slides an audience will see.
+  const shownPosition = (deck, index) =>
+    deck.slides.slice(0, index + 1).filter(isShown).length;
+  const nextShown = (deck, from, direction) => {
+    for (let i = from + direction; i >= 0 && i < deck.slides.length; i += direction)
+      if (isShown(deck.slides[i])) return i;
+    return -1;
+  };
   const beats = (deck, index) => {
     const slide = deck.slides[index];
     return SLIDE_TYPES[slide.type].beats(slide, deck);
   };
-  const initialState = () => ({ slide: 0, step: 0 });
+  const initialState = (deck) => ({
+    slide: deck ? Math.max(0, deck.slides.findIndex(isShown)) : 0,
+    step: 0,
+  });
   const goTo = (deck, index) => ({
     slide: Math.min(Math.max(index, 0), deck.slides.length - 1),
     step: 0,
@@ -821,15 +838,21 @@
     let { slide, step } = state;
     if (action === "next") {
       if (step + 1 < beats(deck, slide)) step++;
-      else if (slide < deck.slides.length - 1) {
-        slide++;
-        step = 0;
+      else {
+        const target = nextShown(deck, slide, 1);
+        if (target >= 0) {
+          slide = target;
+          step = 0;
+        }
       }
     } else if (action === "prev") {
       if (step > 0) step--;
-      else if (slide > 0) {
-        slide--;
-        step = beats(deck, slide) - 1;
+      else {
+        const target = nextShown(deck, slide, -1);
+        if (target >= 0) {
+          slide = target;
+          step = beats(deck, target) - 1;
+        }
       }
     } else if (action === "chat" || action === "reset") step = 0;
     else if (action === "agent") step = 1;
@@ -844,6 +867,11 @@
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    VISIBILITY,
+    isShown,
+    shownCount,
+    shownPosition,
+    nextShown,
     FITS,
     OBJECT_TYPES,
     SHAPES,
