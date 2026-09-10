@@ -24,6 +24,18 @@ The visual reference is Google's I/O 2026 recap at 3:30–3:35 and 4:57–5:10: 
 - Escape untrusted text and embedded JSON. Validate the entire imported document before replacing the active one. Never put secrets into a downloadable HTML file.
 - Local storage is a convenience, not portable storage; preserve JSON and HTML export and a clear storage-failure message.
 
+## Verifying in a browser
+
+A passing test suite says nothing about the stage. Build first, then open `dist/index.html`; `src/` on its own renders nothing.
+
+Three things cost time if you do not know them:
+
+- Presenter controls hide when idle. Move the pointer before clicking the toolbar, the navigation dots or an in-slide control, or the click lands on the scene behind them.
+- While focus sits on a button, space activates that button instead of advancing the deck. The navigation dots hand focus back deliberately for this reason; do not reintroduce the trap elsewhere.
+- Entrance and transition animations run for roughly a second. Screenshot after they settle, unless the moving frame is exactly what you are checking.
+
+Cover every slide type, both directions of keyboard navigation, the editor, an export and a narrow viewport. Watch the console: an error thrown there is a real bug even when the page still looks correct.
+
 ## Checks and documentation
 
 - Run `npm run build` followed by `npm test` after source changes.
