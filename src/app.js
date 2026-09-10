@@ -31,6 +31,7 @@
     pendingPicturePath = null,
     selectedObjectId = null,
     editingObjectTextId = null,
+    editingSlideText = null,
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
@@ -265,7 +266,7 @@
     });
   }
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} motion-${slide.motion}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
+    `<section class="slide ${classes} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${style}">${backdrop(slide)}${body}${freeObjects(slide)}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -301,7 +302,7 @@
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1 data-slide-text="title">${headline(slide, title)}${accent ? ` <span data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -316,14 +317,14 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1 data-slide-text="title">${headline(slide, title)}</h1>${caption(slide, slide.caption)}</div>${copy}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${copy}`,
     );
   }
   function revealSlide(slide, index, step) {
     const words = slide.items
       .map(
         (item, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}">${esc(item.word)}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}" data-slide-text="items.${i}.word">${esc(item.word)}</li>`,
       )
       .join("");
     const size = Math.min(
@@ -335,14 +336,14 @@
       index,
       "reveal-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, "")}</div>`,
+      `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, `items.${step}.caption`)}</div>`,
     );
   }
   function tokensSlide(slide, index, step) {
     const body =
       step === 0
         ? `<p class="token-sentence">${esc(slide.chunks.map((c) => c.text).join(""))}</p>`
-        : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}">${esc(c.text)}</span>`).join("")}</p>`;
+        : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}" data-slide-text="chunks.${i}.text">${esc(c.text)}</span>`).join("")}</p>`;
     return frame(
       slide,
       index,
@@ -359,7 +360,7 @@
     const imageCaption = visibleText(slide, "caption");
     const overlay =
       imageTitle || imageCaption
-        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1 data-slide-text="title">${headline(slide, imageTitle)}</h1>` : ""}${caption(slide, imageCaption)}</div></div>`
+        ? `<div class="scene image-scene"><div class="image-text">${imageTitle ? `<h1><span data-slide-text="title">${headline(slide, imageTitle)}</span></h1>` : ""}${caption(slide, imageCaption)}</div></div>`
         : "";
     const size = Math.min(7.5, 300 / ((slide.title || "xx").length + 2));
     return frame(
@@ -377,14 +378,14 @@
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-slide-text="value">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
     const sides = slide.sides
       .map(
         (side, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line">${esc(side.line)}</span>` : ""}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading" data-slide-text="sides.${i}.heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line" data-slide-text="sides.${i}.line">${esc(side.line)}</span>` : ""}</li>`,
       )
       .join("");
     return frame(
@@ -442,7 +443,7 @@
       index,
       `experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}`,
       `--scene-size:${size}cqw;--phase:${Math.max(0, step - 1)}`,
-      `<div class="scene experiment-scene"><p class="scene-context">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word">${esc(heading)}</h2><p class="scene-caption">${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
+      `<div class="scene experiment-scene"><p class="scene-context" data-example-text="task">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word" ${agent ? `data-example-text="steps.${step - 1}.label"` : 'data-slide-text="title"'}>${esc(heading)}</h2><p class="scene-caption" ${agent ? `data-example-text="steps.${step - 1}.artifact"` : 'data-example-text="answer"'}>${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
     );
   }
   const SCENES = {
@@ -627,9 +628,20 @@
       4500,
     );
   }
+  /* Two very different failures used to share one message. Invalid content is a
+     defect in this app, not a storage problem, and saying so is what lets it be
+     found instead of quietly eating the presenter's work. */
   function save() {
+    let payload;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(C.validate(deck)));
+      payload = JSON.stringify(C.validate(deck));
+    } catch {
+      $("#save-status").textContent =
+        "השינוי האחרון אינו תקין ולכן לא נשמר. בטלו אותו כדי להמשיך לשמור.";
+      return;
+    }
+    try {
+      localStorage.setItem(storageKey, payload);
       canSave = true;
     } catch {
       canSave = false;
@@ -751,6 +763,7 @@
     motion: "תנועת הכניסה",
     backdrop: "רקע הבמה",
     transition: "מעבר לשקף הזה",
+    textStyle: "מראה הטקסט",
     name: "שם הדוגמה / הקהל",
     task: "המטרה",
     answer: "תשובת הצ׳אטבוט",
@@ -854,9 +867,10 @@
   function objectEditor(object, slideIndex, objectIndex) {
     const common = `<div class="object-animation-grid">${objectPicker("כניסה", slideIndex, object, "entrance", C.OBJECT_ENTRANCES)}${objectPicker("יציאה", slideIndex, object, "exit", C.OBJECT_EXITS)}${objectPicker("הצמדה", slideIndex, object, "snap", C.SNAP_MODES)}</div><div class="object-transform-grid">${objectInput("X באחוזים", slideIndex, object, "x", 0, 100, 0.1)}${objectInput("Y באחוזים", slideIndex, object, "y", 0, 100, 0.1)}${objectInput("רוחב", slideIndex, object, "width", 2, 100, 0.1)}${objectInput("גובה", slideIndex, object, "height", 2, 100, 0.1)}${objectInput("סיבוב", slideIndex, object, "rotation", -180, 180)}${objectInput("שקיפות", slideIndex, object, "opacity", 0, 100)}</div>`;
     let specific = "";
-    if (object.type === "text")
-      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / 500</small></span><textarea rows="3" maxlength="500" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
-    else if (object.type === "image")
+    if (object.type === "text") {
+      const limit = C.textLimit(deck.slides[slideIndex], object);
+      specific = `<label class="field"><span class="field-head"><span>תוכן הטקסט</span><small>${object.text.length} / ${limit}</small></span><textarea rows="3" maxlength="${limit}" required data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="text">${esc(object.text)}</textarea></label><div class="object-transform-grid">${objectInput("גודל גופן", slideIndex, object, "fontSize", 8, 300)}${objectPicker("משקל", slideIndex, object, "weight", { 300: "דק", 400: "רגיל", 600: "מודגש", 800: "כבד" })}${objectPicker("יישור", slideIndex, object, "align", C.ALIGNS)}${objectPicker("מראה הטקסט", slideIndex, object, "style", C.TEXT_STYLES)}</div>${objectColour("צבע הטקסט", slideIndex, object, "color")}`;
+    } else if (object.type === "image")
       specific = `${pictureField("קובץ התמונה", `slides.${slideIndex}.objects.${objectIndex}.picture`, object.picture)}${field("תיאור לקורא מסך", `slides.${slideIndex}.objects.${objectIndex}.alt`, object.alt, 120, false, false)}<div class="object-transform-grid">${objectPicker("התאמה למסגרת", slideIndex, object, "fit", C.FITS)}${objectInput("עיגול פינות", slideIndex, object, "radius", 0, 50)}</div>`;
     else if (object.type === "visual")
       specific = `<div class="object-transform-grid">${objectPicker("רכיב", slideIndex, object, "visual", C.VISUALS)}</div>${objectColour("צבע ראשי", slideIndex, object, "color")}${objectColour("צבע רקע", slideIndex, object, "secondary")}${["label1", "label2", "label3"].map((key, labelIndex) => field(`טקסט ${labelIndex + 1}`, `slides.${slideIndex}.objects.${objectIndex}.${key}`, object[key], 40, false, false)).join("")}`;
@@ -929,6 +943,7 @@
       .join("")}</div></section>`;
   }
   const LOOK_KEYS = new Set([
+    "textStyle",
     "motion",
     "backdrop",
     "backdropPicture",
@@ -952,7 +967,7 @@
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -1045,7 +1060,6 @@
       value = neat(Math.min(Number(value), 100 - Number(object.y)));
     object[key] = value;
     if (key === "text" && object.bind) deck.slides[slideIndex][object.bind] = value;
-    if (key === "color" && object.type === "text") object.style = "solid";
     if (!withinDocumentLimit()) {
       object[key] = previous;
       input.value = previous;
@@ -1055,15 +1069,11 @@
     if (input.type === "number") input.value = value;
     if (key === "text") {
       input.closest(".field").querySelector("small").textContent =
-        `${value.length} / 500`;
+        `${value.length} / ${C.textLimit(deck.slides[slideIndex], object)}`;
     }
     if (key === "color") {
       const output = input.closest(".colour-picker")?.querySelector("output");
       if (output) output.textContent = value;
-      const style = input
-        .closest(".object-editor")
-        ?.querySelector('select[data-object-prop="style"]');
-      if (style && object.type === "text") style.value = "solid";
     }
     selectedObjectId = object.id;
     if (slideIndex !== state.slide) state = C.goTo(deck, slideIndex);
@@ -1417,21 +1427,94 @@
     if (!editingObjectTextId) return;
     editingObjectTextId = null;
     save();
-    render();
+    // Same reason as finishSlideTextEditing: never rebuild the stage from
+    // inside a blur, or the node being replaced is already gone.
+    requestAnimationFrame(render);
+  }
+  /* Slide text is edited where it sits. Converting it into a movable object is
+     a separate, deliberate action — a double-click must never move the words
+     the presenter just aimed at. */
+  const textTarget = (el) => {
+    if (el.dataset.slideText !== undefined)
+      return {
+        owner: deck.slides[state.slide],
+        path: el.dataset.slideText,
+        spec: C.fieldSpec(deck.slides[state.slide], el.dataset.slideText),
+      };
+    const path = el.dataset.exampleText;
+    const parts = path.split(".");
+    const spec =
+      parts.length === 1
+        ? C.EXAMPLE_FIELDS[parts[0]]
+        : C.EXAMPLE_STEP_FIELDS[parts[2]];
+    return { owner: C.selected(deck), path, spec };
+  };
+  function beginSlideTextEditing(el) {
+    const { owner, path, spec } = textTarget(el);
+    if (!spec) return;
+    finishSlideTextEditing({ rerender: false });
+    editingSlideText = { owner, path, spec, el };
+    el.textContent = C.readPath(owner, path) ?? "";
+    el.contentEditable = "true";
+    el.spellcheck = true;
+    el.dataset.slideTextEditing = "true";
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const selection = getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  function finishSlideTextEditing({ rerender = true } = {}) {
+    if (!editingSlideText) return;
+    const { el } = editingSlideText;
+    editingSlideText = null;
+    el.contentEditable = "false";
+    delete el.dataset.slideTextEditing;
+    if (!rerender) return;
+    // Rebuilding the stage while the browser is still unwinding a blur throws,
+    // so hand the render to the next frame.
+    requestAnimationFrame(() => {
+      render();
+      renderEditor();
+    });
   }
   $("#slide-root").addEventListener("dblclick", (event) => {
-    const text = event.target.closest(".object-text");
     if (!$("#editor").open) return;
+    const text = event.target.closest(".object-text");
     if (text) {
       event.preventDefault();
       beginTextEditing(text.closest(".free-object").dataset.objectId);
       return;
     }
-    const structured = event.target.closest("[data-slide-text]");
+    const structured = event.target.closest(
+      "[data-slide-text], [data-example-text]",
+    );
     if (!structured) return;
     event.preventDefault();
-    const object = convertSlideText(state.slide, structured.dataset.slideText);
-    if (object) beginTextEditing(object.id);
+    beginSlideTextEditing(structured);
+  });
+  $("#slide-root").addEventListener("input", (event) => {
+    const el = event.target.closest("[data-slide-text-editing='true']");
+    if (!el || !editingSlideText || el !== editingSlideText.el) return;
+    const { owner, path, spec } = editingSlideText;
+    let value = el.textContent.replace(/\r/g, "");
+    if (value.length > spec.max) {
+      value = value.slice(0, spec.max);
+      el.textContent = value;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      notify(`הטקסט הזה מוגבל ל־${spec.max} תווים.`);
+    }
+    if (spec.required && !value.trim()) return;
+    C.writePath(owner, path, value);
+    const bound = owner.objects?.find((object) => object.bind === path);
+    if (bound) bound.text = value;
+    save();
   });
   $("#slide-root").addEventListener("focusout", (event) => {
     if (
@@ -1447,14 +1530,28 @@
       !event.target.closest("#slide-root, #object-toolbar")
     )
       finishTextEditing();
+    if (
+      editingSlideText &&
+      !event.target.closest("[data-slide-text-editing='true']")
+    )
+      finishSlideTextEditing();
+  });
+  $("#slide-root").addEventListener("focusout", (event) => {
+    if (
+      editingSlideText &&
+      event.target === editingSlideText.el &&
+      !event.relatedTarget?.closest?.("#object-toolbar")
+    )
+      finishSlideTextEditing();
   });
   $("#slide-root").addEventListener("input", (event) => {
     if (!event.target.matches('[data-object-text-editor="true"]')) return;
     const object = currentObject();
     if (!object || object.type !== "text") return;
+    const limit = C.textLimit(deck.slides[state.slide], object);
     let value = event.target.textContent.replace(/\r/g, "");
-    if (value.length > 500) {
-      value = value.slice(0, 500);
+    if (value.length > limit) {
+      value = value.slice(0, limit);
       event.target.textContent = value;
       const range = document.createRange();
       range.selectNodeContents(event.target);
@@ -1470,14 +1567,25 @@
     if (field) {
       field.value = value;
       panel.querySelector(".field-head small").textContent =
-        `${value.length} / 500`;
+        `${value.length} / ${limit}`;
       panel.querySelector(".object-select span").textContent = value.slice(0, 28);
     }
     save();
   });
   $("#slide-root").addEventListener("keydown", (event) => {
+    const leaving =
+      event.key === "Escape" || (event.ctrlKey && event.key === "Enter");
+    if (event.target.matches("[data-slide-text-editing='true']")) {
+      if (event.key === "Enter" && !event.shiftKey) event.preventDefault();
+      if (leaving || (event.key === "Enter" && !event.shiftKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishSlideTextEditing();
+      }
+      return;
+    }
     if (!event.target.matches('[data-object-text-editor="true"]')) return;
-    if (event.key === "Escape" || (event.ctrlKey && event.key === "Enter")) {
+    if (leaving) {
       event.preventDefault();
       event.stopPropagation();
       finishTextEditing();
@@ -1652,6 +1760,9 @@
         added.color = rootStyle.getPropertyValue("--accent").trim();
         added.stroke = rootStyle.getPropertyValue("--text").trim();
       }
+      const offset = (slide.objects.length % 6) * 4;
+      added.x = String(Math.min(Number(added.x) + offset, 100 - Number(added.width)));
+      added.y = String(Math.min(Number(added.y) + offset, 100 - Number(added.height)));
       slide.objects.push(added);
       selectedObjectId = added.id;
       state = C.goTo(deck, +slideIndex);

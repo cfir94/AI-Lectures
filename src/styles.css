@@ -435,9 +435,11 @@ p {
   outline: 2px solid var(--accent);
 }
 .editing .object-text[data-editable-text="true"],
-.editing [data-slide-text] {
+.editing [data-slide-text],
+.editing [data-example-text] {
   cursor: text;
 }
+.editing [data-example-text]:hover,
 .editing [data-slide-text]:hover {
   outline: 1px dashed rgba(var(--accent-rgb), 0.62);
   outline-offset: 7px;
@@ -573,7 +575,7 @@ h1 {
   line-height: 1.24;
   max-width: 100%;
 }
-h1 span {
+.headline-accent {
   color: var(--accent);
   background: var(--spectrum);
   -webkit-background-clip: text;
@@ -1044,6 +1046,42 @@ h1 span {
   }
 }
 
+/* A slide-wide text style, so a headline can be the colourful one without
+   turning it into a free object first. The accent word keeps its own gradient. */
+.slide-text-spectrum h1,
+.slide-text-spectrum .scene-eyebrow,
+.slide-text-spectrum .split-heading,
+.slide-text-spectrum .reveal-list li[data-state="now"],
+.slide-text-spectrum .token-sentence,
+.slide-text-spectrum .scene-word {
+  color: transparent;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.slide-text-outline h1,
+.slide-text-outline .split-heading,
+.slide-text-outline .scene-word {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: max(1px, 0.02em) var(--text);
+}
+
+/* Editing a projected string in place: it must stay exactly where it was. */
+[data-slide-text-editing="true"] {
+  cursor: text;
+  user-select: text;
+  touch-action: auto;
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 4px;
+  -webkit-text-fill-color: currentColor;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.editing [data-slide-text] {
+  cursor: text;
+}
 /* A picture that is the slide. */
 .image-frame {
   position: absolute;
@@ -2215,7 +2253,7 @@ kbd {
   h1 {
     font-size: clamp(2.7rem, 12vw, 5.8rem);
   }
-  h1 span {
+  .headline-accent {
     display: block;
   }
   .statement-scene .scene-caption {

@@ -81,6 +81,17 @@
     wipe: "סגירה",
   };
   const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
+  const EXAMPLE_FIELDS = {
+    name: text(40),
+    task: text(110),
+    answer: text(180),
+  };
+  const EXAMPLE_STEP_FIELDS = {
+    label: text(18),
+    detail: text(120),
+    artifact: text(40),
+  };
+  const OBJECT_TEXT_MAX = 500;
   const ALIGNS = { right: "ימין", center: "מרכז", left: "שמאל" };
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
@@ -114,6 +125,7 @@
     cut: "חיתוך",
   };
   const COMMON_FIELDS = {
+    textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
     backdropPicture: picture(),
@@ -321,6 +333,39 @@
       strokeWidth: "0",
     };
   };
+  /* A bound text object and the slide field it writes into are the same string,
+     so the shorter of the two limits governs. Without this the editor happily
+     accepts 500 characters into a 40-character title and the document stops
+     validating — which reads to the presenter as "saving is unavailable". */
+  const textLimit = (slide, object) => {
+    const spec =
+      object.bind && SLIDE_TYPES[slide.type]?.fields?.[object.bind];
+    return spec?.max ?? OBJECT_TEXT_MAX;
+  };
+  /* Every projected string on a slide can be edited in place, so the editor
+     needs the spec behind a dotted path such as "title" or "items.0.word". */
+  const fieldSpec = (slide, path) => {
+    const type = SLIDE_TYPES[slide.type];
+    if (!type) return null;
+    const parts = String(path).split(".");
+    if (parts.length === 1) return type.fields[parts[0]] ?? null;
+    if (parts.length !== 3 || !type.list || parts[0] !== type.list.key)
+      return null;
+    if (!/^\d+$/.test(parts[1]) || !slide[parts[0]]?.[Number(parts[1])])
+      return null;
+    return type.list.fields[parts[2]] ?? null;
+  };
+  const readPath = (slide, path) => {
+    const parts = String(path).split(".");
+    return parts.length === 1
+      ? slide[parts[0]]
+      : slide[parts[0]]?.[Number(parts[1])]?.[parts[2]];
+  };
+  const writePath = (slide, path, value) => {
+    const parts = String(path).split(".");
+    if (parts.length === 1) slide[parts[0]] = value;
+    else slide[parts[0]][Number(parts[1])][parts[2]] = value;
+  };
   const safeJSON = (value) =>
     JSON.stringify(value)
       .replace(/</g, "\\u003c")
@@ -409,7 +454,7 @@
       if (item.type === "text")
         return {
           ...base,
-          text: str(item.text, text(500)),
+          text: str(item.text, text(OBJECT_TEXT_MAX)),
           fontSize: number(item.fontSize, 8, 300),
           weight: ownChoice(item.weight, { 300: true, 400: true, 600: true, 800: true }),
           align: ownChoice(item.align, ALIGNS),
@@ -532,16 +577,10 @@
           fail();
         return {
           id: str(e.id, text(100)),
-          name: str(e.name, text(40)),
-          task: str(e.task, text(110)),
-          answer: str(e.answer, text(180)),
+          ...group(e, EXAMPLE_FIELDS),
           steps: e.steps.map((s) => {
             if (!obj(s)) fail();
-            return group(s, {
-              label: text(18),
-              detail: text(120),
-              artifact: text(40),
-            });
+            return group(s, EXAMPLE_STEP_FIELDS);
           }),
         };
       }),
@@ -622,6 +661,13 @@
     OBJECT_EXITS,
     SNAP_MODES,
     ALIGNS,
+    OBJECT_TEXT_MAX,
+    EXAMPLE_FIELDS,
+    EXAMPLE_STEP_FIELDS,
+    textLimit,
+    fieldSpec,
+    readPath,
+    writePath,
     clone,
     serializedBytes,
     newId,
