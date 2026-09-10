@@ -1250,7 +1250,19 @@ summary small {
 }
 .slide-add {
   border-bottom: 1px solid var(--line);
-  padding: 18px 0;
+  padding: 4px 0 18px;
+}
+.backdrop-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
 }
 .picture-field {
   margin-top: 18px;
@@ -1785,7 +1797,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","transition":"fade","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","motion":"cascade","backdrop":"plain","backdropPicture":"","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","motion":"blur","backdrop":"particles","backdropPicture":"","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","motion":"rise","backdrop":"plain","backdropPicture":"","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","motion":"wipe","backdrop":"grid","backdropPicture":"","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","motion":"blur","backdrop":"aurora","backdropPicture":"","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","motion":"zoom","backdrop":"rings","backdropPicture":"","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","motion":"rise","backdrop":"arcs","backdropPicture":"","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
@@ -1841,6 +1853,7 @@ kbd {
     beams: "קרני אור",
     waves: "גלים",
     halo: "הילה",
+    picture: "תמונה משלך",
     plain: "רקע נקי",
   };
   const TRANSITIONS = {
@@ -1852,6 +1865,7 @@ kbd {
   const COMMON_FIELDS = {
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
+    backdropPicture: picture(),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -1993,6 +2007,7 @@ kbd {
     ...clone(BLANKS[type]),
     motion: "rise",
     backdrop: "arcs",
+    backdropPicture: "",
     note: "",
   });
   const blankItem = (type) =>
@@ -2286,6 +2301,10 @@ kbd {
       inner = [0, 1, 2, 3]
         .map((i) => `<div class="ring" style="--ring:${i}"></div>`)
         .join("");
+    else if (kind === "picture")
+      inner = slide.backdropPicture
+        ? `<img class="backdrop-image" src="${esc(slide.backdropPicture)}" alt=""><span class="backdrop-scrim"></span>`
+        : '<p class="image-placeholder">בחרו תמונת רקע בעורך.</p>';
     else if (kind === "beams") inner = '<div class="beam-field"></div>';
     else if (kind === "halo") inner = '<div class="halo"></div>';
     else if (kind === "waves")
@@ -2801,7 +2820,7 @@ kbd {
       )
       .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
   }
-  const LOOK_KEYS = new Set(["motion", "backdrop"]);
+  const LOOK_KEYS = new Set(["motion", "backdrop", "backdropPicture"]);
   const splitSpecs = (specs) => {
     const content = {},
       look = {};
@@ -2818,7 +2837,8 @@ kbd {
       <p class="editor-note">${esc(type.hint)}</p>
       ${fieldsFor(slide, content, `slides.${index}`)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
-      <div class="look-row">${fieldsFor(slide, look, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { motion: look.motion, backdrop: look.backdrop }, `slides.${index}`)}</div>
+      ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
   function examplesEditor(open) {
@@ -2845,14 +2865,15 @@ kbd {
       : new Set([deck.slides[state.slide].id]);
     if (pendingOpenId) open.add(pendingOpenId);
     $("#editor-fields").innerHTML =
-      deck.slides
-        .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
-        .join("") +
-      `<div class="slide-add"><label class="field"><span class="field-head"><span>שקף חדש</span></span><select id="new-slide-type">${Object.entries(
+      `<div class="slide-add"><label class="field"><span class="field-head"><span>הוספת שקף חדש בסוף המצגת</span></span><select id="new-slide-type">${Object.entries(
         C.SLIDE_TYPES,
       )
         .map(([key, t]) => `<option value="${key}">${esc(t.label)}</option>`)
-        .join("")}</select></label><button class="duplicate-button" id="add-slide" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}הוספה בסוף המצגת</button></div>` +
+        .join("")}</select></label><button class="duplicate-button" id="add-slide" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}הוספה</button></div>` +
+      deck.slides
+        .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
+        .join("") +
+
       examplesEditor(open.has("examples"));
   }
   function setPath(path, value) {
@@ -3074,6 +3095,8 @@ kbd {
       renderedSceneKey = null;
       save();
       render();
+      // Choosing the picture backdrop reveals its upload field.
+      if (e.target.dataset.field.endsWith(".backdrop")) renderEditor();
       return;
     }
     if (e.target.id === "editor-example") {
