@@ -7,13 +7,14 @@ const C = globalThis.LectureCore;
 const seed = JSON.parse(
   await readFile(new URL("../src/content.json", import.meta.url), "utf8"),
 );
+const indexOfType = (type) => seed.slides.findIndex((s) => s.type === type);
 test("portable export preserves edited content, scripts and an isolated storage identity", async () => {
   const html = await readFile(
     new URL("../dist/index.html", import.meta.url),
     "utf8",
   );
   const edited = C.clone(seed);
-  edited.intro.title = "</script><b>בדיקה</b>";
+  edited.slides[0].title = "</script><b>בדיקה</b>";
   edited.theme = "wine";
   const output = C.portableHTML(
     html.replace(/^<!doctype html>\s*/i, ""),
@@ -25,7 +26,7 @@ test("portable export preserves edited content, scripts and an isolated storage 
   )[1];
   const document = C.validate(JSON.parse(payload));
   assert.equal(document.documentId, "portable-test");
-  assert.equal(document.intro.title, edited.intro.title);
+  assert.equal(document.slides[0].title, edited.slides[0].title);
   assert.equal(document.theme, "wine");
   assert.ok(output.includes('data-theme="wine"'));
   assert.notEqual(document.documentId, seed.documentId);
@@ -39,60 +40,86 @@ test("portable export preserves edited content, scripts and an isolated storage 
 test("content import/export roundtrip preserves Hebrew and choices", () => {
   assert.deepEqual(C.validate(JSON.parse(C.safeJSON(seed))), seed);
 });
+test("optional slide fields may be omitted and come back empty", () => {
+  const partial = C.clone(seed);
+  delete partial.slides[0].accent;
+  delete partial.slides[0].caption;
+  delete partial.slides[0].note;
+  const document = C.validate(partial);
+  assert.equal(document.slides[0].accent, "");
+  assert.equal(document.slides[0].caption, "");
+  assert.equal(document.slides[0].note, "");
+});
 test("reject malformed imports, duplicate IDs, oversized fields and unsupported versions", () => {
   for (const modify of [
-    (d) => (d.version = 2),
+    (d) => (d.version = 1),
+    (d) => (d.slides = []),
     (d) => (d.examples = []),
+    (d) => d.slides.push(C.clone(d.slides[0])),
     (d) => d.examples.push(C.clone(d.examples[0])),
     (d) => (d.selectedExampleId = "missing"),
-    (d) => (d.intro.title = "x".repeat(41)),
-    (d) => (d.examples[0].steps = []),
+    (d) => (d.slides[0].title = "x".repeat(41)),
+    (d) => (d.slides[0].title = "   "),
+    (d) => (d.slides[0].type = "unknown"),
+    (d) => (d.slides[0].note = "x".repeat(501)),
+    (d) => (d.slides[indexOfType("reveal")].items.length = 1),
+    (d) => (d.slides[indexOfType("tokens")].chunks[0].text = "x".repeat(13)),
+    (d) => (d.slides[indexOfType("demo")].tool = ""),
     (d) => (d.theme = "invalid"),
+    (d) => (d.examples[0].steps = []),
     (d) => (d.examples[0].steps[0] = null),
-    (d) => (d.intro.title = "   "),
   ]) {
     const bad = C.clone(seed);
     modify(bad);
     assert.throws(() => C.validate(bad));
-    assert.equal(seed.examples.length, 1);
+    assert.equal(seed.slides.length, 11);
   }
 });
-test("navigation walks chat and all agent steps without exceeding final slide", () => {
+test("navigation walks every beat of every slide and stops at both ends", () => {
+  const total = seed.slides.reduce((sum, _, i) => sum + C.beats(seed, i), 0);
+  const visited = new Set();
   let s = C.initialState();
-  const count = seed.examples[0].steps.length;
-  s = C.transition(s, "next", count);
-  assert.deepEqual(s, { slide: 1, mode: "chat", step: -1 });
-  s = C.transition(s, "next", count);
-  assert.deepEqual(s, { slide: 1, mode: "agent", step: 0 });
-  for (let i = 0; i < 20; i++) s = C.transition(s, "next", count);
-  assert.equal(s.step, 3);
-  for (let i = 0; i < 20; i++) s = C.transition(s, "prev", count);
+  for (let i = 0; i < total + 10; i++) {
+    visited.add(`${s.slide}:${s.step}`);
+    s = C.transition(s, "next", seed);
+  }
+  const last = seed.slides.length - 1;
+  assert.equal(visited.size, total);
+  assert.deepEqual(s, { slide: last, step: C.beats(seed, last) - 1 });
+  for (let i = 0; i < total + 10; i++) s = C.transition(s, "prev", seed);
   assert.deepEqual(s, C.initialState());
 });
-test("mode changes and replay reset stale progress", () => {
-  const s = { slide: 1, mode: "agent", step: 3 };
-  assert.deepEqual(C.transition(s, "chat", 4), {
-    slide: 1,
-    mode: "chat",
-    step: -1,
+test("stepping back from a slide lands on the previous slide's last beat", () => {
+  const reveal = indexOfType("reveal");
+  const s = C.transition({ slide: reveal + 1, step: 0 }, "prev", seed);
+  assert.deepEqual(s, {
+    slide: reveal,
+    step: seed.slides[reveal].items.length - 1,
   });
-  assert.deepEqual(C.transition(s, "agent", 4), {
-    slide: 1,
-    mode: "agent",
-    step: 0,
+});
+test("mode changes and replay reset stale progress inside the experiment", () => {
+  const slide = indexOfType("experiment");
+  const s = { slide, step: seed.examples[0].steps.length };
+  assert.deepEqual(C.transition(s, "chat", seed), { slide, step: 0 });
+  assert.deepEqual(C.transition(s, "agent", seed), { slide, step: 1 });
+  assert.deepEqual(C.transition(s, "reset", seed), { slide, step: 0 });
+});
+test("new slides and list items are valid content on their own", () => {
+  const document = C.clone(seed);
+  for (const type of Object.keys(C.SLIDE_TYPES))
+    document.slides.push(C.blankSlide(type));
+  document.slides.push({
+    ...C.blankSlide("reveal"),
+    items: [C.blankItem("reveal"), C.blankItem("reveal")],
   });
-  assert.deepEqual(C.transition(s, "reset", 4), {
-    slide: 1,
-    mode: "chat",
-    step: -1,
-  });
+  assert.doesNotThrow(() => C.validate(document));
 });
 test("embedded content cannot terminate its script tag", () => {
   const d = C.clone(seed);
-  d.intro.title = "</script><script>alert(1)</script>";
+  d.slides[0].title = "</script><script>alert(1)</script>";
   const serialized = C.safeJSON(C.validate(d));
   assert.ok(!serialized.includes("<"));
-  assert.equal(JSON.parse(serialized).intro.title, d.intro.title);
+  assert.equal(JSON.parse(serialized).slides[0].title, d.slides[0].title);
 });
 test("built standalone output has no external runtime assets or unresolved markers", async () => {
   const html = await readFile(

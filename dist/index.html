@@ -183,7 +183,7 @@ h1 span {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
-.intro-scene h1 {
+.statement-scene h1 {
   animation: thought-in 1.1s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
 .scene-caption {
@@ -195,7 +195,7 @@ h1 span {
   margin-top: 2cqw;
   text-wrap: balance;
 }
-.intro-scene .scene-caption {
+.statement-scene .scene-caption {
   animation: thought-in 0.9s 0.35s both;
 }
 .scene-context {
@@ -229,6 +229,93 @@ h1 span {
 }
 .experiment-scene .scene-caption {
   margin-top: 2.2cqw;
+}
+.demo-tool {
+  font-size: clamp(0.75rem, 1.3cqw, 1.05rem);
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 2.6cqw;
+  padding: 6px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.demo-slide h1 {
+  animation: thought-in 0.9s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+.scene-eyebrow {
+  font-size: clamp(0.8rem, 1.5cqw, 1.15rem);
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 3cqw;
+}
+.reveal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.reveal-list li {
+  font-size: clamp(1.9rem, var(--headline-size, 9cqw), 8rem);
+  font-weight: 350;
+  line-height: 1.2;
+  letter-spacing: -0.045em;
+  color: var(--muted);
+  transition:
+    opacity 0.5s,
+    color 0.5s;
+}
+.reveal-list li[data-state="past"] {
+  opacity: 0.26;
+}
+.reveal-list li[data-state="next"] {
+  opacity: 0.04;
+}
+.reveal-list li[data-state="now"] {
+  color: var(--text);
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: thought-in 0.7s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+.reveal-scene .scene-caption {
+  margin-top: 3.2cqw;
+  min-height: 3.2em;
+}
+.token-sentence {
+  font-size: clamp(1.5rem, 5cqw, 4rem);
+  font-weight: 350;
+  letter-spacing: -0.03em;
+  line-height: 1.4;
+  animation: thought-in 0.8s both;
+}
+.token-chunks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  max-width: 92%;
+}
+.token {
+  font-size: clamp(1rem, 3.4cqw, 2.7rem);
+  line-height: 1.35;
+  padding: 0.12em 0.3em;
+  border-radius: 6px;
+  white-space: pre;
+  background: hsl(calc(196deg + var(--token) * 43deg) 62% 55% / 0.32);
+  animation: token-in 0.45s both;
+  animation-delay: calc(var(--token) * 45ms);
+}
+:root[data-theme="paper"] .token {
+  background: hsl(calc(196deg + var(--token) * 43deg) 68% 58% / 0.4);
+}
+.tokens-scene .scene-caption {
+  margin-top: 3.2cqw;
+}
+.no-motion .reveal-list li[data-state="now"],
+.no-motion .token,
+.no-motion .token-sentence,
+.no-motion .demo-slide h1 {
+  animation: none;
 }
 .simulation-note {
   position: absolute;
@@ -293,8 +380,8 @@ h1 span {
 .complete-scene .atmosphere {
   opacity: 1;
 }
-.no-entry .intro-scene h1,
-.no-entry .intro-scene .scene-caption {
+.no-entry .statement-scene h1,
+.no-entry .statement-scene .scene-caption {
   animation: none;
 }
 .no-motion .scene-message,
@@ -328,22 +415,31 @@ h1 span {
 .slide-dots {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   direction: ltr;
-}
-.slide-dots span {
-  width: 16px;
-  height: 1px;
-  background: var(--line);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 60cqw;
 }
 .slide-dots button {
-  background: none;
-  color: var(--muted);
-  font-size: 0.8rem;
-  padding: 10px;
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.4;
+  transition:
+    opacity 0.3s,
+    transform 0.3s,
+    background 0.3s;
+}
+.slide-dots button:hover {
+  opacity: 0.8;
 }
 .slide-dots button[aria-current] {
-  color: var(--text);
+  background: var(--accent);
+  opacity: 1;
+  transform: scale(1.5);
 }
 .icon-button {
   background: transparent;
@@ -596,6 +692,28 @@ summary {
 }
 summary::marker {
   color: var(--muted);
+}
+summary small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-inline-start: 8px;
+}
+.slide-editor-tools {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
+}
+.slide-editor-tools .icon-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+}
+.slide-add {
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+.slide-add .field {
+  margin-top: 0;
 }
 .field {
   display: block;
@@ -877,7 +995,7 @@ kbd {
   h1 span {
     display: block;
   }
-  .intro-scene .scene-caption {
+  .statement-scene .scene-caption {
     margin-top: 24px;
   }
   .scene-caption {
@@ -885,6 +1003,27 @@ kbd {
   }
   .scene-word {
     font-size: clamp(2.5rem, 14vw, 6.8rem);
+  }
+  .reveal-list li {
+    font-size: clamp(2.2rem, 13vw, 5.5rem);
+  }
+  .reveal-scene .scene-caption {
+    margin-top: 26px;
+  }
+  .token-sentence {
+    font-size: clamp(1.4rem, 7vw, 2.6rem);
+  }
+  .token {
+    font-size: clamp(1rem, 5vw, 1.8rem);
+  }
+  .demo-tool {
+    margin-bottom: 22px;
+  }
+  .scene-eyebrow {
+    margin-bottom: 26px;
+  }
+  .slide-dots {
+    max-width: 60vw;
   }
   .scene-context {
     position: static;
@@ -1001,7 +1140,7 @@ kbd {
     <div class="stage" id="stage" tabindex="-1" aria-label="במת ההרצאה">
       <div id="slide-root"></div>
       <footer class="stage-footer">
-        <div class="slide-dots" aria-label="בחירת שקף"><button data-slide="0" aria-label="שקף 1: פתיחה" aria-current="step">01</button><span></span><button data-slide="1" aria-label="שקף 2: ניסוי">02</button></div>
+        <div class="slide-dots" id="slide-dots" role="group" aria-label="בחירת שקף"></div>
       </footer>
     </div>
     <nav class="toolbar" id="toolbar" aria-label="שליטה במצגת">
@@ -1025,63 +1164,164 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="slide-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <noscript>יש להפעיל JavaScript בדפדפן כדי להציג את ההרצאה.</noscript>
-  <script id="deck-data" type="application/json">{"version":1,"documentId":"chatbot-agent-keynote-v1","theme":"carbon","selectedExampleId":"workshop","intro":{"title":"מצ׳אטבוט","accent":"לסוכן.","subtitle":"ממילים למעשים."},"experiment":{"title":"הנה הצעה.","subtitle":"אותה מטרה. עכשיו נעבור מתשובה לפעולה."},"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
+  <script id="deck-data" type="application/json">{"version":2,"documentId":"lecture-part1-v2","theme":"carbon","selectedExampleId":"workshop","slides":[{"id":"open","type":"statement","title":"מצ׳אטבוט","accent":"לסוכן.","caption":"ממילים למעשים.","note":"שקף פתיחה. נותנים לו לשבת שנייה בלי לדבר, ועוברים הלאה."},{"id":"demo-search","type":"demo","title":"אותה שאלה. פעמיים.","tool":"גוגל, ואז צ׳אט","caption":"פעם אחת מחפשים. פעם אחת שואלים.","prompt":"בלי חיפוש באינטרנט, בלי קישורים, בלי להגיד שאתה לא בטוח.\nענה תשובה רציפה וקצרה, כאילו אתה בטוח:\n[שאלה שהקהל הזה באמת היה כותב בגוגל]","note":"גוגל: מקלידים שאלה אמיתית של הקהל הזה ולוחצים Enter. אומרים: זו הדרך הישנה. שאלתי וקיבלתי רשימת אתרים. המחשב לא ענה, הוא מצא דפים שאנשים כתבו. עוברים לצ׳אט עם אותה שאלה בדיוק: הפעם אין רשימה, יש תשובה. מישהו כביכול יושב בפנים וכותב לי פסקה. זה לא חיפוש, המחשב ייצר טקסט חדש. סוגרים את גוגל ונשארים על התשובה."},{"id":"families","type":"reveal","title":"מה מחשב יודע לעשות","note":"כאן רק מדברים, המסך נשאר על התשובה. שמונים שנה מחשב ידע לעשות שתי משפחות של דברים. עכשיו יש שלישית: הוא ממשיך טקסט. מסתכל על מה שכתבתי ומנחש מה סביר שיבוא עכשיו, מילה אחרי מילה, עד שיוצאת תשובה שנראית אנושית.","items":[{"word":"לחשב.","caption":"מספרים נכנסים, מספרים יוצאים. שכר, ריבית, אקסל."},{"word":"לשלוף.","caption":"למצוא משהו שכבר קיים. חיפוש, תיקייה, מסד נתונים."},{"word":"לייצר.","caption":"טקסט חדש, שלא היה קיים לפני רגע. זו המשפחה השלישית."}]},{"id":"demo-doc","type":"demo","title":"מסמך שנשמע אמיתי.","tool":"צ׳אט","caption":"אף אחד בחדר לא נתן לו את העובדות.","prompt":"כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]","note":"נותנים לו לכתוב עד הסוף ולא מדברים בזמן שהוא כותב. אחרי שהטקסט על המסך: זה נשמע כמו מישהו מהמשרד. יש מבנה, יש טון, יש החלטות. הוא לא פתח את התיק שלכם, הוא ניחש איך מסמך כזה אמור להיראות והמשיך."},{"id":"llm","type":"reveal","title":"מודל שפה גדול","note":"המסך עדיין על המסמך שנכתב. שלוש המילים הן פירוק של השם עצמו, ולכן זה נשאר פשוט: גדול בגלל כמות הטקסט, שפה כי הכול מתחיל במשפטים, מודל כי זו מכונה שמתאימה דפוסים.","items":[{"word":"גדול.","caption":"ראה כמות טקסט שקשה לתפוס. כמעט כל מה שבני אדם כתבו."},{"word":"שפה.","caption":"הכול מתחיל במשפטים ונגמר במשפטים."},{"word":"מודל.","caption":"מכונה שמתאימה דפוסים. לא אדם, ואין בפנים ספרייה."}]},{"id":"network","type":"statement","title":"מיליארדי כפתורים","accent":"קטנים.","caption":"אין מוח מאחורי זה. יש רשת חיבורים שסובבו שוב ושוב, עד שהניחוש נהיה טוב.","note":"באימון סיבבו את הכפתורים על טקסטים של בני אדם עד שהניחוש של המילה הבאה נהיה טוב מאוד. אחר כך לימדו אותה להתנהג כמו עוזרת ולא כמו משלימת משפטים, ולכן זה מרגיש כמו שיחה."},{"id":"tokens","type":"tokens","title":"ככה המכונה רואה שפה.","caption":"לא אותיות כמונו, ולא תמיד מילים שלמות. חתיכות.","note":"פותחים Tiktokenizer ומדביקים משפט אחד מהתשובה הקודמת, כדי להראות את זה על טקסט אמיתי. היא לא קוראת, היא בולעת לבנים ומנחשת את הלבנה הבאה. ולכן אפשר לקבל ממנה מייל שנשמע מושלם, וגם תשובה בטוחה שפשוט לא נכונה.","chunks":[{"text":"המ"},{"text":"כונה"},{"text":" לא"},{"text":" קור"},{"text":"את"},{"text":"."},{"text":" היא"},{"text":" מנ"},{"text":"חשת"},{"text":" את"},{"text":" הח"},{"text":"תיכה"},{"text":" הבאה"},{"text":"."}]},{"id":"demo-invention","type":"demo","title":"בטוח. ולא בדוק.","tool":"צ׳אט","caption":"שם, תאריך, מספר — בלי מקור אחד.","prompt":"בלי חיפוש.\nענה כאילו זו עובדה ידועה, עם שם, תאריך ומספר.\n[בקשה לעובדה שנשמעת סבירה אצל הקהל הזה, שאין דרך שהמודל באמת יידע אותה בוודאות]","note":"לא צריך שהמודל ייכשל, צריך שהקהל יראה תשובה חלקה בלי מקור. אם היא המציאה מספרים: אין פה מסך של הלמס, יש ניחוש שנשמע כמו חדשות. אם היא התחמקה: הפעם היא נזהרה, המנגנון עדיין אותו מנגנון. להחלפה לפי קהל משנים רק את נושא העובדה."},{"id":"fluency","type":"statement","title":"שוטפות זה לא בדיקה.","accent":"","caption":"היא לא בדקה אם זה קרה. היא בדקה אם זה נשמע כמו תשובה.","note":"זו שורת המפתח של החלק הזה. עוצרים עליה שנייה לפני שממשיכים."},{"id":"handoff","type":"statement","title":"עד כאן היא","accent":"מדברת.","caption":"בחלק הבא נותנים לה גם לעשות.","note":"מעבר לחלק השני. מכאן הניסוי החי."},{"id":"experiment","type":"experiment","title":"הנה הצעה.","note":"אותה מטרה. עכשיו עוברים מתשובה לפעולה. אפשר להחליף דוגמה לפי הקהל מתוך השקף עצמו."}],"examples":[{"id":"workshop","name":"תכנון סדנה","task":"הכן לי סדנת AI.","answer":"פתיחה, תרגול, שיתוף. את השאר תכין בעצמך.","steps":[{"label":"מתכנן.","detail":"בניית מסלול של 90 דקות, מהיכרות ועד תרגול.","artifact":"סדר יום לסדנה"},{"label":"מכין.","detail":"הכנת תרגיל קבוצתי ודף עבודה לכל משתתף.","artifact":"חומרי התרגול"},{"label":"בודק.","detail":"בדיקת הזמנים והתאמת התרגילים לצוות של 12 אנשים.","artifact":"התאמה לצוות שלך"},{"label":"מוכן.","detail":"סדר היום, החומרים וטיוטת ההזמנה מוכנים לעיון שלך.","artifact":"הסדנה שלך."}]}]}</script>
   <script id="core-script">/* Shared pure content and navigation rules. No DOM or network dependencies. */
 (() => {
   "use strict";
   const THEMES = ["carbon", "paper", "wine"];
-  const LIMITS = {
-    title: 40,
-    subtitle: 100,
-    name: 40,
-    task: 110,
-    answer: 180,
-    label: 18,
-    detail: 120,
-    artifact: 40,
-    examples: 20,
-    steps: 6,
-  };
+  const LIMITS = { slides: 40, examples: 20, steps: 6, note: 500 };
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const newId = (prefix) =>
+    `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const text = (max, required = true) => ({ max, required });
+  const selected = (deck) =>
+    deck.examples.find((e) => e.id === deck.selectedExampleId);
+
+  /* Every slide type declares its fields once: validation, the editor and the
+     beat count for the presenter's arrow keys all read this table. */
+  const SLIDE_TYPES = {
+    statement: {
+      label: "משפט גדול",
+      hint: "כותרת אחת על הבמה. המילה המודגשת והמשפט שמתחת הם רשות.",
+      fields: {
+        title: text(40),
+        accent: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
+    demo: {
+      label: "הדגמה חיה",
+      hint: "מחזיק את הבמה בזמן שאתה עובר לכלי עצמו. הפרומפט נשמר כאן, ניתן להעתקה בלחיצה, ואינו מוקרן.",
+      fields: {
+        title: text(40),
+        tool: text(30),
+        caption: text(150, false),
+        prompt: text(800, false),
+      },
+      beats: () => 1,
+    },
+    reveal: {
+      label: "מילים שנחשפות",
+      hint: "מילה אחת בכל צעד, עם משפט אחד מתחתיה. הקודמות נשארות עמומות.",
+      fields: { title: text(40, false) },
+      list: {
+        key: "items",
+        label: "מילה",
+        min: 2,
+        max: 5,
+        fields: { word: text(18), caption: text(120, false) },
+      },
+      beats: (slide) => slide.items.length,
+    },
+    tokens: {
+      label: "חתיכות של שפה",
+      hint: "המשפט נשבר לחתיכות. צעד ראשון המשפט השלם, צעד שני החתיכות.",
+      fields: { title: text(40), caption: text(150, false) },
+      list: {
+        key: "chunks",
+        label: "חתיכה",
+        min: 3,
+        max: 24,
+        fields: { text: text(12) },
+      },
+      beats: () => 2,
+    },
+    experiment: {
+      label: "צ׳אטבוט מול סוכן",
+      hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
+      fields: { title: text(40) },
+      beats: (slide, deck) => 1 + selected(deck).steps.length,
+    },
+  };
+  const BLANKS = {
+    statement: { title: "משפט חדש.", accent: "", caption: "" },
+    demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
+    reveal: {
+      title: "",
+      items: [
+        { word: "ראשונה.", caption: "" },
+        { word: "שנייה.", caption: "" },
+        { word: "שלישית.", caption: "" },
+      ],
+    },
+    tokens: {
+      title: "ככה זה נראה.",
+      caption: "",
+      chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
+    },
+    experiment: { title: "הנה הצעה." },
+  };
+  const blankSlide = (type) => ({
+    id: newId("slide"),
+    type,
+    ...clone(BLANKS[type]),
+    note: "",
+  });
+  const blankItem = (type) =>
+    clone(BLANKS[type][SLIDE_TYPES[type].list.key][0]);
   const safeJSON = (value) =>
     JSON.stringify(value)
       .replace(/</g, "\\u003c")
       .replace(/\u2028/g, "\\u2028")
       .replace(/\u2029/g, "\\u2029");
+
   function validate(raw) {
     const fail = () => {
       throw new Error(
-        "קובץ התוכן אינו מתאים. יש לבחור קובץ JSON שיוצא מההרצאה, בגרסה 1.",
+        "קובץ התוכן אינו מתאים. יש לבחור קובץ JSON שיוצא מההרצאה, בגרסה 2.",
       );
     };
     const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
-    const str = (v, max) => {
-      if (typeof v !== "string" || !v.trim() || v.length > max) fail();
-      return v;
+    const str = (v, spec) => {
+      const value = spec.required ? v : (v ?? "");
+      if (typeof value !== "string" || value.length > spec.max) fail();
+      if (spec.required && !value.trim()) fail();
+      return value;
     };
-    if (!obj(raw) || raw.version !== 1 || !THEMES.includes(raw.theme)) fail();
+    const group = (source, fields) => {
+      const out = {};
+      for (const [key, spec] of Object.entries(fields))
+        out[key] = str(source[key], spec);
+      return out;
+    };
+    if (!obj(raw) || raw.version !== 2 || !THEMES.includes(raw.theme)) fail();
     if (
-      !obj(raw.intro) ||
-      !obj(raw.experiment) ||
+      !Array.isArray(raw.slides) ||
+      !raw.slides.length ||
+      raw.slides.length > LIMITS.slides ||
       !Array.isArray(raw.examples) ||
       !raw.examples.length ||
       raw.examples.length > LIMITS.examples
     )
       fail();
     const result = {
-      version: 1,
-      documentId: str(raw.documentId, 100),
+      version: 2,
+      documentId: str(raw.documentId, text(100)),
       theme: raw.theme,
-      selectedExampleId: str(raw.selectedExampleId, 100),
-      intro: {
-        title: str(raw.intro.title, 40),
-        accent: str(raw.intro.accent, 40),
-        subtitle: str(raw.intro.subtitle, 100),
-      },
-      experiment: {
-        title: str(raw.experiment.title, 40),
-        subtitle: str(raw.experiment.subtitle, 100),
-      },
+      selectedExampleId: str(raw.selectedExampleId, text(100)),
+      slides: raw.slides.map((s) => {
+        if (!obj(s)) fail();
+        const type = SLIDE_TYPES[s.type];
+        if (!type) fail();
+        const slide = {
+          id: str(s.id, text(100)),
+          type: s.type,
+          ...group(s, type.fields),
+          note: str(s.note, text(LIMITS.note, false)),
+        };
+        if (type.list) {
+          const { key, min, max, fields } = type.list;
+          const items = s[key];
+          if (!Array.isArray(items) || items.length < min || items.length > max)
+            fail();
+          slide[key] = items.map((item) => {
+            if (!obj(item)) fail();
+            return group(item, fields);
+          });
+        }
+        return slide;
+      }),
       examples: raw.examples.map((e) => {
         if (
           !obj(e) ||
@@ -1091,29 +1331,32 @@ kbd {
         )
           fail();
         return {
-          id: str(e.id, 100),
-          name: str(e.name, 40),
-          task: str(e.task, 110),
-          answer: str(e.answer, 180),
+          id: str(e.id, text(100)),
+          name: str(e.name, text(40)),
+          task: str(e.task, text(110)),
+          answer: str(e.answer, text(180)),
           steps: e.steps.map((s) => {
             if (!obj(s)) fail();
-            return {
-              label: str(s.label, 18),
-              detail: str(s.detail, 120),
-              artifact: str(s.artifact, 40),
-            };
+            return group(s, {
+              label: text(18),
+              detail: text(120),
+              artifact: text(40),
+            });
           }),
         };
       }),
     };
+    const unique = (values) => new Set(values).size === values.length;
     const ids = result.examples.map((e) => e.id);
     if (
-      new Set(ids).size !== ids.length ||
+      !unique(result.slides.map((s) => s.id)) ||
+      !unique(ids) ||
       !ids.includes(result.selectedExampleId)
     )
       fail();
     return result;
   }
+
   function portableHTML(template, document, documentId) {
     const portable = validate({ ...clone(document), documentId });
     const start = template.indexOf('<script id="deck-data"');
@@ -1131,39 +1374,49 @@ kbd {
       )
     );
   }
-  const selected = (doc) =>
-    doc.examples.find((e) => e.id === doc.selectedExampleId);
-  const initialState = () => ({ slide: 0, mode: "chat", step: -1 });
-  function transition(state, action, count) {
-    const s = { ...state };
+
+  const beats = (deck, index) => {
+    const slide = deck.slides[index];
+    return SLIDE_TYPES[slide.type].beats(slide, deck);
+  };
+  const initialState = () => ({ slide: 0, step: 0 });
+  const goTo = (deck, index) => ({
+    slide: Math.min(Math.max(index, 0), deck.slides.length - 1),
+    step: 0,
+  });
+  function transition(state, action, deck) {
+    let { slide, step } = state;
     if (action === "next") {
-      if (s.slide === 0) return { slide: 1, mode: "chat", step: -1 };
-      if (s.mode === "chat") return { slide: 1, mode: "agent", step: 0 };
-      s.step = Math.min(count - 1, s.step + 1);
+      if (step + 1 < beats(deck, slide)) step++;
+      else if (slide < deck.slides.length - 1) {
+        slide++;
+        step = 0;
+      }
     } else if (action === "prev") {
-      if (s.slide === 1 && s.mode === "agent" && s.step > 0) s.step--;
-      else if (s.slide === 1 && s.mode === "agent") {
-        s.mode = "chat";
-        s.step = -1;
-      } else return initialState();
-    } else if (action === "chat" || action === "agent") {
-      s.mode = action;
-      s.step = action === "agent" ? 0 : -1;
-    } else if (action === "reset") {
-      s.mode = "chat";
-      s.step = -1;
-    }
-    return s;
+      if (step > 0) step--;
+      else if (slide > 0) {
+        slide--;
+        step = beats(deck, slide) - 1;
+      }
+    } else if (action === "chat" || action === "reset") step = 0;
+    else if (action === "agent") step = 1;
+    return { slide, step: Math.min(step, beats(deck, slide) - 1) };
   }
   globalThis.LectureCore = {
     THEMES,
     LIMITS,
+    SLIDE_TYPES,
     clone,
+    newId,
+    blankSlide,
+    blankItem,
     safeJSON,
     validate,
     portableHTML,
     selected,
+    beats,
     initialState,
+    goTo,
     transition,
   };
 })();
@@ -1194,7 +1447,8 @@ kbd {
     idleTimer,
     toastTimer,
     renderedSlide = -1,
-    renderedSceneKey = null;
+    renderedSceneKey = null,
+    renderedDots = "";
   try {
     const stored = localStorage.getItem(storageKey);
     if (stored) deck = C.validate(JSON.parse(stored));
@@ -1204,6 +1458,8 @@ kbd {
   const icons = {
     next: '<path d="m14 6-6 6 6 6"/>',
     prev: '<path d="m10 6 6 6-6 6"/>',
+    up: '<path d="m6 14 6-6 6 6"/>',
+    down: '<path d="m6 10 6 6 6-6"/>',
     edit: '<path d="m15 4 5 5M4 20l5-1L20 8a3.5 3.5 0 0 0-5-5L4 14Z"/>',
     palette:
       '<circle cx="12" cy="12" r="9"/><circle cx="9" cy="8" r=".6"/><circle cx="6.5" cy="12" r=".6"/><circle cx="14" cy="7" r=".6"/><path d="M19 15h-5a2 2 0 0 0-2 2v4"/>',
@@ -1213,21 +1469,12 @@ kbd {
     close: '<path d="m6 6 12 12M6 18 18 6"/>',
     download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
     replay: '<path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/>',
-    goal: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7"/>',
-    plan: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6m-6 4h6m-6 4h3"/>',
-    tools:
-      '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/>',
-    check: '<path d="m5 12 4 4L19 6"/>',
-    shield:
-      '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 11 3 3 5-5"/>',
-    result: '<path d="M5 3h10l4 4v14H5Zm9 0v5h5M8 12h8m-8 4h6"/>',
     chat: '<path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-9l-5 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10m-10 4h6"/>',
     agent:
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 4V3H3v13h1"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
-    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>',
   };
   const icon = (name) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.agent}</svg>`;
@@ -1240,22 +1487,90 @@ kbd {
   // Keynote scenes: one focal point, with presenter controls kept off the canvas.
   const atmosphere = () =>
     '<div class="atmosphere" aria-hidden="true"><div class="light-arc arc-one"></div><div class="light-arc arc-two"></div></div>';
-  function intro() {
+  const frame = (index, classes, style, body) =>
+    `<section class="slide ${classes}" aria-label="שקף ${index + 1}" style="${style}">${atmosphere()}${body}</section>`;
+  const caption = (value) =>
+    value ? `<p class="scene-caption">${esc(value)}</p>` : "";
+
+  function statementSlide(slide, index) {
     const size = Math.min(
       10.5,
-      390 / (deck.intro.title.length + deck.intro.accent.length + 4),
+      390 / (slide.title.length + slide.accent.length + 4),
     );
-    return `<section class="slide intro-slide" aria-label="שקף 1: מצ׳אטבוט לסוכן" style="--headline-size:${size}cqw">${atmosphere()}<div class="scene intro-scene"><h1>${esc(deck.intro.title)} <span>${esc(deck.intro.accent)}</span></h1><p class="scene-caption">${esc(deck.intro.subtitle)}</p></div><div class="scene-controls intro-controls"><button class="quiet-button" data-action="next">מתחילים ${icon("next")}</button><button class="icon-button" data-action="replay" aria-label="הפעלה חוזרת של הפתיחה">${icon("replay")}</button></div></section>`;
+    const opening =
+      index === 0
+        ? `<div class="scene-controls intro-controls"><button class="quiet-button" data-action="next">מתחילים ${icon("next")}</button><button class="icon-button" data-action="replay" aria-label="הפעלה חוזרת של הפתיחה">${icon("replay")}</button></div>`
+        : "";
+    return frame(
+      index,
+      "statement-slide",
+      `--headline-size:${size}cqw`,
+      `<div class="scene statement-scene"><h1>${esc(slide.title)}${slide.accent ? ` <span>${esc(slide.accent)}</span>` : ""}</h1>${caption(slide.caption)}</div>${opening}`,
+    );
   }
-  function experiment() {
+  function demoSlide(slide, index) {
+    const size = Math.min(9.5, 340 / (slide.title.length + 2));
+    const copy = slide.prompt
+      ? `<div class="scene-controls demo-controls"><button class="quiet-button" data-action="copy-prompt">${icon("copy")}העתקת הפרומפט</button></div>`
+      : "";
+    return frame(
+      index,
+      "demo-slide",
+      `--headline-size:${size}cqw`,
+      `<div class="scene statement-scene"><span class="demo-tool">${esc(slide.tool)}</span><h1>${esc(slide.title)}</h1>${caption(slide.caption)}</div>${copy}`,
+    );
+  }
+  function revealSlide(slide, index, step) {
+    const words = slide.items
+      .map(
+        (item, i) =>
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}">${esc(item.word)}</li>`,
+      )
+      .join("");
+    const size = Math.min(
+      9,
+      210 / Math.max(...slide.items.map((i) => i.word.length)),
+    );
+    return frame(
+      index,
+      "reveal-slide",
+      `--headline-size:${size}cqw`,
+      `<div class="scene reveal-scene">${slide.title ? `<p class="scene-eyebrow">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide.items[step].caption)}</div>`,
+    );
+  }
+  function tokensSlide(slide, index, step) {
+    const body =
+      step === 0
+        ? `<p class="token-sentence">${esc(slide.chunks.map((c) => c.text).join(""))}</p>`
+        : `<p class="token-chunks">${slide.chunks.map((c, i) => `<span class="token" style="--token:${i}">${esc(c.text)}</span>`).join("")}</p>`;
+    return frame(
+      index,
+      "tokens-slide",
+      "",
+      `<div class="scene tokens-scene"><p class="scene-eyebrow">${esc(slide.title)}</p>${body}${step === 1 ? caption(slide.caption) : ""}</div>`,
+    );
+  }
+  function experimentSlide(slide, index, step) {
     const e = C.selected(deck),
-      agent = state.mode === "agent",
-      step = e.steps[state.step],
-      complete = agent && state.step === e.steps.length - 1;
-    const heading = agent ? step.label : deck.experiment.title;
+      agent = step > 0,
+      current = agent ? e.steps[step - 1] : null,
+      complete = agent && step === e.steps.length;
+    const heading = agent ? current.label : slide.title;
     const size = Math.min(13, 195 / (heading.length + 2));
-    return `<section class="slide experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}" aria-label="שקף 2: מתשובה לביצוע" style="--scene-size:${size}cqw;--phase:${Math.max(0, state.step)}">${atmosphere()}<div class="scene experiment-scene"><p class="scene-context">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word">${esc(heading)}</h2><p class="scene-caption">${esc(agent ? step.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${state.step + 1} / ${e.steps.length}` : ""}</span></div></section>`;
+    return frame(
+      index,
+      `experiment-slide ${agent ? "agent-scene" : "chat-scene"} ${complete ? "complete-scene" : ""}`,
+      `--scene-size:${size}cqw;--phase:${Math.max(0, step - 1)}`,
+      `<div class="scene experiment-scene"><p class="scene-context">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word">${esc(heading)}</h2><p class="scene-caption">${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
+    );
   }
+  const SCENES = {
+    statement: statementSlide,
+    demo: demoSlide,
+    reveal: revealSlide,
+    tokens: tokensSlide,
+    experiment: experimentSlide,
+  };
   function exampleOptions() {
     return deck.examples
       .map(
@@ -1264,38 +1579,61 @@ kbd {
       )
       .join("");
   }
-  function render() {
-    const actionFocus = document.activeElement?.dataset.action;
-    document.documentElement.dataset.theme = deck.theme;
-    $("#slide-root").innerHTML = state.slide === 0 ? intro() : experiment();
-    if (renderedSlide === state.slide)
-      $("#slide-root .slide").classList.add("no-entry");
-    renderedSlide = state.slide;
-    const sceneKey = `${state.slide}:${state.mode}:${state.step}`;
-    if (renderedSceneKey === sceneKey)
-      $("#slide-root .slide").classList.add("no-motion");
-    renderedSceneKey = sceneKey;
-    const live = $("#slide-announcement");
-    live.textContent =
-      state.slide === 0
-        ? "שקף 1: " + deck.intro.title + " " + deck.intro.accent
-        : state.mode === "chat"
-          ? "שקף 2: תשובת הצ׳אטבוט"
-          : "שלב " +
-            (state.step + 1) +
-            ": " +
-            C.selected(deck).steps[state.step].label;
-    $("#position").textContent = state.slide === 0 ? "01 / 02" : "02 / 02";
-    $$(".slide-dots button").forEach((b) => {
+  const slideName = (slide) =>
+    slide.title || C.SLIDE_TYPES[slide.type].label;
+  function announce(slide, step) {
+    const place = `שקף ${state.slide + 1} מתוך ${deck.slides.length}`;
+    if (slide.type === "reveal")
+      return `${place}: ${slideName(slide)} — ${slide.items[step].word}`;
+    if (slide.type === "experiment") {
+      const e = C.selected(deck);
+      return step === 0
+        ? `${place}: תשובת הצ׳אטבוט`
+        : `${place}: שלב ${step} — ${e.steps[step - 1].label}`;
+    }
+    return `${place}: ${slideName(slide)}`;
+  }
+  function renderDots() {
+    const key = deck.slides.map((s) => s.id).join("|");
+    if (key !== renderedDots) {
+      renderedDots = key;
+      $("#slide-dots").innerHTML = deck.slides
+        .map(
+          (s, i) =>
+            `<button data-slide="${i}" aria-label="שקף ${i + 1}: ${esc(slideName(s))}"></button>`,
+        )
+        .join("");
+    }
+    $$("#slide-dots button").forEach((b) => {
       if (+b.dataset.slide === state.slide)
         b.setAttribute("aria-current", "step");
       else b.removeAttribute("aria-current");
     });
-    $("#prev").disabled = state.slide === 0;
+  }
+  function render() {
+    const actionFocus = document.activeElement?.dataset.action;
+    const slide = deck.slides[state.slide];
+    document.documentElement.dataset.theme = deck.theme;
+    $("#slide-root").innerHTML = SCENES[slide.type](
+      slide,
+      state.slide,
+      state.step,
+    );
+    if (renderedSlide === state.slide)
+      $("#slide-root .slide").classList.add("no-entry");
+    renderedSlide = state.slide;
+    const sceneKey = `${state.slide}:${state.step}`;
+    if (renderedSceneKey === sceneKey)
+      $("#slide-root .slide").classList.add("no-motion");
+    renderedSceneKey = sceneKey;
+    $("#slide-announcement").textContent = announce(slide, state.step);
+    const pad = (n) => String(n).padStart(2, "0");
+    $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
+    renderDots();
+    $("#prev").disabled = state.slide === 0 && state.step === 0;
     $("#next").disabled =
-      state.slide === 1 &&
-      state.mode === "agent" &&
-      state.step === C.selected(deck).steps.length - 1;
+      state.slide === deck.slides.length - 1 &&
+      state.step === C.beats(deck, state.slide) - 1;
     $$("[data-theme-choice]").forEach((b) =>
       b.setAttribute(
         "aria-pressed",
@@ -1332,14 +1670,42 @@ kbd {
       render();
       return;
     }
-    state = C.transition(state, action, C.selected(deck).steps.length);
+    state = C.transition(state, action, deck);
     render();
     wake();
+  }
+  async function copyPrompt(slide) {
+    const done = (ok) =>
+      notify(
+        ok
+          ? "הפרומפט הועתק. אפשר להדביק בכלי."
+          : "ההעתקה נחסמה בדפדפן. אפשר להעתיק את הפרומפט מתוך העורך.",
+      );
+    try {
+      await navigator.clipboard.writeText(slide.prompt);
+      done(true);
+    } catch {
+      // Clipboard access is blocked on file:// in some browsers; fall back to a selection copy.
+      const area = document.createElement("textarea");
+      area.value = slide.prompt;
+      area.setAttribute("readonly", "");
+      area.style.cssText = "position:fixed;opacity:0";
+      document.body.append(area);
+      area.select();
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      area.remove();
+      done(ok);
+    }
   }
   function changeExample(id) {
     if (!deck.examples.some((e) => e.id === id)) return;
     deck.selectedExampleId = id;
-    state = { ...state, mode: "chat", step: -1 };
+    state = { ...state, step: 0 };
     save();
     render();
   }
@@ -1370,38 +1736,137 @@ kbd {
     dialog.close();
     wake();
   }
-  const field = (label, path, value, max, multi = false) =>
-    `<label class="field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span>${multi ? `<textarea rows="2"` : '<input type="text"'} data-field="${path}" maxlength="${max}" required ${multi ? `>${esc(value)}</textarea>` : `value="${esc(value)}">`}</label>`;
-  function renderEditor() {
+  const FIELD_LABELS = {
+    title: "כותרת",
+    accent: "מילה מודגשת",
+    caption: "משפט מתחת",
+    tool: "הכלי שפותחים",
+    prompt: "הפרומפט — לא מוקרן, מועתק בלחיצה",
+    word: "מילה",
+    text: "חתיכה",
+    name: "שם הדוגמה / הקהל",
+    task: "המטרה",
+    answer: "תשובת הצ׳אטבוט",
+    label: "שם השלב",
+    detail: "הערת מרצה — לא מוקרנת",
+    artifact: "שם התוצר",
+  };
+  const MULTILINE = new Set([
+    "caption",
+    "prompt",
+    "note",
+    "task",
+    "answer",
+    "detail",
+  ]);
+  const field = (label, path, value, max, multi = false, required = true) =>
+    `<label class="field"><span class="field-head"><span>${label}</span><small>${value.length} / ${max}</small></span>${multi ? `<textarea rows="2"` : '<input type="text"'} data-field="${path}" maxlength="${max}" ${required ? "required" : ""} ${multi ? `>${esc(value)}</textarea>` : `value="${esc(value)}">`}</label>`;
+  const fieldsFor = (source, specs, prefix) =>
+    Object.entries(specs)
+      .map(([key, spec]) =>
+        field(
+          FIELD_LABELS[key] || key,
+          `${prefix}.${key}`,
+          source[key],
+          spec.max,
+          MULTILINE.has(key),
+          spec.required,
+        ),
+      )
+      .join("");
+  function listEditor(slide, index, list) {
+    const items = slide[list.key];
+    return `${items
+      .map(
+        (item, j) =>
+          `<section class="step-editor"><div class="step-editor-header"><span>${esc(list.label)} ${j + 1}</span><button class="icon-button" data-remove-item="${index}:${j}" aria-label="הסרת ${esc(list.label)} ${j + 1}" ${items.length <= list.min ? "disabled" : ""}>${icon("trash")}</button></div>${fieldsFor(item, list.fields, `slides.${index}.${list.key}.${j}`)}</section>`,
+      )
+      .join("")}<button class="duplicate-button" data-add-item="${index}" ${items.length >= list.max ? "disabled" : ""}>${icon("plus")}הוספת ${esc(list.label)}</button>`;
+  }
+  function slideEditor(slide, index, open) {
+    const type = C.SLIDE_TYPES[slide.type];
+    const last = deck.slides.length - 1;
+    return `<details data-open-key="${esc(slide.id)}" ${open ? "open" : ""}><summary><span class="slide-editor-name">${index + 1}. ${esc(slideName(slide))}</span><small>${esc(type.label)}</small></summary>
+      <div class="slide-editor-tools"><button class="icon-button" data-move="${index}:-1" aria-label="העברת השקף למעלה" ${index === 0 ? "disabled" : ""}>${icon("up")}</button><button class="icon-button" data-move="${index}:1" aria-label="העברת השקף למטה" ${index === last ? "disabled" : ""}>${icon("down")}</button><button class="icon-button" data-remove-slide="${index}" aria-label="מחיקת השקף" ${last === 0 ? "disabled" : ""}>${icon("trash")}</button></div>
+      <p class="editor-note">${esc(type.hint)}</p>
+      ${fieldsFor(slide, type.fields, `slides.${index}`)}
+      ${type.list ? listEditor(slide, index, type.list) : ""}
+      ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
+  }
+  function examplesEditor(open) {
     const e = C.selected(deck);
+    return `<details data-open-key="examples" ${open ? "open" : ""}><summary><span>דוגמאות לקהלים</span><small>הניסוי</small></summary>
+      <label class="field"><span class="field-head">הדוגמה לעריכה</span><select id="editor-example">${exampleOptions()}</select></label>
+      <button class="duplicate-button" id="duplicate" ${deck.examples.length >= C.LIMITS.examples ? "disabled" : ""}>${icon("copy")}שכפול לקהל אחר</button>
+      <p class="editor-note">שכפל דוגמה ושנה את התוכן. הפריסה נשארת קבועה. בין 2 ל־${C.LIMITS.steps} שלבים; על הבמה יופיעו רק שם הפעולה והתוצר.</p>
+      ${fieldsFor(e, { name: { max: 40, required: true }, task: { max: 110, required: true }, answer: { max: 180, required: true } }, "example")}
+      ${e.steps
+        .map(
+          (s, i) =>
+            `<section class="step-editor"><div class="step-editor-header"><span>שלב ${i + 1}</span><button class="icon-button" data-remove-step="${i}" aria-label="הסרת שלב ${i + 1}" ${e.steps.length <= 2 ? "disabled" : ""}>${icon("trash")}</button></div>${fieldsFor(s, { label: { max: 18, required: true }, detail: { max: 120, required: true }, artifact: { max: 40, required: true } }, `steps.${i}`)}</section>`,
+        )
+        .join("")}
+      <button class="duplicate-button" id="add-step" ${e.steps.length >= C.LIMITS.steps ? "disabled" : ""}>${icon("plus")}הוספת שלב</button></details>`;
+  }
+  function renderEditor() {
+    const previouslyOpen = $$("#editor-fields details[open]").map(
+      (d) => d.dataset.openKey,
+    );
+    const open = previouslyOpen.length
+      ? new Set(previouslyOpen)
+      : new Set([deck.slides[state.slide].id]);
     $("#editor-fields").innerHTML =
-      `<details><summary>שקף הפתיחה</summary>${field("כותרת", "intro.title", deck.intro.title, 40)}${field("שורת הדגשה", "intro.accent", deck.intro.accent, 40)}${field("משפט פתיחה", "intro.subtitle", deck.intro.subtitle, 100, true)}</details>
-      <details><summary>כותרת הניסוי</summary>${field("הכותרת במצב צ׳אטבוט", "experiment.title", deck.experiment.title, 40)}${field("הערת מעבר למרצה — לא מוקרנת", "experiment.subtitle", deck.experiment.subtitle, 100, true)}</details>
-      <details open><summary>דוגמאות לקהלים</summary><label class="field"><span class="field-head">הדוגמה לעריכה</span><select id="editor-example">${exampleOptions()}</select></label><button class="duplicate-button" id="duplicate" ${deck.examples.length >= 20 ? "disabled" : ""}>${icon("copy")}שכפול לקהל אחר</button><p class="editor-note">שכפל דוגמה ושנה את התוכן. הפריסה נשארת קבועה.</p>${field("שם הדוגמה / הקהל", "example.name", e.name, 40)}${field("המטרה", "example.task", e.task, 110, true)}${field("תשובת הצ׳אטבוט", "example.answer", e.answer, 180, true)}</details>
-      <details open><summary>מסלול הסוכן</summary><p class="editor-note">בין 2 ל־6 שלבים. על הבמה יופיעו רק שם הפעולה והתוצר. ההסבר המפורט נשאר כאן.</p>${e.steps.map((s, i) => `<section class="step-editor"><div class="step-editor-header"><span>שלב ${i + 1}</span><button class="icon-button" data-remove-step="${i}" aria-label="הסרת שלב ${i + 1}" ${e.steps.length <= 2 ? "disabled" : ""}>${icon("trash")}</button></div>${field("שם השלב", `steps.${i}.label`, s.label, 18)}${field("הערת מרצה — לא מוקרנת", `steps.${i}.detail`, s.detail, 120, true)}${field("שם התוצר", `steps.${i}.artifact`, s.artifact, 40)}</section>`).join("")}<button class="duplicate-button" id="add-step" ${e.steps.length >= 6 ? "disabled" : ""}>${icon("plus")}הוספת שלב</button></details>`;
+      deck.slides
+        .map((slide, i) => slideEditor(slide, i, open.has(slide.id)))
+        .join("") +
+      `<div class="slide-add"><label class="field"><span class="field-head"><span>שקף חדש</span></span><select id="new-slide-type">${Object.entries(
+        C.SLIDE_TYPES,
+      )
+        .map(([key, t]) => `<option value="${key}">${esc(t.label)}</option>`)
+        .join("")}</select></label><button class="duplicate-button" id="add-slide" ${deck.slides.length >= C.LIMITS.slides ? "disabled" : ""}>${icon("plus")}הוספה בסוף המצגת</button></div>` +
+      examplesEditor(open.has("examples"));
+  }
+  function setPath(path, value) {
+    const p = path.split(".");
+    if (p[0] === "slides") {
+      const slide = deck.slides[+p[1]];
+      if (p.length === 3) slide[p[2]] = value;
+      else slide[p[2]][+p[3]][p[4]] = value;
+    } else if (p[0] === "example") C.selected(deck)[p[1]] = value;
+    else if (p[0] === "steps") C.selected(deck).steps[+p[1]][p[2]] = value;
   }
   function updateField(input) {
     input.closest(".field").querySelector("small").textContent =
       `${input.value.length} / ${input.maxLength}`;
-    if (!input.value.trim()) {
+    if (input.required && !input.value.trim()) {
       input.setCustomValidity("יש למלא טקסט קצר.");
       $("#save-status").textContent = "השדה הריק עדיין לא נשמר.";
       return;
     }
     input.setCustomValidity("");
     const path = input.dataset.field.split(".");
-    if (path[0] === "example") C.selected(deck)[path[1]] = input.value;
-    else if (path[0] === "steps")
-      C.selected(deck).steps[+path[1]][path[2]] = input.value;
-    else deck[path[0]][path[1]] = input.value;
+    setPath(input.dataset.field, input.value);
     save();
     render();
-    if (input.dataset.field === "example.name") {
+    if (path[0] === "slides" && path[2] === "title") {
+      const label = $(
+        `[data-open-key="${CSS.escape(deck.slides[+path[1]].id)}"] .slide-editor-name`,
+      );
+      if (label)
+        label.textContent = `${+path[1] + 1}. ${slideName(deck.slides[+path[1]])}`;
+    } else if (input.dataset.field === "example.name") {
       const option = $$("#editor-example option").find(
         (o) => o.value === deck.selectedExampleId,
       );
       if (option) option.textContent = input.value;
     }
+  }
+  function afterStructureChange() {
+    state = C.goTo(deck, Math.min(state.slide, deck.slides.length - 1));
+    renderedDots = "";
+    save();
+    render();
+    renderEditor();
   }
   function download(text, filename, type) {
     const url = URL.createObjectURL(new Blob([text], { type }));
@@ -1431,6 +1896,7 @@ kbd {
       const candidate = C.validate(JSON.parse(await file.text()));
       deck = candidate;
       state = C.initialState();
+      renderedDots = "";
       save();
       render();
       renderEditor();
@@ -1457,19 +1923,21 @@ kbd {
   }
   $("#slide-root").addEventListener("click", (event) => {
     const b = event.target.closest("[data-action]");
-    if (b) act(b.dataset.action);
+    if (!b) return;
+    if (b.dataset.action === "copy-prompt") copyPrompt(deck.slides[state.slide]);
+    else act(b.dataset.action);
   });
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
       changeExample(event.target.value);
   });
-  $$(".slide-dots button").forEach((b) =>
-    b.addEventListener("click", () => {
-      state = { slide: +b.dataset.slide, mode: "chat", step: -1 };
-      render();
-      wake();
-    }),
-  );
+  $("#slide-dots").addEventListener("click", (event) => {
+    const b = event.target.closest("button");
+    if (!b) return;
+    state = C.goTo(deck, +b.dataset.slide);
+    render();
+    wake();
+  });
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
   $("#edit").addEventListener("click", () => openDialog("editor"));
@@ -1519,33 +1987,64 @@ kbd {
   });
   $("#editor-fields").addEventListener("click", (event) => {
     const button = event.target.closest("button");
-    if (!button || !validEditor()) return;
-    const e = C.selected(deck);
-    if (button.id === "duplicate" && deck.examples.length < 20) {
-      const copy = C.clone(e);
-      copy.id = `example-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      copy.name = `${e.name.slice(0, 29)} — עותק`;
+    if (!button || button.tagName !== "BUTTON" || !validEditor()) return;
+    const data = button.dataset;
+    if (data.move) {
+      const [index, direction] = data.move.split(":").map(Number);
+      const target = index + direction;
+      if (target < 0 || target >= deck.slides.length) return;
+      const [moved] = deck.slides.splice(index, 1);
+      deck.slides.splice(target, 0, moved);
+      state = C.goTo(deck, target);
+      afterStructureChange();
+    } else if (data.removeSlide !== undefined) {
+      if (deck.slides.length <= 1) return;
+      deck.slides.splice(+data.removeSlide, 1);
+      afterStructureChange();
+    } else if (button.id === "add-slide") {
+      if (deck.slides.length >= C.LIMITS.slides) return;
+      deck.slides.push(C.blankSlide($("#new-slide-type").value));
+      state = C.goTo(deck, deck.slides.length - 1);
+      afterStructureChange();
+    } else if (data.addItem !== undefined) {
+      const slide = deck.slides[+data.addItem];
+      const list = C.SLIDE_TYPES[slide.type].list;
+      if (slide[list.key].length >= list.max) return;
+      slide[list.key].push(C.blankItem(slide.type));
+      afterStructureChange();
+    } else if (data.removeItem !== undefined) {
+      const [index, position] = data.removeItem.split(":").map(Number);
+      const slide = deck.slides[index];
+      const list = C.SLIDE_TYPES[slide.type].list;
+      if (slide[list.key].length <= list.min) return;
+      slide[list.key].splice(position, 1);
+      afterStructureChange();
+    } else if (button.id === "duplicate") {
+      if (deck.examples.length >= C.LIMITS.examples) return;
+      const copy = C.clone(C.selected(deck));
+      copy.id = C.newId("example");
+      copy.name = `${copy.name.slice(0, 29)} — עותק`;
       deck.examples.push(copy);
       changeExample(copy.id);
       renderEditor();
       const name = $('[data-field="example.name"]');
       name.focus();
       name.select();
-      return;
-    }
-    if (button.id === "add-step" && e.steps.length < 6)
+    } else if (button.id === "add-step") {
+      const e = C.selected(deck);
+      if (e.steps.length >= C.LIMITS.steps) return;
       e.steps.push({
         label: "שלב חדש",
         detail: "כאן מתארים בקצרה את הפעולה הבאה.",
         artifact: "תוצר חדש",
       });
-    else if (button.hasAttribute("data-remove-step") && e.steps.length > 2)
-      e.steps.splice(+button.dataset.removeStep, 1);
-    else return;
-    state = { ...state, mode: "chat", step: -1 };
-    save();
-    render();
-    renderEditor();
+      afterStructureChange();
+    } else if (data.removeStep !== undefined) {
+      const e = C.selected(deck);
+      if (e.steps.length <= 2) return;
+      e.steps.splice(+data.removeStep, 1);
+      afterStructureChange();
+    }
   });
   $("#export-html").addEventListener("click", exportHTML);
   $("#export-json").addEventListener("click", () => {
