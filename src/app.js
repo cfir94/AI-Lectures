@@ -30,6 +30,8 @@
     pendingOpenId = null,
     pendingPicturePath = null,
     selectedObjectId = null,
+    editing = false,
+    jumpOpen = false,
     editingObjectTextId = null,
     editingSlideText = null,
     activeObjectPointer = null,
@@ -66,6 +68,9 @@
     note: '<path d="M5 3h14v18l-4-3-3 3-3-3-4 3Z"/><path d="M9 8h6m-6 4h4"/>',
     image:
       '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    shape: '<rect x="3" y="3" width="9" height="9" rx="1.5"/><circle cx="16.5" cy="16.5" r="4.5"/>',
+    text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
   };
   const icon = (name) =>
@@ -161,7 +166,7 @@
       selected &&
       editingObjectTextId === object.id &&
       object.type === "text" &&
-      $("#editor")?.open;
+      editing;
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
@@ -196,7 +201,7 @@
   function renderObjectToolbar() {
     const toolbar = $("#object-toolbar");
     const object = currentObject();
-    if (!$("#editor").open || !object) {
+    if (!editing || !object) {
       toolbar.hidden = true;
       toolbar.innerHTML = "";
       return;
@@ -484,6 +489,28 @@
     }
     return `${place}: ${slideName(slide)}`;
   }
+  function renderJumpList() {
+    const list = $("#slide-jump");
+    if (!jumpOpen) {
+      list.hidden = true;
+      $("#position").setAttribute("aria-expanded", "false");
+      return;
+    }
+    list.innerHTML = deck.slides
+      .map(
+        (slide, i) =>
+          `<button role="option" aria-selected="${i === state.slide}" data-jump="${i}"><span class="jump-number" dir="ltr">${String(i + 1).padStart(2, "0")}</span><span class="jump-name">${esc(slideName(slide))}</span><small>${esc(C.SLIDE_TYPES[slide.type].label)}</small></button>`,
+      )
+      .join("");
+    list.hidden = false;
+    $("#position").setAttribute("aria-expanded", "true");
+    list.querySelector(`[data-jump="${state.slide}"]`)?.scrollIntoView({ block: "nearest" });
+  }
+  function setJumpOpen(open) {
+    jumpOpen = open;
+    renderJumpList();
+    if (open) wake();
+  }
   function renderDots() {
     const key = deck.slides.map((s) => s.id).join("|");
     if (key !== renderedDots) {
@@ -605,6 +632,8 @@
     const pad = (n) => String(n).padStart(2, "0");
     $("#position").textContent = `${pad(state.slide + 1)} / ${pad(deck.slides.length)}`;
     renderDots();
+    renderStageTools();
+    renderJumpList();
     $("#prev").disabled = state.slide === 0 && state.step === 0;
     $("#next").disabled =
       state.slide === deck.slides.length - 1 &&
@@ -710,17 +739,40 @@
       if (!$("dialog[open]")) document.body.classList.add("controls-idle");
     }, 4500);
   }
-  function setStageEditing(active) {
-    document.body.classList.toggle("editor-stage-mode", active);
-    $("#editor-stage-toggle").textContent = active ? "חזרה לעורך" : "עריכת במה";
-    $("#editor-stage-toggle").setAttribute("aria-pressed", String(active));
+  function renderStageTools() {
+    const tools = $("#stage-tools");
+    if (!editing) {
+      tools.hidden = true;
+      tools.innerHTML = "";
+      return;
+    }
+    const slide = deck.slides[state.slide];
+    const full = slide.objects.length >= C.LIMITS.objects;
+    const add = Object.entries(C.OBJECT_TYPES)
+      .map(
+        ([type, name]) =>
+          `<button data-stage-add="${type}" ${full ? "disabled" : ""}>${icon(type)}${esc(name)}</button>`,
+      )
+      .join("");
+    tools.innerHTML = `<span class="stage-tools-label">${esc(slideName(slide))}</span><span class="stage-tools-divider"></span>${add}<span class="stage-tools-divider"></span><label class="stage-motion"><span>מראה הטקסט</span><select data-stage-field="textStyle">${optionMarkup(C.TEXT_STYLES, slide.textStyle)}</select></label><button data-stage-open-deck>${icon("note")}כל השקפים</button><button data-stage-done>${icon("check")}סיום עריכה</button>`;
+    tools.hidden = false;
+  }
+  function setEditing(active) {
+    editing = active;
+    document.body.classList.toggle("editing", active);
+    $("#edit").setAttribute("aria-pressed", String(active));
+    if (!active) {
+      selectedObjectId = null;
+      editingObjectTextId = null;
+      finishSlideTextEditing({ rerender: false });
+    }
+    render();
+    wake();
   }
   function openDialog(id) {
     wake();
     if (id === "editor") {
       renderEditor();
-      document.body.classList.add("editing");
-      setStageEditing(false);
       $(`#${id}`).show();
     } else $(`#${id}`).showModal();
   }
@@ -737,12 +789,7 @@
   function closeDialog(dialog) {
     if (dialog.id === "editor" && !validEditor()) return;
     dialog.close();
-    if (dialog.id === "editor") {
-      document.body.classList.remove("editing");
-      setStageEditing(false);
-      editingObjectTextId = null;
-      render();
-    }
+    if (dialog.id === "editor") render();
     wake();
   }
   const FIELD_LABELS = {
@@ -1114,6 +1161,32 @@
       if (option) option.textContent = input.value;
     }
   }
+  function addObject(slideIndex, type, at) {
+    const slide = deck.slides[slideIndex];
+    if (!slide || slide.objects.length >= C.LIMITS.objects) return null;
+    const added = C.blankObject(type);
+    const rootStyle = getComputedStyle(document.documentElement);
+    if (type === "text")
+      added.color = rootStyle.getPropertyValue("--text").trim();
+    else if (type === "shape") {
+      added.color = rootStyle.getPropertyValue("--accent").trim();
+      added.stroke = rootStyle.getPropertyValue("--text").trim();
+    }
+    if (at) {
+      added.x = neat(clamp(at.x - Number(added.width) / 2, 0, 100 - Number(added.width)));
+      added.y = neat(clamp(at.y - Number(added.height) / 2, 0, 100 - Number(added.height)));
+    } else {
+      // Landing every object on the same spot hides each one under the last.
+      const offset = (slide.objects.length % 6) * 4;
+      added.x = neat(Math.min(Number(added.x) + offset, 100 - Number(added.width)));
+      added.y = neat(Math.min(Number(added.y) + offset, 100 - Number(added.height)));
+    }
+    slide.objects.push(added);
+    selectedObjectId = added.id;
+    state = C.goTo(deck, slideIndex);
+    afterStructureChange();
+    return added;
+  }
   function afterStructureChange() {
     state = C.goTo(deck, Math.min(state.slide, deck.slides.length - 1));
     renderedDots = "";
@@ -1277,7 +1350,7 @@
     el.style.height = `${object.height}%`;
   }
   function startObjectPointer(event) {
-    if (!$("#editor").open || event.button !== 0) return;
+    if (!editing || event.button !== 0) return;
     if (
       editingObjectTextId &&
       !event.target.closest('[data-object-text-editor="true"]')
@@ -1480,7 +1553,7 @@
     });
   }
   $("#slide-root").addEventListener("dblclick", (event) => {
-    if (!$("#editor").open) return;
+    if (!editing) return;
     const text = event.target.closest(".object-text");
     if (text) {
       event.preventDefault();
@@ -1535,6 +1608,8 @@
       !event.target.closest("[data-slide-text-editing='true']")
     )
       finishSlideTextEditing();
+    if (jumpOpen && !event.target.closest("#slide-jump, #position"))
+      setJumpOpen(false);
   });
   $("#slide-root").addEventListener("focusout", (event) => {
     if (
@@ -1627,8 +1702,9 @@
     if (!object) return;
     let motionPreview = null;
     if (event.target.matches("[data-toolbar-colour]")) {
+      // The colourful style is built from this colour, so choosing one must
+      // never cancel it.
       object.color = event.target.value;
-      if (object.type === "text") object.style = "solid";
     } else if (
       event.target.matches("[data-toolbar-text-style]") &&
       object.type === "text"
@@ -1657,7 +1733,60 @@
   });
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
-  $("#edit").addEventListener("click", () => openDialog("editor"));
+  $("#edit").addEventListener("click", () => setEditing(!editing));
+  $("#position").addEventListener("click", () => setJumpOpen(!jumpOpen));
+  $("#slide-jump").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-jump]");
+    if (!button) return;
+    state = C.goTo(deck, +button.dataset.jump);
+    setJumpOpen(false);
+    render();
+    wake();
+  });
+  const droppedImage = (transfer) =>
+    [...(transfer?.files ?? [])].find((file) => file.type.startsWith("image/"));
+  $("#stage").addEventListener("dragover", (event) => {
+    if (!editing || ![...event.dataTransfer.types].includes("Files")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    $("#stage").classList.add("drop-active");
+  });
+  $("#stage").addEventListener("dragleave", (event) => {
+    if (!event.relatedTarget?.closest?.("#stage"))
+      $("#stage").classList.remove("drop-active");
+  });
+  $("#stage").addEventListener("drop", async (event) => {
+    $("#stage").classList.remove("drop-active");
+    if (!editing) return;
+    const file = droppedImage(event.dataTransfer);
+    if (!file) return;
+    event.preventDefault();
+    const rect = $("#stage").getBoundingClientRect();
+    const slideIndex = state.slide;
+    const added = addObject(slideIndex, "image", {
+      x: ((event.clientX - rect.left) / rect.width) * 100,
+      y: ((event.clientY - rect.top) / rect.height) * 100,
+    });
+    if (!added) return;
+    const index = deck.slides[slideIndex].objects.indexOf(added);
+    await loadPicture(file, `slides.${slideIndex}.objects.${index}.picture`);
+  });
+  $("#stage-tools").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    if (button.dataset.stageAdd) addObject(state.slide, button.dataset.stageAdd);
+    else if (button.hasAttribute("data-stage-open-deck")) openDialog("editor");
+    else if (button.hasAttribute("data-stage-done")) setEditing(false);
+  });
+  $("#stage-tools").addEventListener("change", (event) => {
+    const field = event.target.dataset.stageField;
+    if (!field) return;
+    deck.slides[state.slide][field] = event.target.value;
+    renderedSlide = -1;
+    save();
+    render();
+    renderEditor();
+  });
   $("#appearance").addEventListener("click", () => openDialog("themes"));
   $("#help").addEventListener("click", () => openDialog("shortcuts"));
   $("#fullscreen").addEventListener("click", fullscreen);
@@ -1750,23 +1879,7 @@
       renderEditor();
     } else if (data.addObject) {
       const [slideIndex, type] = data.addObject.split(":");
-      const slide = deck.slides[+slideIndex];
-      if (slide.objects.length >= C.LIMITS.objects) return;
-      const added = C.blankObject(type);
-      const rootStyle = getComputedStyle(document.documentElement);
-      if (type === "text")
-        added.color = rootStyle.getPropertyValue("--text").trim();
-      else if (type === "shape") {
-        added.color = rootStyle.getPropertyValue("--accent").trim();
-        added.stroke = rootStyle.getPropertyValue("--text").trim();
-      }
-      const offset = (slide.objects.length % 6) * 4;
-      added.x = String(Math.min(Number(added.x) + offset, 100 - Number(added.width)));
-      added.y = String(Math.min(Number(added.y) + offset, 100 - Number(added.height)));
-      slide.objects.push(added);
-      selectedObjectId = added.id;
-      state = C.goTo(deck, +slideIndex);
-      afterStructureChange();
+      addObject(+slideIndex, type);
     } else if (data.removeObject) {
       const [slideIndex, id] = data.removeObject.split(":");
       const slide = deck.slides[+slideIndex];
@@ -1906,10 +2019,6 @@
     }
   });
   $("#export-html").addEventListener("click", exportHTML);
-  $("#editor-stage-toggle").addEventListener("click", () => {
-    if (!validEditor()) return;
-    setStageEditing(!document.body.classList.contains("editor-stage-mode"));
-  });
   $("#export-json").addEventListener("click", () => {
     if (validEditor())
       download(
@@ -1952,13 +2061,18 @@
   document.addEventListener("keydown", (e) => {
     const openDialogs = $$("dialog[open]");
     const openDialog = openDialogs.at(-1);
+    if (e.key === "Escape" && jumpOpen) {
+      e.preventDefault();
+      setJumpOpen(false);
+      return;
+    }
     if (e.key === "Escape" && openDialog) {
       e.preventDefault();
       closeDialog(openDialog);
       return;
     }
     if (
-      $("#editor").open &&
+      editing &&
       !editingObjectTextId &&
       ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) &&
       !e.target.closest("input,textarea,select,[contenteditable=\"true\"]") &&
