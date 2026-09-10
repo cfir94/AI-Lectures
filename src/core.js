@@ -7,8 +7,38 @@
   const newId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
+  const choice = (options) => ({ choice: options });
   const selected = (deck) =>
     deck.examples.find((e) => e.id === deck.selectedExampleId);
+
+  /* Look and feel the presenter picks per slide. Names are Hebrew because they
+     are shown in the editor; the keys are what CSS hooks onto. */
+  const MOTIONS = {
+    rise: "עלייה רכה",
+    blur: "התבהרות",
+    wipe: "חשיפה",
+    cascade: "מילה אחרי מילה",
+    zoom: "התקרבות",
+    still: "בלי תנועה",
+  };
+  const BACKDROPS = {
+    arcs: "קשתות אור",
+    grid: "רשת",
+    particles: "חלקיקים",
+    aurora: "זוהר",
+    rings: "טבעות",
+    plain: "רקע נקי",
+  };
+  const TRANSITIONS = {
+    fade: "הצלבה",
+    push: "החלקה",
+    zoom: "זום",
+    cut: "חיתוך",
+  };
+  const COMMON_FIELDS = {
+    motion: choice(MOTIONS),
+    backdrop: choice(BACKDROPS),
+  };
 
   /* Every slide type declares its fields once: validation, the editor and the
      beat count for the presenter's arrow keys all read this table. */
@@ -60,6 +90,30 @@
       },
       beats: () => 2,
     },
+    number: {
+      label: "מספר ענק",
+      hint: "מספר אחד שממלא את הבמה ומטפס אליו. טוב לנתון שרוצים שיישאר בראש.",
+      fields: {
+        value: text(9),
+        unit: text(20, false),
+        title: text(40, false),
+        caption: text(150, false),
+      },
+      beats: () => 1,
+    },
+    split: {
+      label: "שניים זה מול זה",
+      hint: "שני צדדים על אותה במה. כל צעד מדליק צד אחד, והקודם נשאר עמום לצידו.",
+      fields: { title: text(40, false) },
+      list: {
+        key: "sides",
+        label: "צד",
+        min: 2,
+        max: 3,
+        fields: { heading: text(20), line: text(120, false) },
+      },
+      beats: (slide) => slide.sides.length,
+    },
     experiment: {
       label: "צ׳אטבוט מול סוכן",
       hint: "הניסוי האינטראקטיבי. המשימה, התשובה והשלבים נערכים במקטע הדוגמאות.",
@@ -67,6 +121,8 @@
       beats: (slide, deck) => 1 + selected(deck).steps.length,
     },
   };
+  for (const type of Object.values(SLIDE_TYPES))
+    type.fields = { ...type.fields, ...COMMON_FIELDS };
   const BLANKS = {
     statement: { title: "משפט חדש.", accent: "", caption: "" },
     demo: { title: "הדגמה חדשה.", tool: "הכלי", caption: "", prompt: "" },
@@ -83,12 +139,22 @@
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
+    number: { value: "100", unit: "", title: "", caption: "" },
+    split: {
+      title: "",
+      sides: [
+        { heading: "צד אחד", line: "" },
+        { heading: "צד שני", line: "" },
+      ],
+    },
     experiment: { title: "הנה הצעה." },
   };
   const blankSlide = (type) => ({
     id: newId("slide"),
     type,
     ...clone(BLANKS[type]),
+    motion: "rise",
+    backdrop: "arcs",
     note: "",
   });
   const blankItem = (type) =>
@@ -107,6 +173,12 @@
     };
     const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
     const str = (v, spec) => {
+      if (spec.choice) {
+        // An absent preset falls back to the default; a wrong one is a bad file.
+        if (v === undefined) return Object.keys(spec.choice)[0];
+        if (typeof v !== "string" || !(v in spec.choice)) fail();
+        return v;
+      }
       const value = spec.required ? v : (v ?? "");
       if (typeof value !== "string" || value.length > spec.max) fail();
       if (spec.required && !value.trim()) fail();
@@ -132,6 +204,7 @@
       version: 2,
       documentId: str(raw.documentId, text(100)),
       theme: raw.theme,
+      transition: str(raw.transition, choice(TRANSITIONS)),
       selectedExampleId: str(raw.selectedExampleId, text(100)),
       slides: raw.slides.map((s) => {
         if (!obj(s)) fail();
@@ -239,6 +312,9 @@
     THEMES,
     LIMITS,
     SLIDE_TYPES,
+    MOTIONS,
+    BACKDROPS,
+    TRANSITIONS,
     clone,
     newId,
     blankSlide,

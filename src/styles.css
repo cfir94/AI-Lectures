@@ -139,12 +139,14 @@ p {
 .stage:focus {
   outline: none;
 }
-#slide-root,
+#slide-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 .slide {
   width: 100%;
   height: 100%;
-}
-.slide {
   position: relative;
   isolation: isolate;
 }
@@ -174,9 +176,6 @@ h1 span {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
-.statement-scene h1 {
-  animation: thought-in 1.1s cubic-bezier(0.22, 0.7, 0.3, 1) both;
-}
 .scene-caption {
   font-size: clamp(1.1rem, 2cqw, 1.8rem);
   line-height: 1.6;
@@ -185,9 +184,6 @@ h1 span {
   max-width: 28em;
   margin-top: 2cqw;
   text-wrap: balance;
-}
-.statement-scene .scene-caption {
-  animation: thought-in 0.9s 0.35s both;
 }
 .scene-context {
   position: absolute;
@@ -201,7 +197,12 @@ h1 span {
 }
 .scene-message {
   max-width: 100%;
+}
+.scene-message > * {
   animation: thought-in 0.85s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+.scene-message > p {
+  animation-delay: 0.1s;
 }
 .scene-word {
   font-size: clamp(2.5rem, var(--scene-size, 13cqw), 12rem);
@@ -229,9 +230,6 @@ h1 span {
   padding: 6px 15px;
   border: 1px solid var(--line);
   border-radius: 999px;
-}
-.demo-slide h1 {
-  animation: thought-in 0.9s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
 .scene-eyebrow {
   font-size: clamp(0.8rem, 1.5cqw, 1.15rem);
@@ -277,7 +275,6 @@ h1 span {
   font-weight: 350;
   letter-spacing: -0.03em;
   line-height: 1.4;
-  animation: thought-in 0.8s both;
 }
 .token-chunks {
   display: flex;
@@ -301,12 +298,6 @@ h1 span {
 }
 .tokens-scene .scene-caption {
   margin-top: 3.2cqw;
-}
-.no-motion .reveal-list li[data-state="now"],
-.no-motion .token,
-.no-motion .token-sentence,
-.no-motion .demo-slide h1 {
-  animation: none;
 }
 .simulation-note {
   position: absolute;
@@ -371,13 +362,334 @@ h1 span {
 .complete-scene .atmosphere {
   opacity: 1;
 }
-.no-entry .statement-scene h1,
-.no-entry .statement-scene .scene-caption {
-  animation: none;
-}
-.no-motion .scene-message,
+.no-motion .scene *,
 .no-motion .light-arc {
-  animation: none;
+  animation: none !important;
+}
+/* Entrance presets. The motion class is stripped on a beat-only re-render,
+   so these run when a slide arrives, not every time a step advances. */
+.scene > * {
+  --step: 0;
+}
+.scene > *:nth-child(2) {
+  --step: 1;
+}
+.scene > *:nth-child(3) {
+  --step: 2;
+}
+.scene > *:nth-child(4) {
+  --step: 3;
+}
+[class*="motion-"] .scene > * {
+  animation-duration: 0.85s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
+  animation-delay: calc(var(--step) * 0.11s);
+}
+.motion-rise .scene > * {
+  animation-name: m-rise;
+}
+.motion-blur .scene > * {
+  animation-name: m-blur;
+}
+.motion-wipe .scene > * {
+  animation-name: m-wipe;
+}
+.motion-zoom .scene > * {
+  animation-name: m-zoom;
+}
+.motion-cascade .scene > * {
+  animation-name: m-fade;
+}
+.motion-still .scene > * {
+  animation-name: none;
+}
+.cascade-word {
+  display: inline-block;
+  animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--w) * 0.09s + 0.12s);
+}
+@keyframes m-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+@keyframes m-blur {
+  from {
+    opacity: 0;
+    filter: blur(15px);
+    transform: scale(1.03);
+  }
+}
+@keyframes m-wipe {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(12px);
+  }
+  to {
+    clip-path: inset(0 0 -20% 0);
+  }
+}
+@keyframes m-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Slide-to-slide transitions. --dir is 1 forward, -1 back. */
+.slide.leaving {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+[data-transition="fade"] .slide.leaving {
+  animation: t-fade-out 0.45s both;
+}
+[data-transition="fade"] .slide.entering {
+  animation: t-fade-in 0.45s both;
+}
+[data-transition="push"] .slide.leaving {
+  animation: t-push-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="push"] .slide.entering {
+  animation: t-push-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="zoom"] .slide.leaving {
+  animation: t-zoom-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-transition="zoom"] .slide.entering {
+  animation: t-zoom-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes t-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes t-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes t-push-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 9%));
+  }
+}
+@keyframes t-push-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * -9%));
+  }
+}
+@keyframes t-zoom-out {
+  to {
+    opacity: 0;
+    transform: scale(1.09);
+  }
+}
+@keyframes t-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93);
+  }
+}
+
+/* Backdrops. Every ambient loop stays small enough that restarting it on a
+   re-render is invisible. */
+.grid-plane {
+  position: absolute;
+  inset: -6%;
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(var(--accent-rgb), 0.22) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(var(--accent-rgb), 0.22) 1px,
+      transparent 1px
+    );
+  background-size: 6.5% 11%;
+  mask-image: radial-gradient(
+    ellipse 56% 50% at 50% 50%,
+    transparent 28%,
+    #000 96%
+  );
+  animation: grid-drift 24s linear infinite;
+}
+@keyframes grid-drift {
+  to {
+    background-position:
+      6.5% 11%,
+      6.5% 11%;
+  }
+}
+.backdrop-particles i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4);
+  animation: particle-float var(--drift) ease-in-out var(--delay) infinite
+    alternate;
+}
+@keyframes particle-float {
+  from {
+    opacity: 0.3;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.95;
+    transform: translate3d(6px, -9px, 0);
+  }
+}
+.aurora-blob {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.32;
+  background: radial-gradient(
+    circle,
+    rgba(var(--accent-rgb), 0.9),
+    transparent 68%
+  );
+  animation: aurora-drift 20s ease-in-out infinite alternate;
+  animation-delay: calc(var(--blob) * -7s);
+}
+.aurora-blob:nth-child(1) {
+  inset-inline-start: -14%;
+  top: -20%;
+}
+.aurora-blob:nth-child(2) {
+  inset-inline-end: -18%;
+  bottom: -24%;
+}
+.aurora-blob:nth-child(3) {
+  inset-inline-start: 32%;
+  top: 28%;
+  width: 44%;
+  opacity: 0.16;
+}
+@keyframes aurora-drift {
+  to {
+    transform: translate(4%, -3%) scale(1.14);
+  }
+}
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(34% + var(--ring) * 25%);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 50%;
+  animation: ring-pulse 7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--ring) * -1.7s);
+}
+@keyframes ring-pulse {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* One number, filling the stage. */
+.big-number {
+  display: flex;
+  align-items: baseline;
+  gap: 0.16em;
+  font-size: clamp(4rem, var(--number-size, 26cqw), 20rem);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.big-number span {
+  unicode-bidi: isolate;
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+.big-number em {
+  font-size: 0.2em;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  -webkit-text-fill-color: var(--muted);
+}
+.number-scene .scene-caption {
+  margin-top: 2.6cqw;
+}
+
+/* Two sides of the same stage. */
+.split-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--sides, 2), 1fr);
+}
+.split-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6cqw;
+  padding: 0 3cqw;
+  border-inline-start: 1px solid var(--line);
+  transition: opacity 0.5s;
+}
+.split-list li:first-child {
+  border-inline-start: 0;
+}
+.split-heading {
+  font-size: clamp(1.7rem, 6.2cqw, 5rem);
+  font-weight: 350;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  color: var(--text);
+}
+.split-line {
+  font-size: clamp(0.9rem, 1.7cqw, 1.5rem);
+  line-height: 1.55;
+  color: var(--muted);
+  text-wrap: balance;
+}
+.split-list li[data-state="past"] {
+  opacity: 0.38;
+}
+.split-list li[data-state="next"] {
+  opacity: 0.1;
+}
+.split-list li[data-state="now"] .split-heading {
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.split-list li[data-state="now"] {
+  animation: thought-in 0.6s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
 .scene-controls {
   position: absolute;
@@ -703,6 +1015,43 @@ summary small {
   border-bottom: 1px solid var(--line);
   padding: 18px 0;
 }
+.look-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+.look-row .field {
+  margin-top: 0;
+}
+.dialog-subhead {
+  font-size: 0.95rem;
+  font-weight: 550;
+  margin: 28px 0 0;
+}
+.small-dialog > .dialog-hint {
+  font-size: 0.82rem;
+  margin-top: 8px;
+}
+.transition-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.transition-options button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  padding: 11px 6px;
+  font-size: 0.8rem;
+}
+.transition-options button[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--soft);
+}
 .slide-add .field {
   margin-top: 0;
 }
@@ -1006,6 +1355,28 @@ kbd {
   }
   .token {
     font-size: clamp(1rem, 5vw, 1.8rem);
+  }
+  .split-list {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .split-list li {
+    border-inline-start: 0;
+    border-top: 1px solid var(--line);
+    padding: 26px 0 0;
+  }
+  .split-list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .split-heading {
+    font-size: clamp(1.8rem, 9vw, 3rem);
+  }
+  .big-number {
+    font-size: clamp(3.5rem, 30vw, 9rem);
+  }
+  .transition-options {
+    grid-template-columns: repeat(2, 1fr);
   }
   .demo-tool {
     margin-bottom: 22px;
