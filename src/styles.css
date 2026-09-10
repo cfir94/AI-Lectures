@@ -2659,7 +2659,18 @@ a.quiet-button:hover {
 .presenting .layers-panel {
   display: none !important;
 }
+/* The stage is normally sized around the toolbar strip below it. In presentation
+   mode that strip is gone, so reserving it left a band above and below the
+   slide that read as a frame. Here the deck takes the whole window, and what
+   is left over on a screen that is not 16:9 is black and even — a matte, not a
+   border. */
+.presenting .theater,
+.presenting .theater:fullscreen {
+  padding: 0;
+  background: #000;
+}
 .presenting .stage {
+  width: min(100vw, calc(100svh * 16 / 9));
   border-color: transparent;
 }
 .presenting.controls-idle {
