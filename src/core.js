@@ -455,6 +455,18 @@
   /* Every slide type declares its fields once: validation, the editor and the
      beat count for the presenter's arrow keys all read this table. */
   const SLIDE_TYPES = {
+    agent: {
+      label: "סוכן בפעולה",
+      hint: "המחשה מקומית בשליטת המרצה. מפעילים פעולה, רואים תוצאה ומתקדמים. בחירה ואישור דורשים לחיצה מפורשת. {בחירה} בתוצאה מציג את המועד שנבחר.",
+      fields: { title: text(40), caption: text(120, false) },
+      list: { key: "items", label: "פעולה", min: 2, max: 6,
+        valid: item => item.kind !== "choose" || Boolean(item.first && item.second), fields: {
+        word: text(30), caption: text(120, false), tool: text(24),
+        kind: choice({run: "הפעלת כלי", choose: "בחירה בין אפשרויות", approve: "עצירה לאישור"}),
+        action: text(30), result: text(120), first: text(30, false), second: text(30, false),
+      } },
+      beats: (slide) => slide.items.length,
+    },
     language: {
       label: "מעבדת מילים",
       hint: "ענן שנפתח בלחיצה או משפט להשלמה. האפשרויות מוגדרות כאן מראש; ההפעלה בהרצאה אינה משנה את התוכן השמור.",
@@ -538,6 +550,7 @@
       fields: {
         picture: picture(),
         fit: choice(FITS),
+        imageLayout: choice({overlay: "טקסט על התמונה", editorial: "צילום וכותרת נפרדים"}),
         title: text(40, false),
         caption: text(150, false),
         alt: text(120, false),
@@ -614,6 +627,10 @@
     type.objects = true;
   }
   const BLANKS = {
+    agent: { title: "תאמו פגישה", caption: "מטרה אחת. כלים. תוצאה.", items: [
+      {word: "בודק זמינות.", caption: "קורא את היומן שהרשיתם לו לקרוא.", tool: "יומן", kind: "run", action: "בדיקת זמינות", result: "נמצא מועד פנוי.", first: "", second: ""},
+      {word: "עוצר לאישור.", caption: "בודקים לפני שההזמנה יוצאת.", tool: "הזמנה", kind: "approve", action: "אישור ההזמנה", result: "ההזמנה אושרה בהמחשה.", first: "", second: ""},
+    ] },
     language: { title: "מה יכול לבוא עכשיו?", caption: "בחרו הקשר. פתחו אפשרויות.", mode: "cloud", items: [
       {word: "בוקר", prompt: "הבוקר שלי מתחיל עם", first: "קפה", second: "מוזיקה", third: "ריצה"},
       {word: "רעיון", prompt: "הרעיון הבא שלי הוא", first: "סיפור", second: "אפליקציה", third: "הרצאה"},
@@ -647,7 +664,7 @@
       caption: "",
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
-    image: { picture: "", fit: "cover", title: "", caption: "", alt: "", link: "" },
+    image: { picture: "", fit: "cover", imageLayout: "overlay", title: "", caption: "", alt: "", link: "" },
     number: { value: "100", unit: "", title: "", caption: "" },
     split: {
       title: "",
@@ -987,7 +1004,9 @@
             fail();
           slide[key] = items.map((item) => {
             if (!obj(item)) fail();
-            return group(item, fields);
+            const value = group(item, fields);
+            if (type.list.valid && !type.list.valid(value)) fail();
+            return value;
           });
         }
         if (type.objects) {

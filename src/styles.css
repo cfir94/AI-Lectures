@@ -2801,6 +2801,64 @@ h1 {
 .image-slide h1 {
   line-height: 1.16;
 }
+.image-slide.image-layout-editorial .image-frame {
+  inset: 5% 5% 24%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 1.2cqw;
+  background: #fff;
+  box-shadow: 0 1.2cqw 4cqw #1d164515;
+}
+.image-slide.image-layout-editorial .image-scene {
+  position: absolute;
+  height: auto;
+  min-height: 0;
+  inset: 79% 6% 7%;
+  padding: 0;
+  justify-content: center;
+}
+.image-slide.image-layout-editorial .image-text {
+  position: static;
+  width: 100%;
+  max-width: none;
+  text-align: right;
+  padding-inline-start: 1.6cqw;
+  border-inline-start: 0.22cqw solid var(--accent);
+}
+.image-slide.image-layout-editorial .image-text h1 {
+  font-size: 3.1cqw;
+  line-height: 1.2;
+}
+.image-slide.image-layout-editorial .image-text .scene-caption {
+  font-size: 1.45cqw;
+  margin-top: .5cqw;
+}
+/* The agent presents a single operation and its artifact. Controls perform a
+   local demonstration; nothing here opens a real calendar or sends a message. */
+.agent-scene { padding: 5% 8% 7%; align-items: stretch; justify-content: space-between; text-align: right; }
+.agent-brief { display: flex; align-items: baseline; justify-content: space-between; gap: 2cqw; }
+.agent-brief .scene-eyebrow { margin: 0; letter-spacing: 0; font-size: 1.8cqw; color: var(--text); }
+.agent-brief > p:last-child { font-size: 1.25cqw; color: var(--muted); }
+.agent-work { display: grid; grid-template-columns: 1.1fr 1fr; gap: 6cqw; align-items: center; }
+.agent-copy h1 { font-size: 6.2cqw; line-height: 1.15; letter-spacing: -.035em; }
+.agent-copy .scene-caption { font-size: 1.8cqw; margin-top: 1.6cqw; }
+.agent-tool { display: flex; align-items: center; gap: .6cqw; font-size: 1.15cqw; margin-bottom: 2cqw; color: var(--muted); }
+.agent-status-dot { width: .55cqw; height: .55cqw; border-radius: 50%; background: var(--accent); box-shadow: 0 0 1.4cqw var(--accent); }
+.agent-artifact { min-height: 20cqw; display: flex; flex-direction: column; justify-content: center; padding: 3cqw; border-radius: 1.8cqw; border: 1px solid var(--line); background: linear-gradient(145deg, #ffffffc9, #eeedf966); box-shadow: 0 2cqw 6cqw #3c357312; }
+.agent-sheet-lines { display: grid; gap: .8cqw; margin-bottom: 2cqw; width: 70%; }
+.agent-sheet-lines i { height: .4cqw; border-radius: 2px; background: var(--line); }
+.agent-sheet-lines i:nth-child(2) { width: 80%; }
+.agent-sheet-lines i:nth-child(3) { width: 55%; }
+.agent-await { color: var(--muted); font-size: 1.6cqw; }
+.agent-result { font-size: 2.3cqw; line-height: 1.6; color: var(--text); white-space: pre-line; }
+.agent-artifact.is-ready { border-color: var(--accent); }
+.agent-artifact.is-ready .agent-sheet-lines i { background: var(--accent); opacity: .35; }
+.agent-controls { display: flex; align-items: center; gap: 1cqw; min-height: 3.5cqw; }
+.agent-button { padding: .9cqw 2cqw; border: 1px solid var(--accent); border-radius: 4cqw; background: var(--text); color: var(--surface); font: inherit; font-size: 1.4cqw; cursor: pointer; }
+.agent-button:hover, .agent-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.agent-simulation { margin-inline-start: auto; color: var(--muted); font-size: 1cqw; }
+.image-layout-editorial .image-controls { bottom: 2%; left: 5%; }
+.image-layout-editorial .image-controls .quiet-button { font-size: 1cqw; padding: .35cqw .7cqw; }
 .image-placeholder {
   position: absolute;
   inset: 6cqw;
@@ -4548,4 +4606,31 @@ kbd {
   display: flex;
   justify-content: flex-start;
   margin: 6px 0 2px;
+}
+
+@media (max-width: 700px) {
+  .agent-scene { padding: 9% 7% 100px; gap: 24px; justify-content: center; }
+  .agent-brief { flex-direction: column; gap: 7px; }
+  .agent-brief .scene-eyebrow { font-size: 20px; }
+  .agent-brief > p:last-child { font-size: 13px; }
+  .agent-work { display: flex; flex-direction: column; gap: 25px; align-items: stretch; }
+  .agent-copy h1 { font-size: 38px; }
+  .agent-copy .scene-caption { font-size: 17px; margin-top: 10px; }
+  .agent-tool { font-size: 13px; margin-bottom: 12px; gap: 8px; }
+  .agent-status-dot { width: 6px; height: 6px; }
+  .agent-artifact { min-height: 145px; padding: 22px; border-radius: 20px; }
+  .agent-sheet-lines { gap: 7px; margin-bottom: 15px; }
+  .agent-sheet-lines i { height: 3px; }
+  .agent-await { font-size: 17px; }
+  .agent-result { font-size: 19px; }
+  .agent-controls { flex-wrap: wrap; gap: 12px; }
+  .agent-button { font-size: 15px; padding: 12px 18px; border-radius: 28px; }
+  .agent-simulation { flex-basis: 100%; margin-top: 7px; font-size: 11px; }
+  .image-slide.image-layout-editorial .image-frame { inset: 15% 4% 38%; }
+  .image-slide.image-layout-editorial .image-scene { inset: 66% 7% 18%; }
+  .image-slide.image-layout-editorial .image-text { padding-inline-start: 12px; border-inline-start-width: 2px; }
+  .image-slide.image-layout-editorial .image-text h1 { font-size: 27px; }
+  .image-slide.image-layout-editorial .image-text .scene-caption { font-size: 14px; margin-top: 8px; }
+  .image-layout-editorial .image-controls { bottom: 11%; }
+  .image-layout-editorial .image-controls .quiet-button { font-size: 12px; padding: 8px 12px; }
 }

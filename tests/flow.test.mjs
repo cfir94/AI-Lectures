@@ -5,12 +5,35 @@ import '../src/core.js';
 const C=globalThis.LectureCore;
 const deck=C.validate(JSON.parse(readFileSync(new URL('../src/content.json',import.meta.url),'utf8')));
 
-test('the 2030 flow preserves its missing article without projecting it',()=>{
+test('the supplied Meta article opens the article sequence',()=>{
   const article=deck.slides.findIndex(s=>s.id==='lecture-agents-work-article');
-  assert.equal(deck.slides[article].picture,'');
-  assert.equal(C.isShown(deck.slides[article]),false);
+  assert.ok(deck.slides[article].picture.startsWith('data:image/'));
+  assert.equal(C.isShown(deck.slides[article]),true);
+  assert.equal(deck.slides[article].imageLayout,'editorial');
   const forward=C.transition({slide:article-1,step:C.beats(deck,article-1)-1},'next',deck);
-  assert.equal(forward.slide,article+1);
+  assert.equal(forward.slide,article);
+  assert.equal(deck.slides[article+1].id,'lecture-nobel');
+});
+
+test('replacement ending preserves the three original slides as hidden',()=>{
+  for(const id of ['lecture-start-today','lecture-what-remains','lecture-revolution'])
+    assert.equal(C.isShown(deck.slides.find(s=>s.id===id)),false);
+  for(const id of ['lecture-finale-one-task','lecture-finale-responsibility','lecture-finale-future'])
+    assert.equal(C.isShown(deck.slides.find(s=>s.id===id)),true);
+});
+
+test('agent actions and article layout survive portable validation',()=>{
+  const agent=deck.slides.find(s=>s.type==='agent');
+  assert.equal(C.beats(deck,deck.slides.indexOf(agent)),5);
+  assert.equal(C.validate(C.clone(deck)).slides.find(s=>s.id===agent.id).items[1].second,'רביעי · 14:30');
+  const invalid=C.clone(deck);
+  invalid.slides.find(s=>s.type==='agent').items[0].kind='unsafe';
+  assert.throws(()=>C.validate(invalid));
+  const missingChoice=C.clone(deck);
+  missingChoice.slides.find(s=>s.type==='agent').items[1].first='';
+  assert.throws(()=>C.validate(missingChoice));
+  const image=C.blankSlide('image');
+  assert.equal(image.imageLayout,'overlay');
 });
 
 test('curtain and gathering presets survive portable serialization',()=>{

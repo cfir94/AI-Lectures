@@ -7,11 +7,13 @@
    This walks the built deck in a real browser and fails on that class.
 
    usage: node tools/stage-audit.mjs [path-to-dist/index.html] */
-import { chromium } from "/opt/node22/lib/node_modules/playwright/index.mjs";
+import { chromium, browserOptions } from "./browser-runtime.mjs";
+import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
 
 const target = process.argv[2] ?? "dist/index.html";
-const url = target.startsWith("http") ? target : `file://${process.cwd()}/${target}`;
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const url = target.startsWith("http") ? target : pathToFileURL(resolve(target)).href;
+const browser = await chromium.launch(browserOptions);
 const page = await browser.newPage({ viewport: { width: 1440, height: 810 } });
 const noise = [];
 page.on("pageerror", (e) => noise.push(`console: ${e}`));
@@ -84,8 +86,12 @@ for (let step = 0; step < 200; step++) {
     if (apart > 8)
       problems.push(`${report.name}: frame ${report.frame} does not match the slide ${report.bg}`);
   }
-  await page.keyboard.press("ArrowLeft");
-  await page.waitForTimeout(620);
+  // Interactive choices deliberately cannot be skipped by a navigation key.
+  if (await page.locator('#next:disabled').count()) break;
+  const agentControl = page.locator('.agent-controls [data-action="agent-choose"], .agent-controls [data-action="agent-run"], .agent-controls [data-action="agent-next"]');
+  if (await agentControl.count()) await agentControl.first().click();
+  else await page.keyboard.press("ArrowLeft");
+  await page.waitForTimeout(1250);
 }
 /* The stage was clean while the editor threw on every slide and rendered an
    empty panel — the presenter could present and could not edit, and nothing

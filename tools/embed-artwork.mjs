@@ -14,7 +14,7 @@
 
    usage: node tools/embed-artwork.mjs <jobs.json> [--dry] */
 import { readFile, writeFile } from "node:fs/promises";
-import { chromium } from "/opt/node22/lib/node_modules/playwright/index.mjs";
+import { chromium, browserOptions } from "./browser-runtime.mjs";
 
 const [jobsPath, ...flags] = process.argv.slice(2);
 if (!jobsPath) {
@@ -26,7 +26,7 @@ const jobs = JSON.parse(await readFile(jobsPath, "utf8"));
 const deckPath = new URL("../src/content.json", import.meta.url);
 const deck = JSON.parse(await readFile(deckPath, "utf8"));
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(browserOptions);
 const page = await browser.newPage();
 await page.setContent("<body></body>");
 

@@ -18,6 +18,7 @@
   const initialHTML = document.documentElement.outerHTML;
   const timers = new Map();
   const languageSessions = new Map();
+  const agentSessions = new Map();
   // A video only starts once the presenter asks for it.
   const playing = new Set();
   /* A file the presenter just picked can be played straight away from memory,
@@ -763,6 +764,7 @@
     "illustrated",
     "language",
     "experiment",
+    "agent",
   ]);
   const frame = (slide, index, classes, style, body) =>
     `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" data-pace="${slide.pace}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}--backdrop-strength:${Number(slide.backdropStrength) / 100};${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
@@ -941,7 +943,7 @@
     return frame(
       slide,
       index,
-      `image-slide fit-${slide.fit} ${overlay ? "has-text" : ""}`,
+      `image-slide fit-${slide.fit} image-layout-${slide.imageLayout} ${overlay ? "has-text" : ""}`,
       `--headline-size:${size}cqw`,
       `<figure class="image-frame">${media}</figure>${overlay}${open}`,
     );
@@ -1055,7 +1057,29 @@
       `<div class="scene experiment-scene"><p class="scene-context" data-example-text="task">${esc(e.task)}</p><div class="scene-message"><h2 class="scene-word" ${agent ? `data-example-text="steps.${step - 1}.label"` : 'data-slide-text="title"'}>${esc(heading)}</h2><p class="scene-caption" ${agent ? `data-example-text="steps.${step - 1}.artifact"` : 'data-example-text="answer"'}>${esc(agent ? current.artifact : e.answer)}</p></div></div><span class="simulation-note">המחשה</span><div class="scene-controls experiment-controls"><div class="mode-switch" role="group" aria-label="מצב ההדגמה"><button data-action="chat" aria-pressed="${!agent}">צ׳אטבוט</button><button data-action="agent" aria-pressed="${agent}">סוכן</button></div><select id="audience-select" aria-label="בחירת דוגמה">${exampleOptions()}</select><button class="quiet-button" data-action="${complete ? "reset" : "next"}">${complete ? "שוב" : agent ? "השלב הבא" : "נעבור לסוכן"}${icon(complete ? "replay" : "next")}</button><span class="step-counter" aria-label="התקדמות">${agent ? `${step} / ${e.steps.length}` : ""}</span></div>`,
     );
   }
+  function agentSession(slide) {
+    if (!agentSessions.has(slide.id))
+      agentSessions.set(slide.id, { completed: {}, choice: "" });
+    return agentSessions.get(slide.id);
+  }
+  function agentSlide(slide, index, step) {
+    const item = slide.items[step];
+    const session = agentSession(slide);
+    const done = Boolean(session.completed[step]);
+    const path = `items.${step}`;
+    const choice = session.choice || "המועד שתבחרו";
+    const result = item.result.replaceAll("{בחירה}", choice);
+    const action = (key, label, extra = "") => `<button class="agent-button" data-action="${key}" ${extra}>${label}</button>`;
+    const controls = done
+      ? action(step === slide.items.length - 1 ? "agent-reset" : "agent-next", step === slide.items.length - 1 ? "ננסה שוב" : "המשך") + (item.kind === "choose" ? '<button class="quiet-button" data-action="agent-change">בחירת מועד אחר</button>' : "")
+      : item.kind === "choose"
+        ? ["first", "second"].filter(key => item[key]).map(key => action("agent-choose", `<span data-slide-text="${path}.${key}">${esc(item[key])}</span>`, `data-key="${key}"`)).join("")
+        : action("agent-run", `<span data-slide-text="${path}.action">${esc(item.action)}</span>`);
+    return frame(slide, index, `agent-slide ${done ? "agent-done" : ""} agent-kind-${item.kind}`, "",
+      `<div class="scene agent-scene"><header class="agent-brief"><p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p><p data-slide-text="caption">${esc(slide.caption)}</p></header><div class="agent-work"><div class="agent-copy"><p class="agent-tool"><span class="agent-status-dot" aria-hidden="true"></span><span data-slide-text="${path}.tool">${esc(item.tool)}</span></p><h1 data-slide-text="${path}.word">${esc(item.word)}</h1><p class="scene-caption" data-slide-text="${path}.caption">${esc(item.caption)}</p></div><div class="agent-artifact ${done ? "is-ready" : ""}" role="status" aria-live="polite"><div class="agent-sheet-lines" aria-hidden="true"><i></i><i></i><i></i></div>${done ? `<p class="agent-result" data-slide-text="${path}.result">${esc(result)}</p>` : `<span class="agent-await">${item.kind === "approve" ? "ממתין לאישור שלכם" : item.kind === "choose" ? "אתם בוחרים את המועד" : "מוכן להפעלה"}</span>`}</div></div><div class="agent-controls">${controls}${!done && item.kind === "approve" ? '<button class="quiet-button" data-action="agent-revise">חזרה לטיוטה</button>' : ""}<span class="agent-simulation">המחשה · ללא חיבור לכלים אמיתיים</span></div></div>`);
+  }
   const SCENES = {
+    agent: agentSlide,
     language: languageSlide,
     illustrated: illustratedSlide,
     video: videoSlide,
@@ -1447,6 +1471,14 @@
       `המצגת גדולה מדי. כדי לשמור אותה בדפדפן ובקובץ נייד, הגודל המרבי הוא ${C.LIMITS.importBytes / 1000000}MB.`,
     );
   function act(action) {
+    const slide = deck.slides[state.slide];
+    if (slide.type === "agent" && action === "next" && !agentSession(slide).completed[state.step]) {
+      if (slide.items[state.step].kind === "run") {
+        agentSession(slide).completed[state.step] = true;
+        render();
+      } else $(".agent-controls .agent-button")?.focus();
+      return;
+    }
     if (action === "replay") {
       renderedSlide = -1;
       renderedSceneKey = null;
@@ -1711,6 +1743,10 @@
     wake();
   }
   const FIELD_LABELS = {
+    imageLayout: "פריסת התמונה",
+    kind: "סוג הפעולה",
+    action: "כפתור הפעולה",
+    result: "תוצאת הפעולה",
     backdropStrength: "עוצמת הרקע",
     pace: "קצב האנימציות",
     layout: "מיקום על הבמה",
@@ -3059,7 +3095,37 @@
     const b = event.target.closest("[data-action]");
     if (!b) return;
     const action = b.dataset.action;
-    if (action.startsWith("language-")) {
+    if (action.startsWith("agent-")) {
+      if (editing) return;
+      const slide = deck.slides[state.slide];
+      if (slide.type !== "agent") return;
+      const session = agentSession(slide);
+      const item = slide.items[state.step];
+      b.blur();
+      if (action === "agent-reset") {
+        agentSessions.delete(slide.id);
+        state = C.goTo(deck, state.slide);
+      } else if (action === "agent-choose") {
+        if (!["first", "second"].includes(b.dataset.key) || !item[b.dataset.key]) return;
+        session.choice = item[b.dataset.key];
+        session.completed[state.step] = true;
+        for (const key of Object.keys(session.completed))
+          if (Number(key) > state.step) delete session.completed[key];
+      } else if (action === "agent-run") session.completed[state.step] = true;
+      else if (action === "agent-change") {
+        session.choice = "";
+        for (const key of Object.keys(session.completed))
+          if (Number(key) >= state.step) delete session.completed[key];
+      }
+      else if (action === "agent-revise") {
+        state = {...state, step: Math.max(0, state.step - 1)};
+        for (const key of Object.keys(session.completed))
+          if (Number(key) >= state.step) delete session.completed[key];
+      } else if (action === "agent-next" && session.completed[state.step]) {
+        state = C.transition(state, "next", deck);
+      }
+      render();
+    } else if (action.startsWith("language-")) {
       if (editing) return;
       const slide = deck.slides[state.slide];
       if (slide.type !== "language") return;
