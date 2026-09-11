@@ -15,7 +15,7 @@
   const LIMITS = {
     drafts: 25,
     draftName: 60,
-    slides: 48,
+    slides: 64,
     examples: 20,
     steps: 6,
     objects: 40,
@@ -154,6 +154,8 @@
     zoom: "התקרבות",
     wipe: "חשיפה",
     pop: "קפיצה רכה",
+    gather: "תנועה משמאל למרכז",
+    curtain: "וילון · פתיחה משמאל לימין",
   };
   const OBJECT_EXITS = {
     none: "בלי יציאה",
@@ -161,6 +163,7 @@
     fall: "ירידה",
     shrink: "התרחקות",
     wipe: "סגירה",
+    curtain: "וילון · סגירה מימין לשמאל",
   };
   const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
   const EXAMPLE_FIELDS = {
@@ -267,7 +270,8 @@
     /* A dark stage needs the ramp lifted or both hues go to mud against the
        surface. Same two colours, same order, raised in lightness only. */
     prism: {
-      surface: "#0e1226", raised: "#1c2244", soft: "#161b36", line: "#3a4372",
+      surface: "#292b49", raised: "#1c2244", soft: "#161b36", line: "#3a4372",
+      gradient: "radial-gradient(ellipse at 12% 10%,#424c73 0%,transparent 65%),linear-gradient(125deg,#303e60 0%,#343152 55%,#483758 100%)",
       text: "#ffffff", muted: "#b3bde0", accent: "#ac94df", rgb: "172,148,223",
       spectrum: "linear-gradient(110deg,#7fb2d9 2%,#96a3dc 50%,#ac94df 98%)",
       tone: "dark",
@@ -283,7 +287,8 @@
     /* One step deeper into blue. This is where the talk stops explaining and
        starts doing. */
     cobalt: {
-      surface: "#070d20", raised: "#122046", soft: "#0b1430", line: "#24407c",
+      surface: "#263650", raised: "#122046", soft: "#0b1430", line: "#24407c",
+      gradient: "radial-gradient(ellipse at 10% 8%,#425879 0%,transparent 66%),linear-gradient(125deg,#2d4263 0%,#293956 55%,#373451 100%)",
       text: "#f3f7ff", muted: "#a3b6d9", accent: "#8fb0e0", rgb: "143,176,224",
       spectrum: "linear-gradient(110deg,#7fb2d9 2%,#96a3dc 50%,#ac94df 98%)",
       tone: "dark",
@@ -292,7 +297,8 @@
        slide in the talk is about a person rather than a tool, and this is the
        colour it gets — once, on purpose. */
     violet: {
-      surface: "#140e26", raised: "#271c48", soft: "#1a1338", line: "#4a3a7a",
+      surface: "#39304e", raised: "#271c48", soft: "#1a1338", line: "#4a3a7a",
+      gradient: "radial-gradient(ellipse at 90% 12%,#58446f 0%,transparent 65%),linear-gradient(125deg,#303c60 0%,#433654 60%,#493856 100%)",
       text: "#f9f6ff", muted: "#c0b3e0", accent: "#b79ee6", rgb: "183,158,230",
       spectrum: "linear-gradient(110deg,#ac94df 2%,#b79ee6 50%,#96a3dc 98%)",
       tone: "dark",

@@ -212,6 +212,26 @@ p {
 .object-enter-zoom { animation-name: object-zoom-in; }
 .object-enter-wipe { animation-name: object-wipe-in; }
 .object-enter-pop { animation-name: object-pop-in; }
+.object-enter-gather { animation-name: object-gather-in; }
+.object-enter-curtain { animation-name: object-curtain-in; }
+@keyframes object-gather-in {
+  from { transform: translateX(-26cqw); }
+  to { transform: translateX(0); }
+}
+@keyframes object-curtain-in {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0); }
+}
+@keyframes object-curtain-out {
+  from { clip-path: inset(0); }
+  to { clip-path: inset(0 100% 0 0); }
+}
+/* Keep the arriving opaque frame behind the departing object's full exit. */
+[data-transition="cut"] .slide.entering {
+  animation: cut-hold var(--enter-delay, 0s) step-end both;
+}
+@keyframes cut-hold { from { visibility: hidden; } to { visibility: visible; } }
+.theater, .stage, .slide { background-image: var(--stage-gradient, none); }
 .slide.leaving .free-object:not(.object-exit-none) {
   animation-duration: 0.52s;
   animation-delay: 0s;
@@ -222,8 +242,9 @@ p {
 .slide.leaving .object-exit-fall { animation-name: object-fall-out; }
 .slide.leaving .object-exit-shrink { animation-name: object-shrink-out; }
 .slide.leaving .object-exit-wipe { animation-name: object-wipe-out; }
+.slide.leaving .object-exit-curtain { animation-name: object-curtain-out; }
 .slide.object-exits-only {
-  background: transparent;
+  background-color: var(--surface);
 }
 .slide.object-exits-only > :not(.free-object-layer) {
   visibility: hidden;

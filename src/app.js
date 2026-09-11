@@ -615,7 +615,7 @@
        resolve against [data-theme] on the document instead of this element. */
     if (slide.palette === "deck") return "";
     const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
-    return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
+    return `--surface:${palette.surface};--stage-gradient:${palette.gradient || "none"};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
   /* Whether this slide's stage is a light one. Some effects are written for a
      dark room and have to be dialled back on white — and a light slide is also
