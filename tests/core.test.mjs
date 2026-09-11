@@ -875,3 +875,43 @@ test("every object entrance and exit is drawn, and cascade splits reversibly", (
   );
   assert.ok(out.includes('<b class="emph">'), "emphasis across two words was cut");
 });
+
+test("a motion is a table row and a class, and split words keep their paint", () => {
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  /* A motion with no CSS is a dead option: the presenter picks it, the class
+     lands on the slide, and nothing moves. */
+  for (const key of Object.keys(C.MOTIONS)) {
+    assert.ok(css.includes(`.motion-${key} .scene > *`), `motion ${key} has no CSS`);
+    if (key === "still" || key === "cascade") continue;
+    assert.ok(css.includes(`@keyframes m-${key}`), `motion ${key} names no keyframes`);
+  }
+
+  /* Splitting a string into words puts a transform on each one, which
+     composites it on its own layer — and an ancestor's `background-clip: text`
+     never reaches a composited descendant. A text style that paints a gradient
+     through transparent glyphs therefore has to restate that paint on the word,
+     or the words render as nothing at all while measuring perfectly. This is
+     the defect the presenter reported twice; it is a property of the style, so
+     it is checked for every style rather than for the three that have it. */
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    selector: m[1].trim(),
+    body: m[2],
+  }));
+  for (const key of Object.keys(C.TEXT_STYLES)) {
+    const paints = rules.some(
+      (r) =>
+        r.selector.includes(`.object-text.text-${key}`) &&
+        !r.selector.includes("cascade-word") &&
+        /(?:^|[\s;])(?:-webkit-text-fill-)?color:\s*transparent/.test(r.body),
+    );
+    if (!paints) continue;
+    assert.ok(
+      rules.some(
+        (r) =>
+          r.selector.includes(`.text-${key} .object-cascade-word`) &&
+          /background|text-stroke/.test(r.body),
+      ),
+      `text style ${key} paints through transparent glyphs but its cascade words carry no paint of their own — they will render as nothing`,
+    );
+  }
+});
