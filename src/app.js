@@ -182,6 +182,15 @@
     plain: () => "",
     arcs: () =>
       '<div class="light-arc arc-one"></div><div class="light-arc arc-two"></div>',
+    /* The arc family keeps its own class off `.light-arc` on purpose: that one
+       is stripped by `.no-motion` because its animation is a one-shot arrival,
+       and these are ambient loops that must not stop when only a beat changed. */
+    orbit: () =>
+      [0, 1, 2].map((i) => `<div class="drift-arc" style="--arc:${i}"></div>`).join(""),
+    ribbons: () =>
+      [0, 1, 2, 3].map((i) => `<div class="ribbon" style="--ribbon:${i}"></div>`).join(""),
+    comet: () =>
+      [0, 1].map((i) => `<div class="comet-arc" style="--comet:${i}"></div>`).join(""),
     grid: () => '<div class="grid-plane"></div>',
     aurora: () =>
       [0, 1, 2].map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`).join(""),
@@ -635,7 +644,7 @@
     "experiment",
   ]);
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" data-pace="${slide.pace}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
 
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
@@ -1058,10 +1067,18 @@
       previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
     const exitsOnly =
       previous && !sameSlide && slide.transition === "cut" && hasObjectExits;
-    const slideExitTime = { cut: 0, fade: 340, push: 440, zoom: 400 }[
-      slide.transition
-    ];
-    const outgoingTime = Math.max(slideExitTime, hasObjectExits ? 520 : 0);
+    /* Both halves of the timing come from `core`, and both are scaled by the
+       pace of the slide they belong to: the outgoing slide's own pace governs
+       how long it takes to leave, the incoming one's how long it takes to
+       arrive. Keeping a second copy of these numbers here is what made the
+       outgoing slide vanish on frame one the moment two transitions were
+       added and this table had not heard of them. */
+    const rate = (s) => C.PACE_RATE[s?.pace] ?? 1;
+    const previousSlide = deck.slides[renderedSlide];
+    const outRate = rate(previousSlide);
+    const slideExitTime = (C.TRANSITION_MS[slide.transition] ?? 360) * outRate;
+    const objectExitTime = hasObjectExits ? C.OBJECT_MS * outRate : 0;
+    const outgoingTime = Math.max(slideExitTime, objectExitTime);
     if (
       previous &&
       !sameSlide &&
@@ -1077,7 +1094,7 @@
       previous.style.setProperty("--dir", direction);
       previous.classList.add("leaving");
       if (hasObjectExits)
-        previous.style.setProperty("--slide-exit-duration", "0.52s");
+        previous.style.setProperty("--slide-exit-duration", `${objectExitTime}ms`);
       if (exitsOnly) previous.classList.add("object-exits-only");
       const drop = () => previous.remove();
       // animationend bubbles, so only the slide's own exit may retire it.
@@ -1792,7 +1809,7 @@
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, palette: look.palette, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, palette: look.palette, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition, pace: look.pace }, `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }

@@ -201,8 +201,17 @@ p {
   justify-content: center;
   user-select: none;
 }
+/* How fast this slide runs. One choice scales its transition and the entrance
+   and exit of every object on it, so the presenter tunes a slide's pace in one
+   place instead of a dozen. An outgoing slide keeps its own rate: it is still
+   that slide leaving. */
+.slide[data-pace="brisk"] { --pace: 0.6; }
+.slide[data-pace="natural"] { --pace: 1; }
+.slide[data-pace="calm"] { --pace: 1.45; }
+.slide[data-pace="slow"] { --pace: 2; }
+
 .free-object:not(.object-enter-none) {
-  animation-duration: 0.72s;
+  animation-duration: calc(0.72s * var(--pace, 1));
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.22, 0.7, 0.3, 1);
   animation-delay: var(--enter-delay, 0s);
@@ -220,7 +229,7 @@ p {
 /* Two classes, because the shared rule above is `.free-object:not(...)` and
    would otherwise outrank a single class and hold this at 0.72s. */
 .free-object.object-enter-gather {
-  animation-duration: 1.25s;
+  animation-duration: calc(1.25s * var(--pace, 1));
   animation-timing-function: cubic-bezier(0.4, 0, 0.25, 1);
 }
 .object-enter-curtain { animation-name: object-curtain-in; }
@@ -1395,6 +1404,138 @@ h1 {
   transform: rotate(165deg);
   animation: arc-arrive-two 2.8s cubic-bezier(0.2, 0.6, 0.2, 1) both;
 }
+
+/* ── The arc family, turned up ────────────────────────────────────────────
+   `arcs` above is the quiet original the presenter picked out: two hairlines
+   that arrive once and then hold still. These three are the same drawing
+   language with the brake off — they keep moving, they sit brighter, and they
+   carry the ramp's purple alongside the slide's accent so the light has two
+   colours in it rather than one.
+
+   Two things they do differently from `arcs`. They are masked to an annulus
+   instead of filling their interior with `--surface`: that trick paints a flat
+   disc of the surface colour over the slide, which is invisible on a plain
+   palette and a hard edge across one that carries a gradient. And they do not
+   use `.light-arc`, because `.no-motion` clears that class — its animation is
+   a one-shot arrival, and an ambient loop must not stop because the presenter
+   advanced a beat. */
+.drift-arc,
+.comet-arc {
+  --ring: 0.22cqw;
+  position: absolute;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from var(--sweep, 0deg),
+    transparent 12%,
+    rgba(var(--accent-rgb), 0.16) 30%,
+    color-mix(in srgb, rgb(var(--accent-rgb)) 45%, #ac94df) 45%,
+    rgba(var(--accent-rgb), 0.95) 56%,
+    color-mix(in srgb, rgb(var(--accent-rgb)) 60%, #ac94df) 64%,
+    rgba(var(--accent-rgb), 0.14) 78%,
+    transparent 92%
+  );
+  -webkit-mask: radial-gradient(
+    circle at 50% 50%,
+    transparent calc(50% - var(--ring)),
+    #000 calc(50% - var(--ring)) 50%,
+    transparent 50%
+  );
+  mask: radial-gradient(
+    circle at 50% 50%,
+    transparent calc(50% - var(--ring)),
+    #000 calc(50% - var(--ring)) 50%,
+    transparent 50%
+  );
+  filter: drop-shadow(0 0 0.7cqw rgba(var(--accent-rgb), 0.5));
+}
+
+/* "קשתות נעות" — three rings turning continuously, one against the other two,
+   at speeds that never line up. Nothing arrives and nothing settles. */
+.drift-arc {
+  width: calc(112% + var(--arc) * 13%);
+  left: calc(-58% - var(--arc) * 6%);
+  top: calc(-78% - var(--arc) * 5%);
+  opacity: calc(0.95 - var(--arc) * 0.14);
+  animation: arc-turn calc(46s + var(--arc) * 19s) linear infinite;
+}
+.drift-arc:nth-child(2) {
+  left: auto;
+  right: -62%;
+  top: auto;
+  bottom: -92%;
+  animation-direction: reverse;
+}
+.drift-arc:nth-child(3) {
+  --ring: 0.14cqw;
+  left: auto;
+  right: -46%;
+  top: -96%;
+}
+@keyframes arc-turn {
+  to { transform: rotate(360deg); }
+}
+
+/* "אור נודד" — the curve holds still and the bright part of it travels along
+   it. That needs the conic gradient's own angle to animate, which a custom
+   property only does once it is registered with a type. */
+@property --sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.comet-arc {
+  --ring: 0.26cqw;
+  width: calc(118% + var(--comet) * 10%);
+  animation: arc-sweep calc(13s + var(--comet) * 5s) linear infinite;
+  animation-delay: calc(var(--comet) * -6s);
+}
+.comet-arc:nth-child(1) {
+  left: -64%;
+  top: -83%;
+}
+.comet-arc:nth-child(2) {
+  right: -62%;
+  bottom: -99%;
+  opacity: 0.75;
+}
+@keyframes arc-sweep {
+  to { --sweep: 360deg; }
+}
+
+/* "סרטי אור" — the same idea with a body instead of a hairline. It has to stay
+   out of the middle of the frame: wide soft bands drawn across the centre stop
+   being light behind the words and become fog in front of them, which is the
+   one thing this family must never do. Two above the headline, two below. */
+.ribbon {
+  position: absolute;
+  left: -24%;
+  right: -24%;
+  height: calc(4.5% + var(--ribbon) * 1.6%);
+  top: calc(6% + var(--ribbon) * 5%);
+  border-radius: 50%;
+  filter: blur(calc(12px + var(--ribbon) * 4px));
+  opacity: calc(0.65 - var(--ribbon) * 0.07);
+  background: linear-gradient(
+    100deg,
+    transparent 3%,
+    rgba(var(--accent-rgb), 0.55) 22%,
+    color-mix(in srgb, rgb(var(--accent-rgb)) 40%, #ac94df) 48%,
+    rgba(var(--accent-rgb), 0.5) 72%,
+    transparent 97%
+  );
+  animation: ribbon-drift calc(17s + var(--ribbon) * 5s) ease-in-out infinite alternate;
+  animation-delay: calc(var(--ribbon) * -5s);
+}
+.ribbon:nth-child(3),
+.ribbon:nth-child(4) {
+  top: auto;
+  bottom: calc(6% + (var(--ribbon) - 2) * 5%);
+}
+@keyframes ribbon-drift {
+  from { transform: translate3d(-8%, -1.6cqw, 0) rotate(-2.4deg) scaleY(0.8); }
+  to { transform: translate3d(8%, 1.6cqw, 0) rotate(2.4deg) scaleY(1.2); }
+}
+
 .chat-scene .atmosphere {
   opacity: 0.25;
 }
@@ -1576,7 +1717,7 @@ h1 {
 .slide.entering > .atmosphere,
 .slide.entering > .scene,
 .slide.entering > .free-object-layer {
-  animation-duration: var(--arrive, 0.62s);
+  animation-duration: calc(var(--arrive-base, 0.36s) * var(--pace, 1));
   animation-timing-function: cubic-bezier(0.33, 0.1, 0.2, 1);
   animation-fill-mode: both;
 }
@@ -1588,37 +1729,37 @@ h1 {
 [data-transition="dissolve"] .slide.entering > .atmosphere,
 [data-transition="dissolve"] .slide.entering > .scene,
 [data-transition="dissolve"] .slide.entering > .free-object-layer {
-  --arrive: 0.86s;
+  --arrive-base: 0.86s;
   animation-name: t-dissolve-in;
 }
 [data-transition="push"] .slide.entering > .atmosphere,
 [data-transition="push"] .slide.entering > .scene,
 [data-transition="push"] .slide.entering > .free-object-layer {
-  --arrive: 0.72s;
+  --arrive-base: 0.72s;
   animation-name: t-push-in;
 }
 [data-transition="zoom"] .slide.entering > .atmosphere,
 [data-transition="zoom"] .slide.entering > .scene,
 [data-transition="zoom"] .slide.entering > .free-object-layer {
-  --arrive: 0.7s;
+  --arrive-base: 0.7s;
   animation-name: t-zoom-in;
 }
 [data-transition="recede"] .slide.entering > .atmosphere,
 [data-transition="recede"] .slide.entering > .scene,
 [data-transition="recede"] .slide.entering > .free-object-layer {
-  --arrive: 0.7s;
+  --arrive-base: 0.7s;
   animation-name: t-recede-in;
 }
 /* The outgoing slide drifts for depth and keeps its opacity — it is fully
    covered, so this only reads through a slide that is deliberately translucent. */
 [data-transition="push"] .slide.leaving {
-  animation: t-push-out var(--slide-exit-duration, 0.72s) cubic-bezier(0.33, 0.1, 0.2, 1) both;
+  animation: t-push-out calc(0.72s * var(--pace, 1)) cubic-bezier(0.33, 0.1, 0.2, 1) both;
 }
 [data-transition="zoom"] .slide.leaving {
-  animation: t-zoom-out var(--slide-exit-duration, 0.7s) cubic-bezier(0.33, 0.1, 0.2, 1) both;
+  animation: t-zoom-out calc(0.7s * var(--pace, 1)) cubic-bezier(0.33, 0.1, 0.2, 1) both;
 }
 [data-transition="recede"] .slide.leaving {
-  animation: t-recede-out var(--slide-exit-duration, 0.7s) cubic-bezier(0.33, 0.1, 0.2, 1) both;
+  animation: t-recede-out calc(0.7s * var(--pace, 1)) cubic-bezier(0.33, 0.1, 0.2, 1) both;
 }
 @keyframes t-fade-in {
   from { opacity: 0; }

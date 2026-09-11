@@ -781,3 +781,41 @@ test("a tool mark on a light slide is never the white variant", () => {
     );
   }
 });
+
+test("every transition and pace has a duration, in one place", () => {
+  /* Two copies of these numbers drifted apart the moment two transitions were
+     added: the renderer's private table had not heard of them, so the outgoing
+     slide's removal timer went NaN and it vanished on frame one. */
+  for (const key of Object.keys(C.TRANSITIONS))
+    assert.equal(typeof C.TRANSITION_MS[key], "number", `${key} has no duration`);
+  for (const key of Object.keys(C.TRANSITION_MS))
+    assert.ok(Object.hasOwn(C.TRANSITIONS, key), `${key} is not a transition`);
+  for (const key of Object.keys(C.PACES))
+    assert.equal(typeof C.PACE_RATE[key], "number", `${key} has no rate`);
+  // The default pace must be the one that changes nothing.
+  assert.equal(C.PACE_RATE[Object.keys(C.PACES)[0]], 1);
+});
+
+test("a backdrop is a table row and a class, never a branch", () => {
+  /* A key in the table with no markup renders an empty atmosphere, and markup
+     naming a class the sheet never styles renders an invisible one. Neither
+     throws, so neither is caught by anything but looking. */
+  const app = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  const parts = app.slice(
+    app.indexOf("const BACKDROP_PARTS = {"),
+    app.indexOf("function backdrop("),
+  );
+  for (const key of Object.keys(C.BACKDROPS)) {
+    const at = parts.indexOf(`\n    ${key}: `);
+    assert.ok(at !== -1, `${key} has no entry in BACKDROP_PARTS`);
+    const next = Object.keys(C.BACKDROPS)
+      .map((k) => parts.indexOf(`\n    ${k}: `))
+      .filter((i) => i > at)
+      .sort((a, b) => a - b)[0];
+    const body = parts.slice(at, next === undefined ? parts.length : next);
+    for (const cls of body.matchAll(/class="([a-z- ]+)"/g))
+      for (const name of cls[1].trim().split(/\s+/))
+        assert.ok(css.includes(`.${name}`), `${key} draws .${name}, which has no CSS`);
+  }
+});
