@@ -55,9 +55,21 @@
     renderedSlide = -1,
     renderedSceneKey = null,
     renderedDots = "";
+  /* A copy saved in this browser wins, because it is the presenter's own work
+     and losing it would be unforgivable. But it also used to hide every later
+     publication with no way to tell: the deck on screen could be months behind
+     the one at the link, and looked identical. When the published revision has
+     moved on since the stored copy was taken, the stored copy is still what
+     loads — and the presenter is told, and can take the new one. */
+  let supersededBy = null;
   try {
     const stored = localStorage.getItem(storageKey);
-    if (stored) deck = C.validate(JSON.parse(stored));
+    if (stored) {
+      const saved = C.validate(JSON.parse(stored));
+      deck = saved;
+      if (embedded.revision && embedded.revision !== saved.revision)
+        supersededBy = embedded;
+    }
   } catch {
     canSave = false;
   }
@@ -177,6 +189,38 @@
       [0, 1, 2, 3].map((i) => `<div class="ring" style="--ring:${i}"></div>`).join(""),
     beams: () => '<div class="beam-field"></div>',
     halo: () => '<div class="halo"></div>',
+    /* Nodes joined to their nearest neighbours, drawn once from the slide's own
+       seed so a re-render rebuilds the same constellation. The middle of the
+       frame is left empty on purpose: this is light behind the words, never a
+       diagram competing with them. */
+    neural: (slide) => {
+      const random = seeded(slide.id);
+      const nodes = [];
+      for (let tries = 0; tries < 320 && nodes.length < 18; tries++) {
+        const x = random() * 160;
+        const y = random() * 90;
+        const dx = (x - 80) / 80;
+        const dy = (y - 45) / 45;
+        if (Math.hypot(dx, dy) < 0.66) continue; // the headline owns the middle
+        if (nodes.some((n) => Math.hypot(n.x - x, n.y - y) < 15)) continue;
+        nodes.push({ x, y, r: 0.32 + random() * 0.34, delay: random() * -9 });
+      }
+      const edges = [];
+      nodes.forEach((a, i) =>
+        nodes.slice(i + 1).forEach((b) => {
+          const span = Math.hypot(a.x - b.x, a.y - b.y);
+          if (span < 27) edges.push({ a, b, span, delay: random() * -14 });
+        }),
+      );
+      const round = (n) => n.toFixed(2);
+      const line = ({ a, b, span, delay }) =>
+        `<line x1="${round(a.x)}" y1="${round(a.y)}" x2="${round(b.x)}" y2="${round(b.y)}" style="--span:${round(span)};--delay:${round(delay)}s"/>`;
+      const dot = ({ x, y, r, delay }) =>
+        `<circle cx="${round(x)}" cy="${round(y)}" r="${round(r)}" style="--delay:${round(delay)}s"/>`;
+      return `<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g class="neural-edges">${edges
+        .map(line)
+        .join("")}</g><g class="neural-nodes">${nodes.map(dot).join("")}</g></svg>`;
+    },
     mesh: () =>
       [0, 1, 2, 3].map((i) => `<div class="mesh-blob" style="--mesh:${i}"></div>`).join(""),
     waves: () =>
@@ -211,10 +255,13 @@
   const paintId = (object, index) =>
     `fill-${index}-${object.id.replace(/[^A-Za-z0-9_-]/g, "")}`;
   const shapeMarkup = (object, index) => {
-    const spectrum = object.style === "spectrum";
+    const auto = object.color === "auto";
+    /* A spectrum is computed from a real hex, so a colour that follows the
+       slide cannot have one built for it; it stays the slide's own colour. */
+    const spectrum = object.style === "spectrum" && !auto;
     const outline = object.style === "outline";
     const id = paintId(object, index);
-    const paint = spectrum ? `url(#${id})` : object.color;
+    const paint = spectrum ? `url(#${id})` : resolveColour(object.color);
     const defs = spectrum
       ? `<defs><linearGradient id="${esc(id)}" x1="0" y1="0" x2="1" y2="1">${spectrumStops(
           object.color,
@@ -226,7 +273,7 @@
           .join("")}</linearGradient></defs>`
       : "";
     // Outline draws the shape in its own colour and needs a line to draw with.
-    const strokePaint = outline ? paint : object.stroke;
+    const strokePaint = outline ? paint : resolveColour(object.stroke);
     const width = outline
       ? Math.max(2, Number(object.strokeWidth))
       : Number(object.strokeWidth);
@@ -235,6 +282,22 @@
       `<svg viewBox="0 0 100 100" aria-hidden="true">${defs}${body}</svg>`;
     if (object.shape === "circle")
       return svg(`<ellipse cx="50" cy="50" rx="47" ry="47" ${common}/>`);
+    /* A field of dots and a hairline: the two quietest marks on the stage. The
+       dots are laid out on a fixed 6x4 lattice rather than at random, so the
+       shape reads as deliberate texture and stays identical between renders. */
+    if (object.shape === "dots") {
+      const cells = [];
+      for (let row = 0; row < 4; row++)
+        for (let column = 0; column < 6; column++)
+          cells.push(
+            `<circle cx="${8 + column * 16.8}" cy="${11 + row * 26}" r="${Math.max(1.2, Number(object.strokeWidth) * 0.9)}" fill="${esc(paint)}"/>`,
+          );
+      return svg(cells.join(""));
+    }
+    if (object.shape === "rule")
+      return svg(
+        `<line x1="0" y1="50" x2="100" y2="50" stroke="${esc(paint)}" stroke-width="${Math.max(0.6, Number(object.strokeWidth) * 0.5)}" vector-effect="non-scaling-stroke"/>`,
+      );
     if (object.shape === "line")
       return svg(
         `<line x1="4" y1="50" x2="96" y2="50" stroke="${esc(paint)}" stroke-width="${Math.max(2, Number(object.strokeWidth))}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`,
@@ -289,7 +352,7 @@
   };
   const visualMarkup = (object, index) => {
     const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
-    const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
+    const style = `--visual-colour:${esc(resolveColour(object.color))};--visual-secondary:${esc(resolveColour(object.secondary))};--visual-gradient:${esc(object.color === "auto" ? "var(--spectrum)" : spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
     const body = visualBody(object.visual, labels, `objects.${index}`);
     return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="group" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
@@ -304,7 +367,7 @@
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
-      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(object.color)}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
+      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
@@ -427,7 +490,7 @@
     el.style.setProperty("--object-size", object.fontSize);
     el.style.setProperty("--object-weight", object.weight);
     el.style.setProperty("--object-align", object.align);
-    el.style.setProperty("--object-colour", object.color);
+    el.style.setProperty("--object-colour", resolveColour(object.color));
     el.classList.remove(...Object.keys(C.TEXT_STYLES).map((key) => `text-${key}`));
     el.classList.add(`text-${object.style}`);
     return true;
@@ -540,18 +603,31 @@
       });
     });
   }
+  /* An object either carries a colour or follows the slide it sits on. */
+  const resolveColour = (value) => (value === "auto" ? "var(--text)" : value);
   const paletteStyle = (slide) => {
+    /* Writing nothing is what lets the deck's theme through: the tokens then
+       resolve against [data-theme] on the document instead of this element. */
+    if (slide.palette === "deck") return "";
     const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
+  /* Emphasis inside a sentence, without opening HTML to the document. The text
+     is escaped first and only then are *asterisk pairs* turned into a marked
+     span, so nothing a document carries can become markup. The stored string
+     keeps its asterisks, and editing in place reads that stored string back —
+     the presenter edits what they wrote, not what was rendered. */
+  const EMPHASIS = /\*([^*\n]{1,60})\*/g;
+  const rich = (value) => esc(value).replace(EMPHASIS, '<b class="emph">$1</b>');
   const caption = (slide, value, key = "caption") =>
     value && !isBound(slide, key)
-      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${esc(value)}</p>`
+      ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${rich(value)}</p>`
       : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
   const headline = (slide, value) =>
@@ -601,7 +677,8 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
+      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
+
     );
   }
   function revealSlide(slide, index, step) {
@@ -947,6 +1024,13 @@
       !reducedMotion() &&
       (slide.transition !== "cut" || exitsOnly)
     ) {
+      /* The class that brought this slide in has to go before it is asked to
+         leave: the entrance rule and the exit rule have equal weight, and the
+         entrance one wins on order, so an outgoing slide was replaying its own
+         arrival — sliding back in from the side before vanishing. Its direction
+         is the move happening now, not the one that delivered it. */
+      previous.classList.remove("entering");
+      previous.style.setProperty("--dir", direction);
       previous.classList.add("leaving");
       if (hasObjectExits)
         previous.style.setProperty("--slide-exit-duration", "0.52s");
@@ -1352,7 +1436,10 @@
     if (id === "editor") {
       $(`#${id}`).show();
       renderEditor();
-    } else $(`#${id}`).showModal();
+    } else {
+      if (id === "themes") renderPalettes();
+      $(`#${id}`).showModal();
+    }
   }
   function validEditor() {
     const invalid = $$("#editor-fields input, #editor-fields textarea").find(
@@ -1547,7 +1634,7 @@
     "#b9a3ff",
   ];
   const objectColour = (label, slideIndex, object, key) =>
-    `<div class="object-field colour-field"><span>${label}</span><label class="colour-picker"><input type="color" value="${esc(object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}" aria-label="${esc(label)}"><output>${esc(object[key])}</output></label><div class="colour-swatches" aria-label="צבעים מהירים">${OBJECT_SWATCHES.map((colour) => `<button type="button" style="--swatch:${colour}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:${colour}" aria-label="${colour}"></button>`).join("")}</div></div>`;
+    `<div class="object-field colour-field"><span>${label}</span><label class="colour-picker"><input type="color" value="${esc(object[key] === "auto" ? "#f6f7f8" : object[key])}" data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}" aria-label="${esc(label)}"><output>${object[key] === "auto" ? "לפי הערכה" : esc(object[key])}</output></label><div class="colour-swatches" aria-label="צבעים מהירים"><button type="button" class="swatch-auto" aria-pressed="${object[key] === "auto"}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:auto" title="לפי ערכת הצבעים של השקף" aria-label="לפי ערכת הצבעים של השקף">א</button>${OBJECT_SWATCHES.map((colour) => `<button type="button" style="--swatch:${colour}" data-object-colour="${slideIndex}:${esc(object.id)}:${key}:${colour}" aria-label="${colour}"></button>`).join("")}</div></div>`;
   const objectPicker = (label, slideIndex, object, key, options) =>
     `<label class="object-field"><span>${label}</span><select data-object-slide="${slideIndex}" data-object-id="${esc(object.id)}" data-object-prop="${key}">${Object.entries(options)
       .map(
@@ -2783,7 +2870,12 @@
   });
   $("#prev").addEventListener("click", () => act("prev"));
   $("#next").addEventListener("click", () => act("next"));
-  $("#edit").addEventListener("click", () => setEditing(!editing));
+  $("#edit").addEventListener("click", (event) => {
+    // Same trap as the navigation dots: leaving focus here turns the presenter's
+    // next space into a second click, which drops them back out of edit mode.
+    event.currentTarget.blur();
+    setEditing(!editing);
+  });
   $("#deck").addEventListener("click", () =>
     $("#editor").open ? closeDialog($("#editor")) : openDialog("editor"),
   );
@@ -2937,6 +3029,51 @@
       render();
     }),
   );
+  /* The same panel also sets the palette of the slide in front of you. A theme
+     dresses the whole deck; a palette dresses one slide — including a white one
+     in the middle of a dark talk — and the panel is where a presenter goes
+     looking for either. Rebuilt on open so the pressed state is the truth. */
+  function renderPalettes() {
+    const slide = deck.slides[state.slide];
+    /* Counted over the slides the audience actually sees; the skipped ones are
+       released too, they are just not what the presenter is looking at. */
+    const shown = deck.slides.filter((s) => C.isShown(s));
+    const pinned = shown.filter((s) => s.palette !== "deck").length;
+    /* The first choice has no palette of its own, so its swatch is the deck's
+       current theme — which is also what makes the theme buttons above visibly
+       do something. */
+    const theme = C.THEMES[deck.theme];
+    $("#palette-options").innerHTML = Object.entries(C.PALETTES)
+      .map(([key, name]) => {
+        const p = C.PALETTE_STYLES[key];
+        const swatch = p
+          ? `background:${p.surface};color:${p.text};border-color:${p.line}`
+          : `background:${theme.swatch[0]};color:${theme.swatch[1]};border-color:${theme.swatch[1]}`;
+        const accent = p ? p.accent : theme.swatch[1];
+        return `<button data-palette-choice="${key}" aria-pressed="${slide.palette === key}" title="${esc(name)}"><span class="palette-preview" style="${swatch}"><i>Aa</i><b style="color:${accent}">✳</b></span><span>${esc(name)}</span></button>`;
+      })
+      .join("");
+    $("#palette-note").textContent = pinned
+      ? `${pinned} מתוך ${shown.length} השקפים נושאים ערכה משלהם, ולכן הערכה שלמעלה לא משנה אותם. שקף שמוגדר ״לפי ערכת המצגת״ משתנה יחד איתה.`
+      : "כל השקפים הולכים אחרי ערכת המצגת. בחירה כאן מצמידה לשקף שמולך ערכה משלו.";
+    $("#palette-release").hidden = !pinned;
+    $("#palette-release").textContent = "החזרת כל השקפים לערכת המצגת";
+  }
+  $("#palette-release").addEventListener("click", () => {
+    for (const slide of deck.slides) slide.palette = "deck";
+    save();
+    render();
+    renderPalettes();
+    notify("כל השקפים הולכים עכשיו אחרי ערכת המצגת.");
+  });
+  $("#palette-options").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-palette-choice]");
+    if (!button) return;
+    deck.slides[state.slide].palette = button.dataset.paletteChoice;
+    save();
+    render();
+    renderPalettes();
+  });
   $("#editor-fields").addEventListener("input", (e) => {
     // Selects also fire input; they are handled on change, where the value is final.
     if (e.target.matches("input[data-field], textarea[data-field]"))
@@ -3294,6 +3431,46 @@
     );
     wake();
   });
+  /* The one case where the stored copy and the published one disagree. Taking
+     the new one files the current deck away as a draft first, so a presenter
+     who has been editing loses nothing by pressing it; keeping the old one
+     records the choice against the new revision so the bar stops asking. */
+  function renderSuperseded() {
+    const bar = $("#superseded");
+    bar.hidden = !supersededBy;
+    if (!supersededBy) return;
+    bar.innerHTML =
+      '<p>יש גרסה חדשה של ההרצאה בקישור. מה שמוצג עכשיו הוא העותק ששמור במכשיר הזה.</p><div class="superseded-actions"><button class="primary-button" data-superseded="take">טעינת הגרסה החדשה</button><button class="text-button" data-superseded="keep">להישאר עם שלי</button></div>';
+  }
+  $("#superseded").addEventListener("click", (event) => {
+    const action = event.target.closest("[data-superseded]")?.dataset.superseded;
+    if (!action || !supersededBy) return;
+    if (action === "take") {
+      const list = readDrafts();
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (list.length < C.LIMITS.drafts)
+        writeDrafts([
+          ...list,
+          {
+            name: `העותק שלי · ${stamp}`,
+            savedAt: new Date().toISOString(),
+            payload: JSON.stringify(deck),
+          },
+        ]);
+      deck = C.clone(supersededBy);
+      state = C.initialState(deck);
+      history.reset(JSON.stringify(deck));
+      notify("נטענה הגרסה החדשה. העותק הקודם נשמר כטיוטה.");
+    } else {
+      deck.revision = supersededBy.revision;
+      notify("נשארנו עם העותק שלך.");
+    }
+    supersededBy = null;
+    renderSuperseded();
+    save();
+    render();
+  });
+  renderSuperseded();
   render();
   save();
   document.body.classList.add("controls-idle");

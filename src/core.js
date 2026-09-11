@@ -111,11 +111,15 @@
     star: "כוכב",
     blob: "כתם",
     ring: "טבעת",
+    dots: "שדה נקודות",
+    rule: "קו שיער",
   };
   const TEXT_STYLES = {
     solid: "צבע אחיד",
     spectrum: "צבעוני",
     outline: "קו מתאר",
+    shimmer: "זוהר נודד",
+    sheen: "ברק חולף",
   };
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
@@ -191,6 +195,7 @@
     waves: "גלים",
     halo: "הילה",
     stars: "שדה כוכבים",
+    neural: "רשת חיבורים",
     mesh: "מרחב צבע",
     picture: "תמונה משלך",
     plain: "רקע נקי",
@@ -204,9 +209,14 @@
   /* A slide palette changes the whole light field, not just one highlighted
      word. Values remain a closed table so imported documents cannot inject
      arbitrary CSS into the stage. */
+  /* "deck" is the absence of a palette: the slide takes the deck's theme rather
+     than carrying colours of its own. It is first because it is the sane
+     default — without it every slide pins itself, the theme controls nothing
+     but the strip around the stage, and choosing one appears to do nothing. */
   const PALETTES = {
+    deck: "לפי ערכת המצגת",
     pearl: "לבן פנינה · תכלת וסגול",
-    midnight: "דיו · תכלת וסגול",
+    prism: "דיו · תכלת וסגול",
     ice: "קרח ותכלת",
     violet: "סגול חשמלי",
     rose: "ורוד ומג׳נטה",
@@ -214,6 +224,11 @@
     danger: "אדום אזהרה",
     mint: "מנטה וירוק",
     cobalt: "כחול קובלט",
+    steel: "פלדה ולבן",
+    paper: "לבן ודיו",
+    mist: "ערפל בהיר",
+    sand: "חול וחום",
+    midnight: "כחול חצות",
   };
   const PALETTE_STYLES = {
     pearl: {
@@ -221,7 +236,7 @@
       text: "#182442", muted: "#52617d", accent: "#5264cb", rgb: "82,100,203",
       spectrum: "linear-gradient(110deg,#087caa 5%,#4464d6 50%,#8451c2 96%)",
     },
-    midnight: {
+    prism: {
       surface: "#101323", raised: "#1e2440", soft: "#191d34", line: "#414d76",
       text: "#ffffff", muted: "#b9c5e4", accent: "#adceff", rgb: "173,206,255",
       spectrum: "linear-gradient(110deg,#a3efff 5%,#a3bfff 52%,#c3a1ff 96%)",
@@ -261,12 +276,73 @@
       text: "#f5f9ff", muted: "#aec0da", accent: "#6ea8ff", rgb: "110,168,255",
       spectrum: "linear-gradient(110deg,#c9e0ff 4%,#6ea8ff 50%,#7de8e8 96%)",
     },
+    /* No hue at all, and the only pure white in the table. It is what a slide
+       looks like when the colour drains out of it — which is how this deck says
+       something broke, instead of turning the wall red. */
+    steel: {
+      surface: "#0e1013", raised: "#1b1f24", soft: "#15181c", line: "#39404a",
+      text: "#ffffff", muted: "#9aa3ad", accent: "#dbe2ea", rgb: "219,226,234",
+      spectrum: "linear-gradient(110deg,#ffffff 4%,#c9d2dc 52%,#8f9aa6 96%)",
+    },
+    /* Light stages. Everything on the stage is built from these tokens, so a
+       pale surface with dark text works the same way round — but `raised` and
+       `soft` have to go *darker* than the surface here, not lighter, or every
+       panel and chip disappears into the background. */
+    paper: {
+      surface: "#ffffff", raised: "#eef1f6", soft: "#f5f7fa", line: "#c9d2de",
+      text: "#0c1118", muted: "#5a6675", accent: "#1f5fd0", rgb: "31,95,208",
+      spectrum: "linear-gradient(110deg,#1f5fd0 4%,#3b4fd8 52%,#7a3fd0 96%)",
+    },
+    mist: {
+      surface: "#e8edf3", raised: "#d6dee8", soft: "#dfe6ee", line: "#adbccd",
+      text: "#101823", muted: "#4f5d6e", accent: "#1d5bb8", rgb: "29,91,184",
+      spectrum: "linear-gradient(110deg,#1d5bb8 4%,#2f6fa8 52%,#5a4fb0 96%)",
+    },
+    sand: {
+      surface: "#f6f1e7", raised: "#e6ddcc", soft: "#efe8da", line: "#cdbfa5",
+      text: "#1c1710", muted: "#6b5c46", accent: "#a35a1c", rgb: "163,90,28",
+      spectrum: "linear-gradient(110deg,#a35a1c 4%,#b8762a 52%,#7d5a2e 96%)",
+    },
+    midnight: {
+      surface: "#05070f", raised: "#101728", soft: "#0a0f1c", line: "#243252",
+      text: "#eef3ff", muted: "#93a3c2", accent: "#7fd8ff", rgb: "127,216,255",
+      spectrum: "linear-gradient(110deg,#d8f4ff 4%,#7fd8ff 50%,#9db4ff 96%)",
+    },
+  };
+  /* Where the words sit in the frame. A deck where every slide centres its
+     headline reads as one slide shown thirty-five times, however good that one
+     slide is — so this is the table that lets a talk breathe: the same content,
+     placed. Each key is a CSS block; nothing branches on it in the renderer. */
+  const LAYOUTS = {
+    center: "במרכז",
+    corner: "פינה עליונה",
+    edge: "צמוד לשוליים",
+    low: "נמוך בפריים",
+    wide: "רחב ופרוס",
+  };
+  /* Headline size as a deliberate choice rather than a computed constant, so a
+     deck can whisper on one slide and shout on the next. */
+  const SCALES = {
+    auto: "לפי אורך הטקסט",
+    small: "קטן",
+    medium: "בינוני",
+    large: "גדול",
+    huge: "ענק",
+  };
+  /* How a run of words is arranged. The descending stack is the original; a row
+     and a stair stop every triple in the deck from looking like the last one. */
+  const ARRANGEMENTS = {
+    stack: "זו מתחת לזו",
+    row: "בשורה אחת",
+    stair: "מדרגות",
   };
   /* A slide the presenter is not showing this time. It stays in the document
      and in the editor, and the deck simply walks past it. */
   const VISIBILITY = { shown: "מוצג בהרצאה", hidden: "מדולג" };
   const COMMON_FIELDS = {
     visibility: choice(VISIBILITY),
+    layout: choice(LAYOUTS),
+    scale: choice(SCALES),
     palette: choice(PALETTES),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
@@ -318,6 +394,11 @@
         title: text(40),
         tool: text(30),
         accent: text(40, false),
+        /* The tool's own mark, beside its name. It belongs to the scene rather
+           than to a free object pinned at the centre of the stage, so that it
+           follows the slide's composition instead of drifting away from the
+           words when the layout is not centred. */
+        mark: picture(),
         link: link(),
         caption: text(150, false),
         prompt: text(800, false),
@@ -327,7 +408,7 @@
     reveal: {
       label: "מילים שנחשפות",
       hint: "מילה אחת בכל צעד, עם משפט אחד מתחתיה. הקודמות נשארות עמומות.",
-      fields: { title: text(40, false) },
+      fields: { title: text(40, false), arrangement: choice(ARRANGEMENTS) },
       list: {
         key: "items",
         label: "מילה",
@@ -644,7 +725,12 @@
       if (!Number.isFinite(raw) || raw < min || raw > max) fail();
       return String(Math.round(raw * 10) / 10);
     };
+    /* "auto" means the object takes the slide's own text colour instead of
+       carrying one. It is what lets a box survive its slide being given a
+       light palette: a fixed near-white is invisible on white paper, and the
+       presenter should not have to re-colour every box to change a theme. */
     const colour = (v) => {
+      if (v === "auto") return "auto";
       if (typeof v !== "string" || !/^#[0-9a-f]{6}$/i.test(v)) fail();
       return v.toLowerCase();
     };
@@ -759,6 +845,12 @@
     const result = {
       version: 2,
       documentId: str(raw.documentId, text(100)),
+      /* Stamped by the build from the content itself. A copy saved in a browser
+         wins over the published one on startup — it is the presenter's work —
+         so this is how the deck can tell that the published document has moved
+         on since that copy was taken, and offer it rather than silently showing
+         a stale talk. Older documents simply have none. */
+      revision: str(raw.revision ?? "", text(40, false)),
       theme: raw.theme,
       transition: str(raw.transition, choice(TRANSITIONS)),
       selectedExampleId: str(raw.selectedExampleId, text(100)),
@@ -985,6 +1077,9 @@
     FITS,
     OBJECT_TYPES,
     SHAPES,
+    LAYOUTS,
+    SCALES,
+    ARRANGEMENTS,
     TEXT_STYLES,
     FILL_STYLES,
     VISUAL_STYLES,
