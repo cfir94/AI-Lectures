@@ -142,6 +142,13 @@ p {
   justify-content: center;
   align-items: center;
   padding: 0 0 68px;
+  /* `render` writes the current slide's palette here, so the letterbox is the
+     slide's own surface. A light slide in a dark frame reads as a mistake.
+     The ground changes at the speed of the transition that is carrying it — a
+     `cut` that leaves the frame fading for another half second is a cut only
+     in the middle of the screen. */
+  background: var(--surface);
+  transition: background var(--ground-ms, 360ms);
 }
 .stage {
   width: min(100%, calc((100svh - 68px) * 16 / 9));
@@ -150,7 +157,7 @@ p {
   overflow: hidden;
   container-type: inline-size;
   background: var(--surface);
-  transition: background 0.6s;
+  transition: background var(--ground-ms, 360ms);
 }
 .stage:focus {
   outline: none;
@@ -1427,6 +1434,20 @@ h1 {
   animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--w) * 0.09s + 0.12s + var(--enter-delay, 0s));
 }
+/* A transform on a descendant composites it on its own layer, and an
+   ancestor's `background-clip: text` never reaches it. The animation holds an
+   identity transform even at rest, so a gradient headline split into cascade
+   words did not render dim — it rendered as nothing at all, because the text
+   fill is transparent and the gradient stayed outside. Each word carries the
+   ramp itself; with the words arriving one at a time, that is what it should
+   have been doing anyway. */
+.headline-accent .cascade-word,
+.slide-text-spectrum .cascade-word {
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 @keyframes m-rise {
   from {
     opacity: 0;
@@ -1495,15 +1516,23 @@ h1 {
   to { opacity: 0; clip-path: inset(0 0 0 100%); }
 }
 
-/* Slide-to-slide transitions. --dir is 1 forward, -1 back. */
+/* Slide-to-slide transitions. --dir is 1 forward, -1 back.
+
+   The outgoing slide stays underneath and stays opaque. It used to sit on top
+   and dissolve, which meant that for a third of a second the audience read the
+   incoming headline straight through the outgoing one — two sentences at once,
+   on top of each other. The incoming slide is what moves now: it covers. */
 .slide.leaving {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 1;
   pointer-events: none;
 }
-[data-transition="fade"] .slide.leaving {
-  animation: t-fade-out var(--slide-exit-duration, 0.34s) cubic-bezier(0.4, 0, 1, 1) both;
+.slide:not(.leaving) {
+  z-index: 2;
+}
+[data-transition="fade"] .slide.entering {
+  animation: t-fade-in 0.36s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="push"] .slide.leaving {
   animation: t-push-out var(--slide-exit-duration, 0.44s) cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -1517,14 +1546,26 @@ h1 {
 [data-transition="zoom"] .slide.entering {
   animation: t-zoom-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
+@keyframes t-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
 @keyframes t-fade-out {
   to {
     opacity: 0;
   }
 }
+@keyframes t-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+/* The outgoing slide drifts a little for depth. It keeps its opacity: the
+   incoming slide is fully opaque and slides over the top of it. */
 @keyframes t-push-out {
   to {
-    opacity: 0;
     transform: translateX(calc(var(--dir) * 9%));
   }
 }
@@ -1535,16 +1576,9 @@ h1 {
 }
 @keyframes t-zoom-out {
   to {
-    opacity: 0;
     transform: scale(1.09);
   }
 }
-@keyframes t-zoom-in {
-  from {
-    transform: scale(0.94);
-  }
-}
-
 /* Backdrops. Every ambient loop stays small enough that restarting it on a
    re-render is invisible. */
 .grid-plane {

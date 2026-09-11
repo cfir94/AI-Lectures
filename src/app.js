@@ -640,13 +640,17 @@
       ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${rich(value)}</p>`
       : "";
   // "cascade" needs each word on its own, so it gets its own markup path.
-  const headline = (slide, value) =>
+  /* `from` continues the count across a headline that is split into a title and
+     an accent. Without it both halves start at word zero, and a sentence that
+     reads right to left arrives in two overlapping waves — which is what a
+     presenter reports as the words landing on top of each other. */
+  const headline = (slide, value, from = 0) =>
     slide.motion === "cascade"
       ? value
           .split(" ")
           .map(
             (word, i) =>
-              `<span class="cascade-word" style="--w:${i}">${esc(word)}</span>`,
+              `<span class="cascade-word" style="--w:${from + i}">${esc(word)}</span>`,
           )
           .join(" ")
       /* Emphasis works in a headline for the same reason it works in a caption:
@@ -672,7 +676,7 @@
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, title.split(" ").length)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -692,7 +696,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
+      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, title.split(" ").length)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
 
     );
   }
@@ -1018,6 +1022,14 @@
     const slide = deck.slides[state.slide];
     const root = $("#slide-root");
     document.documentElement.dataset.theme = deck.theme;
+    /* The ground the stage is painted on, and the letterbox around it, follow
+       the slide rather than the deck theme. Without this a `pearl` slide is a
+       white rectangle floating in whatever colour the theme happens to be —
+       which is the navy frame the presenter reported, and the flash of it he
+       saw mid-transition. Writing nothing for a "deck" slide keeps the theme
+       fallback intact. */
+    const ground = `${paletteStyle(slide)}--ground-ms:${slide.transition === "cut" ? 0 : 360}ms;`;
+    for (const el of [$(".theater"), $("#stage")]) el.style.cssText = ground;
     root.dataset.transition = slide.transition;
     const html = SCENES[slide.type](slide, state.slide, state.step);
     const sameSlide = renderedSlide === state.slide;
