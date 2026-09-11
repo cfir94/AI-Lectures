@@ -38,6 +38,9 @@ test('opening, audience question and presenter motion stay staged as designed',(
 test('slide 8 dissolves and motion layers expose matching object presets',()=>{
   const slide8=deck.slides.find(s=>s.id==='lecture-three-families');
   assert.equal(slide8.transition,'dissolve');
+  assert.deepEqual(Object.keys(C.OBJECT_MOTION_EQUIVALENTS),Object.keys(C.MOTIONS));
+  for(const preset of Object.values(C.OBJECT_MOTION_EQUIVALENTS))
+    assert.ok(C.OBJECT_ENTRANCES[preset],`${preset} is not a valid object entrance`);
   for(const key of [...Object.keys(C.MOTIONS),...Object.keys(C.TRANSITIONS)]){
     if(key==='still'||key==='cut') continue;
     assert.ok(C.OBJECT_ENTRANCES[key],`${key} is missing from object entrances`);
@@ -51,6 +54,10 @@ test('slide transitions cannot overwrite content or object entrances',()=>{
   assert.ok(!css.includes('.slide.entering > .scene'));
   assert.ok(!css.includes('.slide.entering > .free-object-layer'));
   assert.match(css,/\.slide\.entering > \.atmosphere:not\(\.backdrop-retained\)/);
+  assert.match(css,/\.slide\.transition-preview \.free-object/);
   assert.match(app,/previewingSlideMotion = true/);
+  assert.match(app,/previewingSlideTransition = true/);
+  assert.match(app,/state = C\.goTo\(deck, slideIndex\)/);
+  assert.match(app,/objectEntrance === "cascade" && object\.type !== "text"/);
   assert.match(app,/fresh\.replaceWith\(held\)/);
 });

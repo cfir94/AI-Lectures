@@ -55,6 +55,7 @@
     renderedSlide = -1,
     renderedSceneKey = null,
     previewingSlideMotion = false,
+    previewingSlideTransition = false,
     renderedDots = "";
   /* A copy saved in this browser wins, because it is the presenter's own work
      and losing it would be unforgivable. But it also used to hide every later
@@ -1166,14 +1167,20 @@
     root.dataset.transition = slide.transition;
     const html = SCENES[slide.type](slide, state.slide, state.step);
     const sameSlide = renderedSlide === state.slide;
+    const motionPreview = previewingSlideMotion;
+    const transitionPreview = previewingSlideTransition;
     if (!sameSlide) playing.clear();
     const direction = state.slide < renderedSlide ? -1 : 1;
     root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
     const previous = root.lastElementChild;
     const previousSlide = deck.slides[renderedSlide];
-    const retainBackdrop = previous && sameBackdrop(previousSlide, slide);
+    const retainBackdrop =
+      previous && !transitionPreview && sameBackdrop(previousSlide, slide);
     const hasObjectExits =
-      previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
+      transitionPreview
+        ? null
+        : (previous?.querySelector(".free-object:not(.object-exit-none)") ??
+          null);
     const exitsOnly =
       previous && !sameSlide && hasObjectExits;
     /* Both halves of the timing come from `core`, and both are scaled by the
@@ -1189,7 +1196,8 @@
     const outgoingTime = Math.max(slideExitTime, objectExitTime);
     if (
       previous &&
-      !sameSlide &&
+      (!sameSlide || transitionPreview) &&
+      !motionPreview &&
       !reducedMotion() &&
       (slide.transition !== "cut" || exitsOnly)
     ) {
@@ -1201,6 +1209,7 @@
       previous.classList.remove("entering");
       previous.style.setProperty("--dir", direction);
       previous.classList.add("leaving");
+      if (transitionPreview) previous.classList.add("transition-preview");
       if (hasObjectExits)
         previous.style.setProperty("--slide-exit-duration", `${objectExitTime}ms`);
       if (exitsOnly) previous.classList.add("object-exits-only");
@@ -1228,9 +1237,13 @@
     const current = root.lastElementChild;
     current.style.setProperty("--dir", direction);
     // A step inside the same slide keeps the stage still; only beats animate.
-    if (sameSlide && !previewingSlideMotion)
+    if (sameSlide && !motionPreview)
       current.classList.remove(`motion-${slide.motion}`);
+    // A transition preview demonstrates the stage change alone. Content
+    // motion has its own preview and must not obscure what was selected.
+    if (transitionPreview) current.classList.add("no-motion");
     previewingSlideMotion = false;
+    previewingSlideTransition = false;
     renderedSlide = state.slide;
     const sceneKey = `${state.slide}:${state.step}`;
     if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
@@ -3308,17 +3321,35 @@
       return;
     }
     if (e.target.matches("select[data-field]")) {
-      setPath(e.target.dataset.field, e.target.value);
-      if (e.target.dataset.field.endsWith(".transition")) {
-        save();
-        $("#slide-root").dataset.transition = e.target.value;
-        return;
-      }
-      if (e.target.dataset.field.endsWith(".motion")) {
-        previewingSlideMotion = true;
+      const path = e.target.dataset.field;
+      setPath(path, e.target.value);
+      const pathParts = path.split(".");
+      const slideIndex =
+        pathParts[0] === "slides" ? Number(pathParts[1]) : Number.NaN;
+      if (Number.isInteger(slideIndex)) state = C.goTo(deck, slideIndex);
+      if (path.endsWith(".transition")) {
+        previewingSlideTransition = true;
+        previewingSlideMotion = false;
         renderedSceneKey = null;
         save();
         render();
+        notify(`תצוגה מקדימה: ${C.TRANSITIONS[e.target.value]}`);
+        return;
+      }
+      if (path.endsWith(".motion")) {
+        const editedSlide = deck.slides[slideIndex];
+        const objectEntrance = C.OBJECT_MOTION_EQUIVALENTS[e.target.value];
+        for (const object of editedSlide?.objects ?? [])
+          object.entrance =
+            objectEntrance === "cascade" && object.type !== "text"
+              ? "fade"
+              : objectEntrance;
+        previewingSlideMotion = true;
+        previewingSlideTransition = false;
+        renderedSceneKey = null;
+        save();
+        render();
+        notify(`תצוגה מקדימה: ${C.MOTIONS[e.target.value]}`);
         return;
       }
       // Replay the entrance so the presenter sees the preset they just picked.
@@ -3327,7 +3358,7 @@
       save();
       render();
       // Choosing the picture backdrop reveals its upload field.
-      if (e.target.dataset.field.endsWith(".backdrop")) renderEditor();
+      if (path.endsWith(".backdrop")) renderEditor();
       return;
     }
     if (e.target.id === "editor-example") {

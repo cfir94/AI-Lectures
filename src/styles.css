@@ -272,6 +272,13 @@ p {
 .slide.leaving .object-exit-push { animation-name: object-push-out; }
 .slide.leaving .object-exit-wipe { animation-name: object-wipe-out; }
 .slide.leaving .object-exit-curtain { animation-name: object-curtain-out; }
+/* A live transition preview demonstrates the stage change in isolation. The
+   incoming slide already carries `no-motion`; this also keeps any configured
+   exits on the outgoing copy from competing with the selected transition. */
+.slide.transition-preview .free-object,
+.slide.transition-preview .object-cascade-word {
+  animation: none !important;
+}
 .slide.object-exits-only {
   z-index: 3;
   background: transparent;

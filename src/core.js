@@ -211,6 +211,18 @@
     zoom: "התקרבות",
     still: "בלי תנועה",
   };
+  /* A slide motion is also the default entrance for any freely positioned
+     objects on that slide. This keeps "content entrance" truthful after text
+     has been converted to a movable box: the presenter still sees the choice
+     affect the whole slide, and may then fine-tune one object independently. */
+  const OBJECT_MOTION_EQUIVALENTS = {
+    rise: "rise",
+    blur: "blur",
+    wipe: "wipe",
+    cascade: "cascade",
+    zoom: "zoom",
+    still: "none",
+  };
   const BACKDROPS = {
     /* The arc family. `arcs` is the quiet original the presenter picked out —
        two hairline curves that arrive once and then hold still. The three
@@ -1135,6 +1147,7 @@
     VIDEO_SOURCES,
     videoEmbed,
     MOTIONS,
+    OBJECT_MOTION_EQUIVALENTS,
     BACKDROPS,
     TRANSITIONS,
     VIDEO_AUTOPLAY,
