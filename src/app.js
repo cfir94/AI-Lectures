@@ -612,8 +612,13 @@
     const palette = C.PALETTE_STYLES[slide.palette] || C.PALETTE_STYLES.ice;
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
+  /* Whether this slide's stage is a light one. Some effects are written for a
+     dark room and have to be dialled back on white — and a light slide is also
+     where a white tool mark would vanish, so the stage says which it is. */
+  const paletteTone = (slide) =>
+    slide.palette === "deck" ? "" : (C.PALETTE_STYLES[slide.palette]?.tone ?? "dark");
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
 
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
@@ -639,7 +644,12 @@
               `<span class="cascade-word" style="--w:${i}">${esc(word)}</span>`,
           )
           .join(" ")
-      : esc(value);
+      /* Emphasis works in a headline for the same reason it works in a caption:
+         the dominant word is the one the sentence turns on. `rich` escapes
+         first and only then marks the asterisk pair, so the stored string can
+         still be edited in place as the plain text the presenter typed.
+         `cascade` is the exception — it needs each word in its own element. */
+      : rich(value);
 
   function statementSlide(slide, index) {
     const title = visibleText(slide, "title");

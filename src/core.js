@@ -2,14 +2,15 @@
 (() => {
   "use strict";
   // key -> what the editor shows, plus the two swatch colours for its preview.
+  /* Four themes, cut from the same closed gamut as the slide palettes: white,
+     black, purple and blue/cyan. Warm and green were removed on purpose — a
+     theme nobody would choose is not an option, it is a way to make the deck
+     look like a different deck by accident. */
   const THEMES = {
-    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#10171e", "#88e6ee"] },
-    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#ffffff", "#2359c4"] },
-    wine: { name: "בורדו ולבן", hint: "חם · דרמטי", swatch: ["#280f1c", "#ffe2ec"] },
-    forest: { name: "יער ומנטה", hint: "עמוק · רגוע", swatch: ["#101d16", "#7fe3b0"] },
-    ember: { name: "פחם וענבר", hint: "חם · ערבי", swatch: ["#1c1510", "#f0b978"] },
-    ink: { name: "דיו ונייר", hint: "מינימלי · חד", swatch: ["#0e0e0e", "#e8e2d6"] },
-    nebula: { name: "סגול ולילך", hint: "לילי · חלומי", swatch: ["#151327", "#b9a3ff"] },
+    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#101323", "#a3efff"] },
+    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#f8faff", "#4464d6"] },
+    ink: { name: "שחור ולבן", hint: "מינימלי · חד", swatch: ["#0a0b0d", "#ffffff"] },
+    nebula: { name: "סגול", hint: "לילי · רחוק", swatch: ["#120e22", "#a88cff"] },
   };
   const LIMITS = {
     drafts: 25,
@@ -87,7 +88,10 @@
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const text = (max, required = true) => ({ max, required });
   const digits = (max) => ({ max, required: true, digits: true });
-  const choice = (options) => ({ choice: options });
+  /* `retired` is a map from an option that no longer exists to the one that
+     took over its role, so a document saved before a table was narrowed still
+     opens instead of failing whole. */
+  const choice = (options, retired) => ({ choice: options, retired });
   const picture = () => ({ picture: true, max: LIMITS.image });
   const link = () => ({ max: 300, required: false, link: true });
   /* A link is opened by the presenter mid-talk, so only https is accepted:
@@ -213,100 +217,89 @@
      than carrying colours of its own. It is first because it is the sane
      default — without it every slide pins itself, the theme controls nothing
      but the strip around the stage, and choosing one appears to do nothing. */
+  /* The closed set. The presenter asked for one palette and named it: white,
+     black, purple and blue/cyan — nothing warm, nothing green, nothing grey-
+     green. Six entries, each with a role it keeps for the whole talk, and the
+     cyan→blue→purple ramp `pearl` carries is the source every other spectrum
+     is cut from. A seventh option would not be a richer deck, it would be a
+     wider gamut, which is the thing that was wrong. */
   const PALETTES = {
     deck: "לפי ערכת המצגת",
     pearl: "לבן פנינה · תכלת וסגול",
     prism: "דיו · תכלת וסגול",
-    ice: "קרח ותכלת",
-    violet: "סגול חשמלי",
-    rose: "ורוד ומג׳נטה",
-    amber: "ענבר וזהב",
-    danger: "אדום אזהרה",
-    mint: "מנטה וירוק",
-    cobalt: "כחול קובלט",
-    steel: "פלדה ולבן",
-    paper: "לבן ודיו",
-    mist: "ערפל בהיר",
-    sand: "חול וחום",
-    midnight: "כחול חצות",
+    ice: "פחם ותכלת",
+    cobalt: "כחול עמוק",
+    violet: "סגול",
+    steel: "שחור ולבן",
   };
+  /* Palettes and themes that existed before the gamut was closed. A presenter
+     may have a saved copy or an exported file still carrying one, and a
+     removed key would fail the whole document — so every retired name is
+     translated to the option that took over its role instead. */
+  const RETIRED_PALETTES = {
+    rose: "violet",
+    amber: "violet",
+    danger: "steel",
+    mint: "ice",
+    sand: "pearl",
+    paper: "pearl",
+    mist: "pearl",
+    midnight: "prism",
+  };
+  const RETIRED_THEMES = { wine: "nebula", forest: "carbon", ember: "carbon" };
   const PALETTE_STYLES = {
+    /* Light stages. Everything on the stage is built from these tokens, so a
+       pale surface with dark text works the same way round — but `raised` and
+       `soft` have to go *darker* than the surface here, not lighter, or every
+       panel and chip disappears into the background.
+       `pearl` carries the reference gradient the presenter picked out, and a
+       tool mark dropped on it must be the black variant: a white mark on a
+       white stage is an invisible mark. */
     pearl: {
       surface: "#f8faff", raised: "#ffffff", soft: "#eaf0ff", line: "#bac8e0",
       text: "#182442", muted: "#52617d", accent: "#5264cb", rgb: "82,100,203",
       spectrum: "linear-gradient(110deg,#087caa 5%,#4464d6 50%,#8451c2 96%)",
+      tone: "light",
     },
+    /* The same ramp on ink: the dark half of the deck's own light field. */
     prism: {
       surface: "#101323", raised: "#1e2440", soft: "#191d34", line: "#414d76",
       text: "#ffffff", muted: "#b9c5e4", accent: "#adceff", rgb: "173,206,255",
       spectrum: "linear-gradient(110deg,#a3efff 5%,#a3bfff 52%,#c3a1ff 96%)",
+      tone: "dark",
     },
+    /* The house. Charcoal that reads as black from the back of the room, with
+       the cyan end of the ramp on it. */
     ice: {
-      surface: "#10171e", raised: "#1d2933", soft: "#17242d", line: "#365160",
-      text: "#f6fbff", muted: "#aebfca", accent: "#88e6ee", rgb: "136,230,238",
-      spectrum: "linear-gradient(110deg,#bff8ff 5%,#74c8ff 52%,#b9a3ff 96%)",
+      surface: "#0b0f14", raised: "#171e26", soft: "#10161d", line: "#2e3a47",
+      text: "#f7fafd", muted: "#a9b6c3", accent: "#7fe3ff", rgb: "127,227,255",
+      spectrum: "linear-gradient(110deg,#bff2ff 5%,#5b8cff 52%,#a77cff 96%)",
+      tone: "dark",
     },
-    violet: {
-      surface: "#171126", raised: "#2a2044", soft: "#221938", line: "#4d3d75",
-      text: "#faf7ff", muted: "#c2b7d8", accent: "#b9a3ff", rgb: "185,163,255",
-      spectrum: "linear-gradient(110deg,#d8ccff 4%,#a887ff 48%,#ff79c9 96%)",
-    },
-    rose: {
-      surface: "#210f1b", raised: "#3b1a30", soft: "#301326", line: "#693251",
-      text: "#fff7fb", muted: "#d4afc2", accent: "#ff72b6", rgb: "255,114,182",
-      spectrum: "linear-gradient(110deg,#ffd2e8 5%,#ff72b6 48%,#b99aff 96%)",
-    },
-    amber: {
-      surface: "#21170f", raised: "#382819", soft: "#2d2015", line: "#62472a",
-      text: "#fff9ef", muted: "#d5bea1", accent: "#f2bd62", rgb: "242,189,98",
-      spectrum: "linear-gradient(110deg,#fff0b8 4%,#f2bd62 50%,#ff8875 96%)",
-    },
-    danger: {
-      surface: "#200f13", raised: "#39191e", soft: "#2e1418", line: "#683039",
-      text: "#fff7f7", muted: "#d7b0b4", accent: "#ff6b6b", rgb: "255,107,107",
-      spectrum: "linear-gradient(110deg,#ffd0c7 4%,#ff6b6b 48%,#ff8a3d 96%)",
-    },
-    mint: {
-      surface: "#0f1e18", raised: "#1b3429", soft: "#162a21", line: "#315a49",
-      text: "#f4fff9", muted: "#add0bf", accent: "#7fe3b0", rgb: "127,227,176",
-      spectrum: "linear-gradient(110deg,#c9ffe2 4%,#7fe3b0 50%,#b8e96f 96%)",
-    },
+    /* One step deeper into blue. This is where the talk stops explaining and
+       starts doing. */
     cobalt: {
-      surface: "#0d1628", raised: "#172947", soft: "#121f37", line: "#2b4e7b",
-      text: "#f5f9ff", muted: "#aec0da", accent: "#6ea8ff", rgb: "110,168,255",
-      spectrum: "linear-gradient(110deg,#c9e0ff 4%,#6ea8ff 50%,#7de8e8 96%)",
+      surface: "#080e1e", raised: "#142244", soft: "#0d1730", line: "#27467a",
+      text: "#f4f8ff", muted: "#a8bad8", accent: "#6e9dff", rgb: "110,157,255",
+      spectrum: "linear-gradient(110deg,#cfe1ff 4%,#6e9dff 50%,#a77cff 96%)",
+      tone: "dark",
     },
-    /* No hue at all, and the only pure white in the table. It is what a slide
-       looks like when the colour drains out of it — which is how this deck says
+    /* The far end of the same ramp. One slide in the talk is about a person
+       rather than a tool, and this is the colour it gets — once, on purpose. */
+    violet: {
+      surface: "#120e22", raised: "#241c40", soft: "#191333", line: "#453a6e",
+      text: "#f8f5ff", muted: "#bdb2da", accent: "#a88cff", rgb: "168,140,255",
+      spectrum: "linear-gradient(110deg,#ded2ff 4%,#a88cff 50%,#6e9dff 96%)",
+      tone: "dark",
+    },
+    /* No hue at all: black and white and nothing else. It is what a slide looks
+       like when the colour drains out of it — which is how this deck says
        something broke, instead of turning the wall red. */
     steel: {
-      surface: "#0e1013", raised: "#1b1f24", soft: "#15181c", line: "#39404a",
-      text: "#ffffff", muted: "#9aa3ad", accent: "#dbe2ea", rgb: "219,226,234",
-      spectrum: "linear-gradient(110deg,#ffffff 4%,#c9d2dc 52%,#8f9aa6 96%)",
-    },
-    /* Light stages. Everything on the stage is built from these tokens, so a
-       pale surface with dark text works the same way round — but `raised` and
-       `soft` have to go *darker* than the surface here, not lighter, or every
-       panel and chip disappears into the background. */
-    paper: {
-      surface: "#ffffff", raised: "#eef1f6", soft: "#f5f7fa", line: "#c9d2de",
-      text: "#0c1118", muted: "#5a6675", accent: "#1f5fd0", rgb: "31,95,208",
-      spectrum: "linear-gradient(110deg,#1f5fd0 4%,#3b4fd8 52%,#7a3fd0 96%)",
-    },
-    mist: {
-      surface: "#e8edf3", raised: "#d6dee8", soft: "#dfe6ee", line: "#adbccd",
-      text: "#101823", muted: "#4f5d6e", accent: "#1d5bb8", rgb: "29,91,184",
-      spectrum: "linear-gradient(110deg,#1d5bb8 4%,#2f6fa8 52%,#5a4fb0 96%)",
-    },
-    sand: {
-      surface: "#f6f1e7", raised: "#e6ddcc", soft: "#efe8da", line: "#cdbfa5",
-      text: "#1c1710", muted: "#6b5c46", accent: "#a35a1c", rgb: "163,90,28",
-      spectrum: "linear-gradient(110deg,#a35a1c 4%,#b8762a 52%,#7d5a2e 96%)",
-    },
-    midnight: {
-      surface: "#05070f", raised: "#101728", soft: "#0a0f1c", line: "#243252",
-      text: "#eef3ff", muted: "#93a3c2", accent: "#7fd8ff", rgb: "127,216,255",
-      spectrum: "linear-gradient(110deg,#d8f4ff 4%,#7fd8ff 50%,#9db4ff 96%)",
+      surface: "#0a0b0d", raised: "#17191c", soft: "#101215", line: "#343840",
+      text: "#ffffff", muted: "#98a0a9", accent: "#ffffff", rgb: "255,255,255",
+      spectrum: "linear-gradient(110deg,#ffffff 4%,#d2d8e0 52%,#9aa3af 96%)",
+      tone: "dark",
     },
   };
   /* Where the words sit in the frame. A deck where every slide centres its
@@ -343,7 +336,7 @@
     visibility: choice(VISIBILITY),
     layout: choice(LAYOUTS),
     scale: choice(SCALES),
-    palette: choice(PALETTES),
+    palette: choice(PALETTES, RETIRED_PALETTES),
     textStyle: choice(TEXT_STYLES),
     motion: choice(MOTIONS),
     backdrop: choice(BACKDROPS),
@@ -710,8 +703,10 @@
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
         if (v === undefined) return Object.keys(spec.choice)[0];
-        if (typeof v !== "string" || !Object.hasOwn(spec.choice, v)) fail();
-        return v;
+        if (typeof v !== "string") fail();
+        const current = spec.retired?.[v] ?? v;
+        if (!Object.hasOwn(spec.choice, current)) fail();
+        return current;
       }
       const value = spec.required ? v : (v ?? "");
       if (typeof value !== "string" || value.length > spec.max) fail();
@@ -830,7 +825,8 @@
       !obj(raw) ||
       serializedBytes(raw) > LIMITS.importBytes ||
       raw.version !== 2 ||
-      !Object.hasOwn(THEMES, raw.theme)
+      typeof raw.theme !== "string" ||
+      !Object.hasOwn(THEMES, RETIRED_THEMES[raw.theme] ?? raw.theme)
     )
       fail();
     if (
@@ -851,7 +847,7 @@
          on since that copy was taken, and offer it rather than silently showing
          a stale talk. Older documents simply have none. */
       revision: str(raw.revision ?? "", text(40, false)),
-      theme: raw.theme,
+      theme: RETIRED_THEMES[raw.theme] ?? raw.theme,
       transition: str(raw.transition, choice(TRANSITIONS)),
       selectedExampleId: str(raw.selectedExampleId, text(100)),
       slides: raw.slides.map((s) => {
@@ -1069,6 +1065,8 @@
     TRANSITIONS,
     PALETTES,
     PALETTE_STYLES,
+    RETIRED_PALETTES,
+    RETIRED_THEMES,
     VISIBILITY,
     isShown,
     shownCount,

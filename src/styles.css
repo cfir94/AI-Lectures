@@ -1,93 +1,60 @@
-/* Keynote canvas: one focal point. Editing controls live on a separate layer. */
+/* Keynote canvas: one focal point. Editing controls live on a separate layer.
+   The deck runs on one closed gamut — white, black, purple and blue/cyan — and
+   these four themes are the whole of it. Slide palettes in `core.js` are cut
+   from the same ramp; nothing here should introduce a hue that is not on it. */
 :root {
   font-family: "Segoe UI", Arial, sans-serif;
   font-size: 16px;
   color-scheme: dark;
-  --bg: #202526;
-  --surface: #202526;
-  --raised: #303637;
-  --text: #f6f7f8;
-  --muted: #b9c0c4;
-  --accent: #b5d8fb;
-  --accent-rgb: 181, 216, 251;
-  --line: #485052;
-  --soft: #293337;
-  --spectrum: linear-gradient(110deg, #c3e9ed 8%, #9cc9fb 50%, #bec0fa 95%);
-  --shadow: 0 20px 80px #0004;
+  --bg: #101323;
+  --surface: #101323;
+  --raised: #1e2440;
+  --text: #ffffff;
+  --muted: #b9c5e4;
+  --accent: #a3efff;
+  --accent-rgb: 163, 239, 255;
+  --line: #414d76;
+  --soft: #191d34;
+  --spectrum: linear-gradient(110deg, #a3efff 5%, #a3bfff 52%, #c3a1ff 96%);
+  --shadow: 0 20px 80px #0006;
 }
 :root[data-theme="paper"] {
   color-scheme: light;
-  --bg: #f9fafc;
-  --surface: #f9fafc;
-  --raised: #edf1f7;
-  --text: #242729;
-  --muted: #616870;
-  --accent: #3868bd;
-  --accent-rgb: 56, 104, 189;
-  --line: #d3d9e3;
-  --soft: #eaf0fb;
+  --bg: #f8faff;
+  --surface: #f8faff;
+  --raised: #ffffff;
+  --text: #182442;
+  --muted: #52617d;
+  --accent: #5264cb;
+  --accent-rgb: 82, 100, 203;
+  --line: #bac8e0;
+  --soft: #eaf0ff;
   --shadow: 0 20px 80px #0001;
-  --spectrum: linear-gradient(110deg, #286b95, #3c6adb 55%, #745dad);
-}
-:root[data-theme="wine"] {
-  --bg: #301d26;
-  --surface: #301d26;
-  --raised: #462e3b;
-  --text: #fff4f8;
-  --muted: #cfb8c4;
-  --accent: #f5d9e8;
-  --accent-rgb: 245, 217, 232;
-  --line: #664655;
-  --soft: #442937;
-  --spectrum: linear-gradient(110deg, #ffeadb, #f0c9dc 55%, #ccbfed);
-}
-:root[data-theme="forest"] {
-  --bg: #16221c;
-  --surface: #16221c;
-  --raised: #24352c;
-  --text: #f2f8f4;
-  --muted: #adc3b6;
-  --accent: #7fe3b0;
-  --accent-rgb: 127, 227, 176;
-  --line: #3d5347;
-  --soft: #1e2f26;
-  --spectrum: linear-gradient(110deg, #a8f0c6, #7fe3b0 50%, #cfe89a 95%);
-}
-:root[data-theme="ember"] {
-  --bg: #221b16;
-  --surface: #221b16;
-  --raised: #362a22;
-  --text: #faf3ec;
-  --muted: #c9b6a5;
-  --accent: #f0b978;
-  --accent-rgb: 240, 185, 120;
-  --line: #53422f;
-  --soft: #2c231b;
-  --spectrum: linear-gradient(110deg, #ffd9a0, #f0b978 50%, #e79a86 95%);
+  --spectrum: linear-gradient(110deg, #087caa 5%, #4464d6 50%, #8451c2 96%);
 }
 :root[data-theme="ink"] {
-  --bg: #121212;
-  --surface: #121212;
-  --raised: #232323;
-  --text: #f4f1ec;
-  --muted: #a8a29a;
-  --accent: #e8e2d6;
-  --accent-rgb: 232, 226, 214;
-  --line: #3a3a38;
-  --soft: #1c1c1b;
-  --spectrum: linear-gradient(110deg, #ffffff, #e8e2d6 55%, #c9c0ad 95%);
+  --bg: #0a0b0d;
+  --surface: #0a0b0d;
+  --raised: #17191c;
+  --text: #ffffff;
+  --muted: #98a0a9;
+  --accent: #ffffff;
+  --accent-rgb: 255, 255, 255;
+  --line: #343840;
+  --soft: #101215;
+  --spectrum: linear-gradient(110deg, #ffffff 4%, #d2d8e0 52%, #9aa3af 96%);
 }
 :root[data-theme="nebula"] {
-  --bg: #1b1930;
-  --surface: #1b1930;
-  --raised: #2b2848;
-  --text: #f4f1ff;
-  --muted: #b5b0d4;
-  --accent: #b9a3ff;
-  --accent-rgb: 185, 163, 255;
-  --line: #453f6b;
-  --soft: #232041;
-  --spectrum: linear-gradient(110deg, #d3c4ff, #b9a3ff 45%, #ff9fd6 95%);
+  --bg: #120e22;
+  --surface: #120e22;
+  --raised: #241c40;
+  --text: #f8f5ff;
+  --muted: #bdb2da;
+  --accent: #a88cff;
+  --accent-rgb: 168, 140, 255;
+  --line: #453a6e;
+  --soft: #191333;
+  --spectrum: linear-gradient(110deg, #ded2ff 4%, #a88cff 50%, #6e9dff 96%);
 }
 * {
   box-sizing: border-box;
@@ -518,7 +485,7 @@ p {
   background: var(--visual-gradient);
 }
 .visual-window.is-spectrum header b {
-  color: #10171e;
+  color: #101323;
 }
 
 /* A slow mesh of colour — large, quiet, and never the subject of the slide. */
@@ -551,7 +518,7 @@ p {
   top: 18%;
   inset-inline-end: 6%;
   width: 44%;
-  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #ff7bb0);
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #8451c2);
   opacity: 0.34;
 }
 .mesh-blob:nth-child(4) {
@@ -577,7 +544,7 @@ p {
   border-color: transparent;
 }
 .visual-accordion.is-spectrum span {
-  color: #10171e;
+  color: #101323;
 }
 :is(.visual-glass, .visual-approval).is-spectrum {
   border-color: transparent;
@@ -586,7 +553,7 @@ p {
     var(--visual-gradient);
 }
 :is(.visual-glass, .visual-approval).is-spectrum span {
-  color: #10171e;
+  color: #101323;
 }
 :is(.visual-glass, .visual-approval).is-spectrum i {
   background: var(--visual-colour);
@@ -1091,9 +1058,16 @@ h1 {
   background: var(--accent);
   border-color: var(--accent);
 }
+/* The word the sentence turns on. It takes the palette's own cyan-to-purple
+   ramp rather than a colour of its own, so emphasis is the same gesture on
+   every slide in the deck instead of a different highlight each time. */
 .emph {
   font-weight: 600;
   color: var(--accent);
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 .scene-context {
   position: absolute;
@@ -1314,12 +1288,16 @@ h1 {
   padding: 0.12em 0.3em;
   border-radius: 6px;
   white-space: pre;
-  background: hsl(calc(196deg + var(--token) * 43deg) 62% 55% / 0.32);
+  /* The ramp walks the deck's own gamut and no further: cyan through blue to
+     purple. A wider step per token was prettier in isolation and put pink and
+     orange on a slide that has no business carrying either. */
+  background: hsl(calc(192deg + var(--token) * 17deg) 62% 55% / 0.32);
   animation: token-in 0.45s both;
   animation-delay: calc(var(--token) * 45ms);
 }
-:root[data-theme="paper"] .token {
-  background: hsl(calc(196deg + var(--token) * 43deg) 68% 58% / 0.4);
+:root[data-theme="paper"] .token,
+.slide[data-tone="light"] .token {
+  background: hsl(calc(192deg + var(--token) * 17deg) 68% 58% / 0.4);
 }
 .tokens-scene .scene-caption {
   margin-top: 3.2cqw;
