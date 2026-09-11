@@ -21,6 +21,33 @@ const smallSeed = () => {
   return document;
 };
 const indexOfType = (type) => seed.slides.findIndex((s) => s.type === type);
+test("illustrated beats round-trip editable labels and reject unsafe choices and oversized copy", () => {
+  const document = smallSeed();
+  const slide = C.blankSlide("illustrated");
+  document.slides.push(slide);
+  slide.items[0].label1 = "<script>טקסט</script>";
+  const parsed = C.validate(JSON.parse(C.safeJSON(document)));
+  const restored = parsed.slides.at(-1);
+  assert.equal(restored.items[0].label1, slide.items[0].label1);
+  assert.equal(C.fieldSpec(restored, "items.0.label1").max, 40);
+  assert.equal(C.SLIDE_TYPES.illustrated.beats(restored), 2);
+  for (const bad of ["constructor", "__proto__", "<img>"]) {
+    slide.items[0].visual = bad;
+    assert.throws(() => C.validate(document));
+  }
+  slide.items[0].visual = "cloud";
+  slide.items[0].label1 = "א".repeat(41);
+  assert.throws(() => C.validate(document));
+});
+test("visual labels can be edited in place without granting access to geometry or nontext fields", () => {
+  const slide = C.blankSlide("canvas");
+  slide.objects.push(C.blankObject("visual"));
+  assert.equal(C.fieldSpec(slide, "objects.0.label2").max, 40);
+  C.writePath(slide, "objects.0.label2", "הקשר חדש");
+  assert.equal(C.readPath(slide, "objects.0.label2"), "הקשר חדש");
+  for (const key of ["objects.0.x", "objects.0.visual", "objects.8.label1", "objects.__proto__.label1"])
+    assert.equal(C.fieldSpec(slide, key), null);
+});
 test("portable export preserves edited content, scripts and an isolated storage identity", async () => {
   const html = await readFile(
     new URL("../dist/index.html", import.meta.url),

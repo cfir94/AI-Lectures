@@ -120,9 +120,16 @@
   const VISUALS = {
     accordion: "כרטיס אקורדיון",
     glass: "זכוכית נוזלית",
+    approval: "זכוכית · גבול אישור",
     orb: "כדור זוהר",
     bars: "עמודות חיות",
     window: "חלון כלי",
+    cloud: "ענן שפה",
+    calculation: "חישוב ותוצאה",
+    retrieval: "שליפה מתוך מקור",
+    generation: "המשך משפט",
+    document: "מסמך מוכן",
+    connection: "חיבור לכלי",
   };
   /* Fill styles work like the text ones: a key CSS hooks onto and a Hebrew
      name. A visual has no outline state, so it gets the shorter table. */
@@ -198,6 +205,8 @@
      word. Values remain a closed table so imported documents cannot inject
      arbitrary CSS into the stage. */
   const PALETTES = {
+    pearl: "לבן פנינה · תכלת וסגול",
+    midnight: "דיו · תכלת וסגול",
     ice: "קרח ותכלת",
     violet: "סגול חשמלי",
     rose: "ורוד ומג׳נטה",
@@ -207,6 +216,16 @@
     cobalt: "כחול קובלט",
   };
   const PALETTE_STYLES = {
+    pearl: {
+      surface: "#f8faff", raised: "#ffffff", soft: "#eaf0ff", line: "#bac8e0",
+      text: "#182442", muted: "#52617d", accent: "#5264cb", rgb: "82,100,203",
+      spectrum: "linear-gradient(110deg,#087caa 5%,#4464d6 50%,#8451c2 96%)",
+    },
+    midnight: {
+      surface: "#101323", raised: "#1e2440", soft: "#191d34", line: "#414d76",
+      text: "#ffffff", muted: "#b9c5e4", accent: "#adceff", rgb: "173,206,255",
+      spectrum: "linear-gradient(110deg,#a3efff 5%,#a3bfff 52%,#c3a1ff 96%)",
+    },
     ice: {
       surface: "#10171e", raised: "#1d2933", soft: "#17242d", line: "#365160",
       text: "#f6fbff", muted: "#aebfca", accent: "#88e6ee", rgb: "136,230,238",
@@ -259,6 +278,29 @@
   /* Every slide type declares its fields once: validation, the editor and the
      beat count for the presenter's arrow keys all read this table. */
   const SLIDE_TYPES = {
+    language: {
+      label: "מעבדת מילים",
+      hint: "ענן שנפתח בלחיצה או משפט להשלמה. האפשרויות מוגדרות כאן מראש; ההפעלה בהרצאה אינה משנה את התוכן השמור.",
+      fields: { title: text(40), caption: text(120, false), mode: choice({cloud: "ענן נפתח", completion: "השלמת משפט"}) },
+      list: { key: "items", label: "הקשר", min: 2, max: 6, fields: {
+        word: text(18), prompt: text(80), first: text(18), second: text(18), third: text(18),
+      } },
+      beats: () => 1,
+    },
+    illustrated: {
+      label: "רעיון והמחשה",
+      hint: "רעיון אחד והמחשה אחת בכל צעד. החצים מחליפים את שניהם יחד. כל מילה בהמחשה ניתנת לעריכה, בנפרד מהעיצוב.",
+      fields: { title: text(40, false), composition: choice({split: "רעיון לצד המחשה", theatre: "המחשה במרכז הבמה"}) },
+      list: {
+        key: "items", label: "רעיון", min: 2, max: 5,
+        fields: {
+          word: text(18), caption: text(120, false),
+          visual: choice(VISUALS),
+          label1: text(40, false), label2: text(40, false), label3: text(40, false),
+        },
+      },
+      beats: (slide) => slide.items.length,
+    },
     statement: {
       label: "משפט גדול",
       hint: "כותרת אחת על הבמה. המילה המודגשת והמשפט שמתחת הם רשות.",
@@ -275,6 +317,7 @@
       fields: {
         title: text(40),
         tool: text(30),
+        accent: text(40, false),
         link: link(),
         caption: text(150, false),
         prompt: text(800, false),
@@ -384,9 +427,21 @@
     type.objects = true;
   }
   const BLANKS = {
+    language: { title: "מה יכול לבוא עכשיו?", caption: "בחרו הקשר. פתחו אפשרויות.", mode: "cloud", items: [
+      {word: "בוקר", prompt: "הבוקר שלי מתחיל עם", first: "קפה", second: "מוזיקה", third: "ריצה"},
+      {word: "רעיון", prompt: "הרעיון הבא שלי הוא", first: "סיפור", second: "אפליקציה", third: "הרצאה"},
+    ] },
+    illustrated: {
+      title: "רעיון אחד בכל רגע",
+      items: [
+        { word: "שפה.", caption: "מתוך אפשרויות נבנה משפט.", visual: "cloud", label1: "רעיון · שאלה · סיפור", label2: "מה יכול לבוא עכשיו?", label3: "מילה · הקשר · משמעות" },
+        { word: "פעולה.", caption: "ממילים לתוצר.", visual: "document", label1: "התוצר", label2: "מוכן לבדיקה", label3: "" },
+      ],
+    },
     statement: { title: "משפט חדש.", accent: "", caption: "" },
     demo: {
       title: "הדגמה חדשה.",
+      accent: "",
       tool: "הכלי",
       link: "",
       caption: "",
@@ -506,6 +561,9 @@
     if (!type) return null;
     const parts = String(path).split(".");
     if (parts.length === 1) return type.fields[parts[0]] ?? null;
+    if (parts.length === 3 && parts[0] === "objects" && /^\d+$/.test(parts[1]) &&
+        slide.objects?.[Number(parts[1])]?.type === "visual" && /^label[123]$/.test(parts[2]))
+      return text(40, false);
     if (parts.length !== 3 || !type.list || parts[0] !== type.list.key)
       return null;
     if (!/^\d+$/.test(parts[1]) || !slide[parts[0]]?.[Number(parts[1])])

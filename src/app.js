@@ -17,6 +17,7 @@
     );
   const initialHTML = document.documentElement.outerHTML;
   const timers = new Map();
+  const languageSessions = new Map();
   // A video only starts once the presenter asks for it.
   const playing = new Set();
   /* A file the presenter just picked can be played straight away from memory,
@@ -270,13 +271,28 @@
     // A tool window without a screenshot of one.
     window: (labels) =>
       `<header><i></i><i></i><i></i><b>${esc(labels[0])}</b></header><div class="window-body"><p>${esc(labels[1])}</p><p class="muted">${esc(labels[2])}</p></div>`,
+    cloud: (labels) => `<i class="cloud-orbit"></i><i class="cloud-orbit inner"></i>${labels.map((label, i) => `<p class="cloud-line cloud-line-${i}">${esc(label)}</p>`).join("")}`,
+    calculation: (labels) => `<p class="calculation-input" dir="auto">${esc(labels[0])}</p><i class="calculation-line"></i><p class="calculation-result" dir="auto">${esc(labels[1])}</p><small>${esc(labels[2])}</small>`,
+    retrieval: (labels) => `<div class="source-stack" aria-hidden="true"><i></i><i></i><i></i></div><p class="retrieval-query">${esc(labels[0])}</p><div class="retrieved-sheet"><i aria-hidden="true"></i><p>${esc(labels[1])}</p><small>${esc(labels[2])}</small></div>`,
+    generation: (labels) => `<p class="generation-context">${esc(labels[0])}</p><p class="generation-choice">${esc(labels[1])}<i aria-hidden="true"></i></p><p class="generation-alternatives">${esc(labels[2])}</p>`,
+    document: (labels) => `<div class="document-sheet"><span class="document-fold" aria-hidden="true"></span><p>${esc(labels[0])}</p><div class="document-lines" aria-hidden="true"><i></i><i></i><i></i></div><b>${esc(labels[1])}</b><small>${esc(labels[2])}</small></div>`,
+    connection: (labels) => `<div class="connection-end">${esc(labels[0])}</div><div class="connection-wire" aria-hidden="true"><i></i></div><div class="connection-end">${esc(labels[1])}</div><p>${esc(labels[2])}</p>`,
   };
-  const visualMarkup = (object) => {
+  VISUAL_PARTS.approval = VISUAL_PARTS.glass;
+  const visualBody = (visual, labels, prefix) => {
+    const markers = ["\uE000", "\uE001", "\uE002"];
+    return (VISUAL_PARTS[visual] || VISUAL_PARTS.accordion)(markers.map((marker, i) => labels[i] ? marker : ""))
+      .replace(/[\uE000-\uE002]/g, marker => {
+        const i = markers.indexOf(marker);
+        return `<span data-slide-text="${prefix}.label${i + 1}">${esc(labels[i])}</span>`;
+      });
+  };
+  const visualMarkup = (object, index) => {
     const spectrum = object.style === "spectrum" ? " is-spectrum" : "";
     const style = `--visual-colour:${esc(object.color)};--visual-secondary:${esc(object.secondary)};--visual-gradient:${esc(spectrumGradient(object.color))}`;
     const labels = [object.label1, object.label2, object.label3];
-    const body = (VISUAL_PARTS[object.visual] ?? VISUAL_PARTS.accordion)(labels);
-    return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="img" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
+    const body = visualBody(object.visual, labels, `objects.${index}`);
+    return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="group" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
   };
   const objectMarkup = (object, index) => {
     const selected = selectedObjectId === object.id;
@@ -293,7 +309,7 @@
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
         : '<span class="object-placeholder">תמונה</span>';
-    else if (object.type === "visual") body = visualMarkup(object);
+    else if (object.type === "visual") body = visualMarkup(object, index);
     else body = shapeMarkup(object, index);
     const handles =
       '<i class="object-handle resize-se" data-object-handle="resize" aria-hidden="true"></i>';
@@ -529,7 +545,7 @@
     return `--surface:${palette.surface};--raised:${palette.raised};--soft:${palette.soft};--line:${palette.line};--text:${palette.text};--muted:${palette.muted};--accent:${palette.accent};--accent-rgb:${palette.rgb};--spectrum:${palette.spectrum};`;
   };
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle}" aria-label="שקף ${index + 1}" style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
   const visibleText = (slide, key) => (isBound(slide, key) ? "" : slide[key]);
@@ -570,8 +586,9 @@
   }
   function demoSlide(slide, index) {
     const title = visibleText(slide, "title");
+    const accent = visibleText(slide, "accent");
     const tool = visibleText(slide, "tool");
-    const size = Math.min(9.5, 340 / (slide.title.length + 2));
+    const size = Math.min(9.5, 340 / (slide.title.length + slide.accent.length + 2));
     const open = C.safeLink(slide.link)
       ? `<a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת ${esc(slide.tool || "הכלי")}</a>`
       : "";
@@ -584,7 +601,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>${caption(slide, slide.caption)}</div>${controls}`,
+      `<div class="scene statement-scene">${tool ? `<span class="demo-tool" data-slide-text="tool">${esc(tool)}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
     );
   }
   function revealSlide(slide, index, step) {
@@ -605,6 +622,28 @@
       `--headline-size:${size}cqw`,
       `<div class="scene reveal-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<ol class="reveal-list">${words}</ol>${caption(slide, slide.items[step].caption, `items.${step}.caption`)}</div>`,
     );
+  }
+  function illustratedSlide(slide, index, step) {
+    const item = slide.items[step];
+    const path = `items.${step}`;
+    // Insert editable labels after escaping, so text can never become markup.
+    // The same asset templates serve free objects and presenter-controlled beats.
+    const art = visualBody(item.visual, [item.label1, item.label2, item.label3], path);
+    return frame(slide, index, `illustrated-slide composition-${slide.composition}`, "",
+      `<div class="scene illustrated-scene"><div class="illustrated-copy">${slide.title ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<div class="illustrated-beat"><h1 data-slide-text="${path}.word">${esc(item.word)}</h1>${caption(slide, item.caption, `${path}.caption`)}</div></div><div class="illustrated-art"><div class="illustrated-beat visual-component visual-${item.visual}" style="--visual-colour:var(--accent);--visual-secondary:var(--surface);--visual-gradient:var(--spectrum)">${art}</div></div></div>`);
+  }
+  function languageSlide(slide, index) {
+    const session = languageSessions.get(slide.id) || { selected: slide.mode === "completion" ? 0 : -1, input: null, chosen: "" };
+    const selected = Math.min(session.selected, slide.items.length - 1);
+    const item = slide.items[selected];
+    const clusters = slide.items.map((entry, i) => `<button class="language-seed seed-${i}" data-action="language-open" data-index="${i}" aria-pressed="${selected === i}"><span data-slide-text="items.${i}.word">${esc(entry.word)}</span></button>`).join("");
+    const choices = item ? ["first", "second", "third"].map(key => `<button class="language-option" data-action="language-choose" data-key="${key}"><span data-slide-text="items.${selected}.${key}">${esc(item[key])}</span></button>`).join("") : "";
+    const input = session.input ?? item?.prompt ?? "";
+    const prompt = item ? (slide.mode === "completion" && !editing
+      ? `<form class="language-form"><label for="language-input">המשפט שלכם</label><input id="language-input" maxlength="80" dir="auto" value="${esc(input)}" autocomplete="off"><button class="quiet-button" type="submit">הצגת אפשרויות</button></form>`
+      : `<p class="language-prompt" data-slide-text="items.${selected}.prompt">${esc(item.prompt)}</p>`) : "";
+    return frame(slide, index, `language-slide language-${slide.mode} ${item ? "is-open" : ""}`, "",
+      `<div class="scene language-scene"><header><h1 data-slide-text="title">${esc(slide.title)}</h1><p data-slide-text="caption">${esc(slide.caption)}</p></header><div class="language-space"><div class="language-halo" aria-hidden="true"></div><div class="language-seeds">${clusters}</div>${item ? `<div class="language-focus">${prompt}<div class="language-options">${choices}</div><p class="language-result" role="status">${session.chosen ? `${esc(input)} <strong>${esc(session.chosen)}</strong>` : ""}</p><button class="language-reset quiet-button" data-action="language-reset">${slide.mode === "cloud" ? "חזרה לענן" : "איפוס הניסוי"}</button></div>` : ""}</div></div>`);
   }
   function tokensSlide(slide, index, step) {
     const body =
@@ -746,6 +785,8 @@
     );
   }
   const SCENES = {
+    language: languageSlide,
+    illustrated: illustratedSlide,
     video: videoSlide,
     statement: statementSlide,
     demo: demoSlide,
@@ -770,7 +811,7 @@
     slide.title || C.SLIDE_TYPES[slide.type].label;
   function announce(slide, step) {
     const place = `שקף ${state.slide + 1} מתוך ${deck.slides.length}`;
-    if (slide.type === "reveal")
+    if (C.SLIDE_TYPES[slide.type].list?.fields.word)
       return `${place}: ${slideName(slide)} — ${slide.items[step].word}`;
     if (slide.type === "split")
       return `${place}: ${slideName(slide)} — ${slide.sides[step].heading}`;
@@ -1336,6 +1377,15 @@
     tool: "הכלי שפותחים",
     prompt: "הפרומפט — לא מוקרן, מועתק בלחיצה",
     word: "מילה",
+    visual: "ההמחשה",
+    composition: "קומפוזיציה",
+    mode: "אופן ההפעלה",
+    first: "אפשרות ראשונה",
+    second: "אפשרות שנייה",
+    third: "אפשרות שלישית",
+    label1: "טקסט בהמחשה · ראשון",
+    label2: "טקסט בהמחשה · מרכזי",
+    label3: "טקסט בהמחשה · משני",
     text: "חתיכה",
     value: "המספר",
     unit: "יחידה",
@@ -2083,6 +2133,7 @@
     for (const slide of document.slides) {
       if (slide.backdropPicture) values.add(slide.backdropPicture);
       if (slide.picture) values.add(slide.picture);
+      if (slide.poster) values.add(slide.poster);
       for (const object of slide.objects)
         if (object.type === "image" && object.picture) values.add(object.picture);
     }
@@ -2574,7 +2625,27 @@
     const b = event.target.closest("[data-action]");
     if (!b) return;
     const action = b.dataset.action;
-    if (action === "play-video") {
+    if (action.startsWith("language-")) {
+      if (editing) return;
+      const slide = deck.slides[state.slide];
+      if (slide.type !== "language") return;
+      const session = languageSessions.get(slide.id) || {selected: slide.mode === "completion" ? 0 : -1, input: null, chosen: ""};
+      if (action === "language-reset") languageSessions.delete(slide.id);
+      else {
+        if (action === "language-open") {
+          const index = Number(b.dataset.index);
+          if (!Number.isInteger(index) || !slide.items[index]) return;
+          Object.assign(session, {selected: index, input: null, chosen: ""});
+        } else if (action === "language-choose") {
+          if (!["first", "second", "third"].includes(b.dataset.key) || !slide.items[session.selected]) return;
+          session.input = $("#language-input")?.value ?? session.input;
+          session.chosen = slide.items[session.selected][b.dataset.key];
+        }
+        languageSessions.set(slide.id, session);
+      }
+      b.blur();
+      render();
+    } else if (action === "play-video") {
       playing.add(deck.slides[state.slide].id);
       b.blur();
       render();
@@ -2603,6 +2674,20 @@
   $("#slide-root").addEventListener("change", (event) => {
     if (event.target.id === "audience-select")
       changeExample(event.target.value);
+  });
+  $("#slide-root").addEventListener("submit", (event) => {
+    if (!event.target.matches(".language-form")) return;
+    event.preventDefault();
+    const slide = deck.slides[state.slide];
+    if (editing || slide.type !== "language") return;
+    const input = $("#language-input").value.trim().slice(0, 80);
+    const matches = slide.items.map((item, index) => ({index, score: item.prompt.split(/\s+/).filter(word => word.length > 1 && input.includes(word)).length + (input.includes(item.word) ? 2 : 0)}));
+    matches.sort((a,b) => b.score - a.score);
+    const prior = languageSessions.get(slide.id)?.selected ?? 0;
+    languageSessions.set(slide.id, {selected: matches[0].score ? matches[0].index : Math.max(0, prior), input, chosen: ""});
+    event.submitter?.blur();
+    render();
+    $("#language-input")?.focus({preventScroll:true});
   });
   $("#object-toolbar").addEventListener("click", (event) => {
     const button = event.target.closest("button");
