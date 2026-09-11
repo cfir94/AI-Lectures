@@ -2246,7 +2246,7 @@
       "motion": "blur",
       "backdrop": "arcs",
       "backdropPicture": "",
-      "transition": "dissolve",
+      "transition": "cut",
       "note": "שקף סיום נקי. משאירים אותו על המסך בזמן שאלות או בזמן שהקהל מצלם את פרטי הקשר.",
       "objects": [
         {

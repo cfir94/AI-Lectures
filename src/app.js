@@ -2002,6 +2002,51 @@
      about the slide it sits on, so nothing chosen for the slide overwrites
      them. */
   const SIGNATURE_ENTRANCES = new Set(["gather", "curtain"]);
+  /* The stage transition and the content entrance are the two choices the
+     presenter changes most, and they are now reachable from two places: the
+     slide card in the side panel and the motion button in the floating
+     toolbar. They must behave identically in both, so both call this — a
+     second copy of these rules is how the two halves drifted apart in the
+     first place, with the toolbar replaying everything at once while the panel
+     previewed one thing at a time.
+
+     Each preview shows its own thing and nothing else. A transition preview
+     demonstrates the stage change with the content held still; a content
+     preview replays the entrance without moving the stage. Returns true when
+     it handled the field, so a caller can fall through for anything else. */
+  function previewLookChange(path, value, slideIndex) {
+    if (path.endsWith(".transition")) {
+      previewingSlideTransition = true;
+      previewingSlideMotion = false;
+      renderedSceneKey = null;
+      save();
+      render();
+      notify(`תצוגה מקדימה: ${C.TRANSITIONS[value]}`);
+      return true;
+    }
+    if (!path.endsWith(".motion")) return false;
+    const edited = deck.slides[slideIndex];
+    const objectEntrance = C.OBJECT_MOTION_EQUIVALENTS[value];
+    for (const object of edited?.objects ?? []) {
+      /* A signature move says something about this one object — `gather`
+         carries a mark from where it stood on the slide before, `curtain`
+         opens one way and closes the other. Reaching for the slide's motion
+         dropdown must not quietly undo either of them. */
+      if (SIGNATURE_ENTRANCES.has(object.entrance)) continue;
+      // Only text can arrive word by word; anything else simply appears.
+      object.entrance =
+        objectEntrance === "cascade" && object.type !== "text"
+          ? "fade"
+          : objectEntrance;
+    }
+    previewingSlideMotion = true;
+    previewingSlideTransition = false;
+    renderedSceneKey = null;
+    save();
+    render();
+    notify(`תצוגה מקדימה: ${C.MOTIONS[value]}`);
+    return true;
+  }
   const LOOK_KEYS = new Set([
     "visibility",
     "palette",
@@ -3327,7 +3372,11 @@
         const readout = target.closest(".range-field")?.querySelector("[data-range-readout]");
         if (readout) readout.textContent = `${target.value}%`;
       }
-      setPath(target.dataset.field, target.value);
+      const path = target.dataset.field;
+      setPath(path, target.value);
+      if (previewLookChange(path, target.value, state.slide)) return;
+      // Everything else in this dialog — pace, backdrop, its strength — is
+      // seen by replaying the slide as it will actually arrive.
       renderedSlide = -1;
       renderedSceneKey = null;
       save();
@@ -3453,38 +3502,7 @@
       const slideIndex =
         pathParts[0] === "slides" ? Number(pathParts[1]) : Number.NaN;
       if (Number.isInteger(slideIndex)) state = C.goTo(deck, slideIndex);
-      if (path.endsWith(".transition")) {
-        previewingSlideTransition = true;
-        previewingSlideMotion = false;
-        renderedSceneKey = null;
-        save();
-        render();
-        notify(`תצוגה מקדימה: ${C.TRANSITIONS[e.target.value]}`);
-        return;
-      }
-      if (path.endsWith(".motion")) {
-        const editedSlide = deck.slides[slideIndex];
-        const objectEntrance = C.OBJECT_MOTION_EQUIVALENTS[e.target.value];
-        for (const object of editedSlide?.objects ?? []) {
-          /* A signature move says something about this one object — `gather`
-             carries a mark from where it stood on the slide before, `curtain`
-             opens one way and closes the other. Reaching for the slide's motion
-             dropdown must not quietly undo either of them. */
-          if (SIGNATURE_ENTRANCES.has(object.entrance)) continue;
-          // Only text can arrive word by word; anything else simply appears.
-          object.entrance =
-            objectEntrance === "cascade" && object.type !== "text"
-              ? "fade"
-              : objectEntrance;
-        }
-        previewingSlideMotion = true;
-        previewingSlideTransition = false;
-        renderedSceneKey = null;
-        save();
-        render();
-        notify(`תצוגה מקדימה: ${C.MOTIONS[e.target.value]}`);
-        return;
-      }
+      if (previewLookChange(path, e.target.value, slideIndex)) return;
       // Replay the entrance so the presenter sees the preset they just picked.
       renderedSlide = -1;
       renderedSceneKey = null;

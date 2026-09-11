@@ -837,3 +837,41 @@ test("every field the editor can show has a Hebrew label", () => {
   }
   assert.deepEqual([...missing], [], "these fields would render their own key");
 });
+
+test("every object entrance and exit is drawn, and cascade splits reversibly", () => {
+  /* A key in the table with no CSS block is a dead option: the presenter picks
+     it, nothing happens, and nothing throws. The animation family grew by five
+     entrances and five exits at once, which is exactly when one gets missed. */
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  for (const key of Object.keys(C.OBJECT_ENTRANCES))
+    if (key !== "none")
+      assert.ok(
+        css.includes(`.object-enter-${key}`),
+        `entrance ${key} has no CSS`,
+      );
+  for (const key of Object.keys(C.OBJECT_EXITS))
+    if (key !== "none")
+      assert.ok(css.includes(`.object-exit-${key}`), `exit ${key} has no CSS`);
+
+  /* The word splitter has to be invisible to the reader: the sentence that
+     comes out of it reads exactly like the one that went in. It used to split
+     the source string and rejoin on a single space, which flattened the line
+     breaks a free text box keeps, dropped double spaces, and cut emphasis
+     spanning two words in half. This is that contract, checked against the
+     implementation the deck actually ships. */
+  const app = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  const start = app.indexOf("const cascadeWords = (html, className");
+  assert.ok(start !== -1, "cascadeWords is gone");
+  const body = app.slice(start, app.indexOf("\n  };", start) + 5);
+  const cascadeWords = new Function(`"use strict"; ${body} return cascadeWords;`)();
+  const source = "שורה\nשנייה  כפול\n<b class=\"emph\">שתי מילים</b> ועוד";
+  const out = cascadeWords(source, "w");
+  const strip = (html) => html.replace(/<[^>]*>/g, "");
+  assert.equal(strip(out), strip(source), "the sentence itself changed");
+  assert.equal(
+    (out.match(/class="w"/g) ?? []).length,
+    strip(source).trim().split(/\s+/).length,
+    "one span per word, and no span for a word that is not there",
+  );
+  assert.ok(out.includes('<b class="emph">'), "emphasis across two words was cut");
+});
