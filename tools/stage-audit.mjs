@@ -93,6 +93,7 @@ for (let step = 0; step < 200; step++) {
 for (const [name, label, expect] of [
   ["slides", "שקפים", "details[data-open-key]"],
   ["design", "עיצוב", "[data-palette-choice]"],
+  ["motion", "תנועה", "#motion-fields [data-field]"],
 ]) {
   try {
     await page.mouse.move(800, page.viewportSize().height - 40);

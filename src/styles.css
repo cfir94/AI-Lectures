@@ -1388,21 +1388,27 @@ h1 {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  /* Two multipliers, never a plain override: a scene that wants a quieter
+     backdrop and a presenter who wants a stronger one both get their say.
+     Above 1 this clamps — which is why the arc family also scales its own
+     paint below, since a layer already at full opacity cannot get brighter. */
+  opacity: calc(var(--scene-atmosphere, 1) * var(--backdrop-strength, 1));
 }
 .light-arc {
   position: absolute;
   width: 115%;
   aspect-ratio: 1;
-  border: 1px solid transparent;
+  /* A hairline is a hairline until the presenter asks for more of it. */
+  border: max(1px, calc(1px * var(--backdrop-strength, 1))) solid transparent;
   border-radius: 50%;
   background:
     linear-gradient(var(--surface), var(--surface)) padding-box,
     conic-gradient(
         from 10deg,
         transparent 20%,
-        rgba(var(--accent-rgb), 0.06) 40%,
-        rgba(var(--accent-rgb), 0.45) 55%,
-        rgba(var(--accent-rgb), 0.08) 68%,
+        rgba(var(--accent-rgb), calc(0.06 * var(--backdrop-strength, 1))) 40%,
+        rgba(var(--accent-rgb), calc(0.45 * var(--backdrop-strength, 1))) 55%,
+        rgba(var(--accent-rgb), calc(0.08 * var(--backdrop-strength, 1))) 68%,
         transparent 85%
       )
       border-box;
@@ -1440,7 +1446,7 @@ h1 {
    advanced a beat. */
 .drift-arc,
 .comet-arc {
-  --ring: 0.22cqw;
+  --ring: calc(0.22cqw * var(--backdrop-strength, 1));
   position: absolute;
   aspect-ratio: 1;
   background: conic-gradient(
@@ -1521,6 +1527,49 @@ h1 {
   to { --sweep: 360deg; }
 }
 
+/* "קשתות בפינה" — the whole frame left alone except one corner. Three rings
+   centred far below and to the left of the stage, so only their upper-right
+   shoulders cross into the bottom-right of the screen; they turn slowly enough
+   that the movement is felt rather than watched. This is the one in the family
+   that can sit under a dense slide, because it never enters the middle. */
+.corner-arc {
+  --ring: calc(0.2cqw * var(--backdrop-strength, 1));
+  position: absolute;
+  aspect-ratio: 1;
+  width: calc(34% + var(--corner) * 13%);
+  right: calc(-9% - var(--corner) * 5%);
+  bottom: calc(-15% - var(--corner) * 7%);
+  opacity: calc(0.85 - var(--corner) * 0.16);
+  background: conic-gradient(
+    from 196deg,
+    transparent 4%,
+    rgba(var(--accent-rgb), calc(0.16 * var(--backdrop-strength, 1))) 12%,
+    color-mix(in srgb, rgb(var(--accent-rgb)) 50%, #ac94df) 20%,
+    rgba(var(--accent-rgb), calc(0.9 * var(--backdrop-strength, 1))) 27%,
+    rgba(var(--accent-rgb), calc(0.12 * var(--backdrop-strength, 1))) 36%,
+    transparent 46%
+  );
+  -webkit-mask: radial-gradient(
+    circle at 50% 50%,
+    transparent calc(50% - var(--ring)),
+    #000 calc(50% - var(--ring)) 50%,
+    transparent 50%
+  );
+  mask: radial-gradient(
+    circle at 50% 50%,
+    transparent calc(50% - var(--ring)),
+    #000 calc(50% - var(--ring)) 50%,
+    transparent 50%
+  );
+  filter: drop-shadow(0 0 0.6cqw rgba(var(--accent-rgb), 0.4));
+  animation: corner-sway calc(28s + var(--corner) * 11s) ease-in-out infinite alternate;
+  animation-delay: calc(var(--corner) * -7s);
+}
+@keyframes corner-sway {
+  from { transform: rotate(-7deg); }
+  to { transform: rotate(7deg); }
+}
+
 /* "סרטי אור" — the same idea with a body instead of a hairline. It has to stay
    out of the middle of the frame: wide soft bands drawn across the centre stop
    being light behind the words and become fog in front of them, which is the
@@ -1556,7 +1605,7 @@ h1 {
 }
 
 .chat-scene .atmosphere {
-  opacity: 0.25;
+  --scene-atmosphere: 0.25;
 }
 .agent-scene .arc-one {
   left: calc(-67% + var(--phase) * 7%);
@@ -1566,7 +1615,7 @@ h1 {
   right: calc(-65% + var(--phase) * 4%);
 }
 .complete-scene .atmosphere {
-  opacity: 1;
+  --scene-atmosphere: 1;
 }
 .no-motion .scene *,
 .no-motion .light-arc,
@@ -4342,4 +4391,30 @@ kbd {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* A number the presenter drags. The readout sits in the field head beside the
+   label, where every other field already puts its count. */
+.range-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 2px 0 0;
+}
+
+/* The motion dialog: the two choices the presenter changes most, in front of
+   them at all times rather than three clicks into a side panel. */
+.motion-slide-name {
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.motion-fields {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 4px;
+}
+.motion-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 6px 0 2px;
 }

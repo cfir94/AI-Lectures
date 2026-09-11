@@ -819,3 +819,21 @@ test("a backdrop is a table row and a class, never a branch", () => {
         assert.ok(css.includes(`.${name}`), `${key} draws .${name}, which has no CSS`);
   }
 });
+
+test("every field the editor can show has a Hebrew label", () => {
+  /* A field with no entry falls back to its own key, so the presenter reads
+     "pace" and "backdropPicture" in an otherwise Hebrew panel. Eight had drifted
+     in that way, each one added to the schema without its label. */
+  const app = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  const start = app.indexOf("const FIELD_LABELS = {");
+  const labels = new Set(
+    [...app.slice(start, app.indexOf("};", start)).matchAll(/^\s*(\w+):/gm)].map((m) => m[1]),
+  );
+  const missing = new Set();
+  for (const type of Object.values(C.SLIDE_TYPES)) {
+    for (const key of Object.keys(type.fields)) if (!labels.has(key)) missing.add(key);
+    if (type.list)
+      for (const key of Object.keys(type.list.fields)) if (!labels.has(key)) missing.add(key);
+  }
+  assert.deepEqual([...missing], [], "these fields would render their own key");
+});

@@ -104,6 +104,7 @@
     close: '<path d="m6 6 12 12M6 18 18 6"/>',
     download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
     replay: '<path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/>',
+    motion: '<path d="M3 12h9"/><path d="m8 8 4 4-4 4"/><path d="M16 5v14"/><path d="M20 8v8"/>',
     chat: '<path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-9l-5 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10m-10 4h6"/>',
     agent:
       '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="4" r="1.5"/><circle cx="20" cy="4" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="4" cy="20" r="1.5"/><path d="m6 6 4 4m4 4 4 4m0-12-4 4m-4 4-4 4"/>',
@@ -208,6 +209,8 @@
       [0, 1, 2, 3].map((i) => `<div class="ribbon" style="--ribbon:${i}"></div>`).join(""),
     comet: () =>
       [0, 1].map((i) => `<div class="comet-arc" style="--comet:${i}"></div>`).join(""),
+    corner: () =>
+      [0, 1, 2].map((i) => `<div class="corner-arc" style="--corner:${i}"></div>`).join(""),
     grid: () => '<div class="grid-plane"></div>',
     aurora: () =>
       [0, 1, 2].map((i) => `<div class="aurora-blob" style="--blob:${i}"></div>`).join(""),
@@ -395,7 +398,7 @@
     const body = visualBody(object.visual, labels, `objects.${index}`);
     return `<div class="visual-component visual-${object.visual}${spectrum}" style="${style}" role="group" aria-label="${esc(C.VISUALS[object.visual] ?? "רכיב חזותי")}">${body}</div>`;
   };
-  const objectMarkup = (object, index) => {
+  const objectMarkup = (object, index, slide) => {
     const selected = selectedObjectId === object.id;
     const editingText =
       selected &&
@@ -404,7 +407,15 @@
       editing;
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
-    if (object.type === "text")
+    if (object.type === "text") {
+      /* Word by word is the object's own entrance (or exit), so the split
+         follows that choice rather than the slide's — a presenter who set one
+         box to arrive word by word gets it on that box alone. While the box is
+         being edited it stays one plain string: splitting it into per-word
+         spans under a caret is how an editor loses the caret. */
+      const cascadeText =
+        !editingText &&
+        (object.entrance === "cascade" || object.exit === "cascade");
       /* `dir="auto"` because the stage is RTL and some of what goes on it is
          not: an English quotation opens with a neutral quote mark, so the
          paragraph direction decides where that mark lands, and in an RTL
@@ -416,8 +427,8 @@
          `*word*` reads as prose in one place and as markup in the other. While
          the box is contenteditable it stays plain text: the presenter edits the
          string they typed, not the markup it renders to. */
-      body = `<p dir="auto" class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : object.entrance === "cascade" || object.exit === "cascade" ? object.text.split(/\s+/).map((word, wordIndex) => `<span class="object-cascade-word" style="--w:${Math.min(wordIndex, 12)}">${rich(word)}</span>`).join(" ") : rich(object.text)}</p>`;
-    else if (object.type === "image")
+      body = `<p dir="auto" class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : cascadeText ? cascadeWords(rich(object.text), "object-cascade-word", 0, 12) : rich(object.text)}</p>`;
+    } else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
         : '<span class="object-placeholder">תמונה</span>';
@@ -437,7 +448,9 @@
   };
   const freeObjects = (slide) =>
     slide.objects?.length
-      ? `<div class="free-object-layer">${slide.objects.map(objectMarkup).join("")}</div>`
+      ? `<div class="free-object-layer">${slide.objects
+          .map((object, index) => objectMarkup(object, index, slide))
+          .join("")}</div>`
       : "";
   const optionMarkup = (options, selected) =>
     Object.entries(options)
@@ -752,7 +765,7 @@
     "experiment",
   ]);
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" data-pace="${slide.pace}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}" data-pace="${slide.pace}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}--backdrop-strength:${Number(slide.backdropStrength) / 100};${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
 
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
@@ -764,29 +777,57 @@
      the presenter edits what they wrote, not what was rendered. */
   const EMPHASIS = /\*([^*\n]{1,60})\*/g;
   const rich = (value) => esc(value).replace(EMPHASIS, '<b class="emph">$1</b>');
+  /* Splitting a sentence into one span per word has to leave the sentence
+     itself alone, and the obvious implementation does not. Three things break.
+     A free text box is `white-space: pre-wrap`, so it keeps the line breaks the
+     presenter typed — splitting on whitespace and rejoining on a single space
+     flattens a three-line box into one run-on line, which is exactly what "it
+     mangles my text" looks like. A double space or a trailing newline yields an
+     empty word, which is markup for a word that is not there. And emphasis
+     spanning two words (`*two words*`) loses its asterisk pair the moment each
+     word is escaped on its own.
+
+     So split the rendered markup rather than the source string: step over tags
+     untouched, keep every run of whitespace exactly as it was, and wrap only
+     the runs of visible characters. `<b class="emph">` then simply contains the
+     spans it always contained. */
+  const cascadeWords = (html, className, from = 0, cap = Infinity) => {
+    let index = from;
+    return html
+      .split(/(<[^>]*>)/)
+      .map((chunk) =>
+        chunk.startsWith("<")
+          ? chunk
+          : chunk.replace(
+              /\S+/g,
+              (word) =>
+                `<span class="${className}" style="--w:${Math.min(index++, cap)}">${word}</span>`,
+            ),
+      )
+      .join("");
+  };
+  /* How many words a string actually produces, which is where the next string
+     has to start counting. `"".split(" ")` is `[""]` — one word that is not
+     there — so a bound, and therefore empty, headline used to push its accent
+     one step late. */
+  const wordCount = (value) =>
+    value.trim() ? value.trim().split(/\s+/).length : 0;
   const caption = (slide, value, key = "caption") =>
     value && !isBound(slide, key)
       ? `<p class="scene-caption" ${key ? `data-slide-text="${esc(key)}"` : ""}>${rich(value)}</p>`
       : "";
-  // "cascade" needs each word on its own, so it gets its own markup path.
-  /* `from` continues the count across a headline that is split into a title and
-     an accent. Without it both halves start at word zero, and a sentence that
-     reads right to left arrives in two overlapping waves — which is what a
-     presenter reports as the words landing on top of each other. */
+  /* `from` continues the count across a headline split into a title and an
+     accent. Without it both halves start at word zero and a sentence that reads
+     right to left arrives in two overlapping waves — which is what a presenter
+     reports as the words landing on top of each other.
+
+     Emphasis works in a headline for the same reason it works in a caption: the
+     dominant word is the one the sentence turns on. `rich` escapes first and
+     only then marks the asterisk pair, so the stored string can still be edited
+     in place as the plain text the presenter typed. */
   const headline = (slide, value, from = 0) =>
-    slide.motion === "cascade"
-      ? value
-          .split(" ")
-          .map(
-            (word, i) =>
-              `<span class="cascade-word" style="--w:${from + i}">${esc(word)}</span>`,
-          )
-          .join(" ")
-      /* Emphasis works in a headline for the same reason it works in a caption:
-         the dominant word is the one the sentence turns on. `rich` escapes
-         first and only then marks the asterisk pair, so the stored string can
-         still be edited in place as the plain text the presenter typed.
-         `cascade` is the exception — it needs each word in its own element. */
+    slide.motion === "cascade" && value.trim()
+      ? cascadeWords(rich(value), "cascade-word", from)
       : rich(value);
 
   function statementSlide(slide, index) {
@@ -805,7 +846,7 @@
       index,
       "statement-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, title.split(" ").length)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
+      `<div class="scene statement-scene"><h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, wordCount(title))}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${opening}`,
     );
   }
   function demoSlide(slide, index) {
@@ -825,7 +866,7 @@
       index,
       "demo-slide",
       `--headline-size:${size}cqw`,
-      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, title.split(" ").length)}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
+      `<div class="scene statement-scene">${tool || slide.mark ? `<span class="demo-tool">${slide.mark ? `<img src="${esc(slide.mark)}" alt="" class="demo-mark">` : ""}${tool ? `<span data-slide-text="tool">${esc(tool)}</span>` : ""}</span>` : ""}<h1><span data-slide-text="title">${headline(slide, title)}</span>${accent ? ` <span class="headline-accent" data-slide-text="accent">${headline(slide, accent, wordCount(title))}</span>` : ""}</h1>${caption(slide, slide.caption)}</div>${controls}`,
 
     );
   }
@@ -1236,9 +1277,6 @@
     } else root.innerHTML = html;
     const current = root.lastElementChild;
     current.style.setProperty("--dir", direction);
-    // A step inside the same slide keeps the stage still; only beats animate.
-    if (sameSlide && !motionPreview)
-      current.classList.remove(`motion-${slide.motion}`);
     // A transition preview demonstrates the stage change alone. Content
     // motion has its own preview and must not obscure what was selected.
     if (transitionPreview) current.classList.add("no-motion");
@@ -1246,7 +1284,18 @@
     previewingSlideTransition = false;
     renderedSlide = state.slide;
     const sceneKey = `${state.slide}:${state.step}`;
-    if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
+    const sameScene = renderedSceneKey === sceneKey;
+    /* A beat inside the same slide keeps the stage still; only the beat
+       animates, so the motion class goes. A re-render that changed no beat at
+       all — a panel opening, a field edited — is held still by `.no-motion`
+       instead, and keeps its class: stripping it there left the element unable
+       to describe its own slide, and the next thing to read that class found
+       nothing. A motion preview is neither: the presenter asked to see this
+       slide's entrance replayed where it stands, so the class that names it has
+       to survive the very re-render that replays it. */
+    if (sameSlide && !sameScene && !motionPreview)
+      current.classList.remove(`motion-${slide.motion}`);
+    if (sameScene) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
     countUp(current);
     runTimer(current, slide);
@@ -1662,6 +1711,15 @@
     wake();
   }
   const FIELD_LABELS = {
+    backdropStrength: "עוצמת הרקע",
+    pace: "קצב האנימציות",
+    layout: "מיקום על הבמה",
+    scale: "גודל הטקסט",
+    arrangement: "סידור",
+    backdropPicture: "תמונת הרקע",
+    mark: "סמל הכלי",
+    icon: "אייקון לצד הזה",
+    minutes: "אורך בדקות",
     title: "כותרת",
     accent: "מילה מודגשת",
     caption: "משפט מתחת",
@@ -1770,6 +1828,8 @@
         ? `<button class="icon-button" data-clear-picture="${path}" aria-label="הסרת התמונה">${icon("trash")}</button>`
         : ""
     }</div></div>`;
+  const rangeField = (label, path, value, min, max) =>
+    `<label class="field range-field"><span class="field-head"><span>${label}</span><small data-range-readout>${esc(value)}%</small></span><input type="range" data-field="${path}" min="${min}" max="${max}" step="5" value="${esc(value)}"></label>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
@@ -1792,6 +1852,14 @@
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
               source[key],
+            )
+          : spec.percent
+          ? rangeField(
+              FIELD_LABELS[key] || key,
+              `${prefix}.${key}`,
+              source[key],
+              spec.min,
+              spec.max,
             )
           : spec.choice
           ? picker(
@@ -1930,6 +1998,10 @@
      `look`, because naming the keys twice is how `pace` was added to the schema
      and to the row but not to this set — `look.pace` came back undefined, the
      row threw on it, and the whole slides panel rendered empty. */
+  /* The two moves that mean something about a particular object rather than
+     about the slide it sits on, so nothing chosen for the slide overwrites
+     them. */
+  const SIGNATURE_ENTRANCES = new Set(["gather", "curtain"]);
   const LOOK_KEYS = new Set([
     "visibility",
     "palette",
@@ -1939,6 +2011,7 @@
     "backdropPicture",
     "transition",
     "pace",
+    "backdropStrength",
   ]);
   // The picture that goes with `backdrop: picture` gets its own field below.
   const MOTION_KEYS = new Set(["motion", "transition", "pace"]);
@@ -3222,6 +3295,49 @@
   $("#undo").addEventListener("click", () => stepHistory(-1));
   $("#redo").addEventListener("click", () => stepHistory(1));
   $("#appearance").addEventListener("click", () => openDialog("themes"));
+  /* The presenter changes these constantly and they were three clicks deep in a
+     side panel. They are the same fields the editor renders — read from
+     COMMON_FIELDS, so one added there shows up here too. */
+  const MOTION_DIALOG_KEYS = ["transition", "motion", "pace", "backdrop", "backdropStrength"];
+  function renderMotionDialog() {
+    const slide = deck.slides[state.slide];
+    const specs = C.SLIDE_TYPES[slide.type].fields;
+    $("#motion-slide-name").textContent = `${C.shownPosition(deck, state.slide) || state.slide + 1}. ${slideName(slide)}`;
+    $("#motion-fields").innerHTML = fieldsFor(
+      slide,
+      Object.fromEntries(
+        MOTION_DIALOG_KEYS.filter((key) => specs[key]).map((key) => [key, specs[key]]),
+      ),
+      `slides.${state.slide}`,
+    );
+  }
+  $("#motion").addEventListener("click", () => {
+    renderMotionDialog();
+    openDialog("motion-dialog");
+  });
+  /* The dialog's own fields go through the same handlers the editor uses, so a
+     change here saves, re-renders and previews exactly as it does there. */
+  for (const event of ["input", "change"])
+    $("#motion-dialog").addEventListener(event, (e) => {
+      const target = e.target;
+      if (!target.matches("[data-field]")) return;
+      if (event === "input" && target.tagName === "SELECT") return;
+      if (event === "change" && target.tagName !== "SELECT") return;
+      if (target.type === "range") {
+        const readout = target.closest(".range-field")?.querySelector("[data-range-readout]");
+        if (readout) readout.textContent = `${target.value}%`;
+      }
+      setPath(target.dataset.field, target.value);
+      renderedSlide = -1;
+      renderedSceneKey = null;
+      save();
+      render();
+    });
+  $("#motion-replay").addEventListener("click", () => {
+    renderedSlide = -1;
+    renderedSceneKey = null;
+    render();
+  });
   $("#help").addEventListener("click", () => openDialog("shortcuts"));
   $("#fullscreen").addEventListener("click", fullscreen);
   $$("[data-close]").forEach((b) =>
@@ -3305,8 +3421,18 @@
   });
   $("#editor-fields").addEventListener("input", (e) => {
     // Selects also fire input; they are handled on change, where the value is final.
-    if (e.target.matches("input[data-field], textarea[data-field]"))
+    if (e.target.matches("input[data-field], textarea[data-field]")) {
+      /* The readout is updated in place rather than by re-rendering: rebuilding
+         the editor mid-drag would replace the slider under the pointer and end
+         the gesture. */
+      if (e.target.type === "range") {
+        const readout = e.target
+          .closest(".range-field")
+          ?.querySelector("[data-range-readout]");
+        if (readout) readout.textContent = `${e.target.value}%`;
+      }
       updateField(e.target);
+    }
     else if (
       e.target.matches(
         "input[data-object-prop], textarea[data-object-prop]",
@@ -3339,11 +3465,18 @@
       if (path.endsWith(".motion")) {
         const editedSlide = deck.slides[slideIndex];
         const objectEntrance = C.OBJECT_MOTION_EQUIVALENTS[e.target.value];
-        for (const object of editedSlide?.objects ?? [])
+        for (const object of editedSlide?.objects ?? []) {
+          /* A signature move says something about this one object — `gather`
+             carries a mark from where it stood on the slide before, `curtain`
+             opens one way and closes the other. Reaching for the slide's motion
+             dropdown must not quietly undo either of them. */
+          if (SIGNATURE_ENTRANCES.has(object.entrance)) continue;
+          // Only text can arrive word by word; anything else simply appears.
           object.entrance =
             objectEntrance === "cascade" && object.type !== "text"
               ? "fade"
               : objectEntrance;
+        }
         previewingSlideMotion = true;
         previewingSlideTransition = false;
         renderedSceneKey = null;
