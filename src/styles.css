@@ -2857,7 +2857,12 @@ body.presenting .superseded {
   border-inline-start: 0;
 }
 .split-heading {
-  font-size: clamp(1.7rem, 6.2cqw, 5rem);
+  /* The heading has to know how many columns it is sharing the stage with.
+     At a fixed 6.2cqw a two-sided comparison reads beautifully and a
+     three-sided one wraps every heading that is not one short word — the
+     column is a third of the stage, not half. Dividing by `--sides` leaves
+     every existing two-sided slide at exactly the size it had. */
+  font-size: clamp(1.4rem, calc(6.2cqw * 2 / var(--sides, 2)), 5rem);
   font-weight: 350;
   letter-spacing: -0.04em;
   line-height: 1.15;
