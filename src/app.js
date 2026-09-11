@@ -367,7 +367,12 @@
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
-      body = `<p class="object-text text-${object.style} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${esc(object.text)}</p>`;
+      /* A bound text object holds the same string as its slide field, so it
+         has to emphasise the same way the structured field does — otherwise
+         `*word*` reads as prose in one place and as markup in the other. While
+         the box is contenteditable it stays plain text: the presenter edits the
+         string they typed, not the markup it renders to. */
+      body = `<p class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : rich(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
