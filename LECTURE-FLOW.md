@@ -1,51 +1,52 @@
-# המדריך ל-2030: איך AI משנה את הדרך שבה אנו עובדים
+# המדריך ל-2030 - איך AI משנה את הדרך שבה אנו עובדים
 
-עודכן ב־2026-09-11 לפי הפלואו החדש של המרצה. 53 שקפים במסמך: 36 מוצגים ו־17 מדולגים. כל המזהים הקודמים נשמרו.
+עודכן ב־2026-09-11 לפי הפלואו החדש של המרצה. 54 שקפים במסמך: 37 מוצגים ו־17 מדולגים. כל המזהים הקודמים נשמרו.
 
 ## הרצף לקהל
 
 | מס׳ | שקף | מזהה לעריכה |
 | --- | --- | --- |
-| 1 | מה מהעבודה שלכם | `lecture-open` |
-| 2 | בוקר טוב | `lecture-good-morning` |
-| 3 | ChatGPT — לוגו מלא | `lecture-tools` |
-| 4 | Gemini — לוגו מלא | `lecture-gemini-logo` |
-| 5 | Claude — לוגו מלא | `lecture-claude-logo` |
-| 6 | מודל שפה | `lecture-model-intro` |
-| 7 | מה מחשב יודע לעשות | `lecture-three-families` |
-| 8 | ככה המכונה רואה שפה. | `lecture-tokens` |
-| 9 | לכל מילה, עוד אפשרויות. | `lecture-llm` |
-| 10 | מה המילה הבאה? | `lecture-completion` |
-| 11 | שוטפות | `lecture-fluency` |
-| 12 | חיפוש מידע. | `lecture-search-sources` |
-| 13 | כתיבת תוכן. | `lecture-writing` |
-| 14 | ניתוח מקור מידע. | `lecture-notebooklm-concept` |
-| 15 | Gemini — תנועה למרכז | `lecture-gemini-focus` |
-| 16 | NotebookLM — פתיחת וילון | `lecture-notebooklm` |
-| 17 | מה צ׳אטבוט יכול לעשות? | `lecture-chatbot` |
-| 18 | סוכני AI. | `lecture-agent-demo` |
-| 19 | מה סוכן יכול לעשות? | `lecture-agent-anatomy` |
-| 20 | אותה מטרה. דרך אחרת. | `lecture-answer-finish` |
-| 21 | כאן אדם | `lecture-human-approval` |
-| 22 | 200 מיליון מבנים. | `lecture-nobel` |
-| 23 | 4.9 מיליון דולר סינגפורי. | `lecture-singapore` |
-| 24 | שלוש חברות אמיתיות. | `lecture-reuters` |
-| 25 | 1 / 3 — איזו תמונה נוצרה? | `lecture-image-question-1` |
-| 26 | 2 / 3 — איזו תמונה נוצרה? | `lecture-image-question-2` |
-| 27 | 3 / 3 — איזו תמונה נוצרה? | `lecture-image-question-3` |
-| 28 | התשובות | `lecture-image-answers` |
-| 29 | עד €10,000 בחודש. | `lecture-aitana` |
-| 30 | שפע. ואז שימפנזים. | `lecture-musk-video` |
-| 31 | הוא עובד בבית. | `lecture-figure-home-video` |
-| 32 | עכשיו יש לו ידיים. | `lecture-figure-video` |
-| 33 | עיר אמיתית. תרחיש שנכתב. | `lecture-seoul-video` |
-| 34 | מה עושים מכאן | `lecture-tomorrow` |
-| 35 | עד 2030. | `lecture-bottom-line` |
-| 36 | תודה. | `lecture-thanks` |
+| 1 | המדריך ל-2030 | `lecture-open` |
+| 2 | מה מהעבודה שלכם | `lecture-question` |
+| 3 | בוקר טוב | `lecture-good-morning` |
+| 4 | ChatGPT — לוגו | `lecture-tools` |
+| 5 | Gemini — לוגו | `lecture-gemini-logo` |
+| 6 | Claude — לוגו | `lecture-claude-logo` |
+| 7 | מודל שפה | `lecture-model-intro` |
+| 8 | מה מחשב יודע לעשות | `lecture-three-families` |
+| 9 | ככה המכונה רואה שפה. | `lecture-tokens` |
+| 10 | לכל מילה, עוד אפשרויות. | `lecture-llm` |
+| 11 | מה המילה הבאה? | `lecture-completion` |
+| 12 | שוטפות | `lecture-fluency` |
+| 13 | חיפוש מידע. | `lecture-search-sources` |
+| 14 | כתיבת תוכן. | `lecture-writing` |
+| 15 | ניתוח מקור מידע. | `lecture-notebooklm-concept` |
+| 16 | Gemini — לוגו | `lecture-gemini-focus` |
+| 17 | NotebookLM — לוגו | `lecture-notebooklm` |
+| 18 | מה צ׳אטבוט יכול לעשות? | `lecture-chatbot` |
+| 19 | סוכני AI. | `lecture-agent-demo` |
+| 20 | מה סוכן יכול לעשות? | `lecture-agent-anatomy` |
+| 21 | אותה מטרה. דרך אחרת. | `lecture-answer-finish` |
+| 22 | כאן אדם | `lecture-human-approval` |
+| 23 | 200 מיליון מבנים. | `lecture-nobel` |
+| 24 | 4.9 מיליון דולר סינגפורי. | `lecture-singapore` |
+| 25 | שלוש חברות אמיתיות. | `lecture-reuters` |
+| 26 | 1 / 3 — איזו תמונה נוצרה? | `lecture-image-question-1` |
+| 27 | 2 / 3 — איזו תמונה נוצרה? | `lecture-image-question-2` |
+| 28 | 3 / 3 — איזו תמונה נוצרה? | `lecture-image-question-3` |
+| 29 | התשובות | `lecture-image-answers` |
+| 30 | עד €10,000 בחודש. | `lecture-aitana` |
+| 31 | שפע. ואז שימפנזים. | `lecture-musk-video` |
+| 32 | הוא עובד בבית. | `lecture-figure-home-video` |
+| 33 | עכשיו יש לו ידיים. | `lecture-figure-video` |
+| 34 | עיר אמיתית. תרחיש שנכתב. | `lecture-seoul-video` |
+| 35 | מה עושים מכאן | `lecture-tomorrow` |
+| 36 | עד 2030. | `lecture-bottom-line` |
+| 37 | תודה. | `lecture-thanks` |
 
 ## הדגמות ומעברים
 
-- הפתיחה: התמונה שסופקה בשם ״שקף פתיחה.jpg״, שאלה לקהל ושם ההרצאה. ההצגה האישית משתמשת בצילום המרצה הקיים וברקע ״קשתות אור״.
+- הפתיחה היא שם ההרצאה: ״המדריך ל-2030״ ככותרת גדולה ומתחתיה תת־הכותרת, על התמונה שסופקה בשם ״שקף פתיחה.jpg״. השאלה לקהל קיבלה שקף משלה מיד אחריה, כדי ששני הדברים לא יתחרו על אותה טיפוגרפיה. ההצגה האישית משתמשת בצילום המרצה הקיים וברקע ״קשתות אור״.
 - תמונת ״יפה 2.png״ מציגה שכבות לצד הסבר מודל השפה; ״סוכן עובד.png״ משולבת לצד המסר על פעולה עם כלים. התמונות הוקטנו ל־WebP ומוטמעות במסמך, בלי תלות בתיקיית המקור.
 - בשקף 9 לוחצים על מילה ופותחים את ההקשר וההמשכים. בשקף 10 אפשר להקליד, להציג אפשרויות ולבחור המשך. אלה דוגמאות מוגדרות מראש, לא הסתברויות של מודל אמיתי.
 - שקפים 12–14 יוצאים לכלים האמיתיים. הפרומפטים נשארים בשדה ההדגמה וניתנים להעתקה; פרטי ההסבר נשארים בשדה `note`.
