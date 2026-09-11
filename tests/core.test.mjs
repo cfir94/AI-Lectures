@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import vm from "node:vm";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import "../src/core.js";
 const C = globalThis.LectureCore;
 const tinyPng =
@@ -55,7 +56,7 @@ test("portable export preserves edited content, scripts and an isolated storage 
   );
   const edited = C.clone(seed);
   edited.slides[0].title = "</script><b>בדיקה</b>";
-  edited.theme = "wine";
+  edited.theme = "nebula";
   const output = C.portableHTML(
     html.replace(/^<!doctype html>\s*/i, ""),
     edited,
@@ -67,8 +68,8 @@ test("portable export preserves edited content, scripts and an isolated storage 
   const document = C.validate(JSON.parse(payload));
   assert.equal(document.documentId, "portable-test");
   assert.equal(document.slides[0].title, edited.slides[0].title);
-  assert.equal(document.theme, "wine");
-  assert.ok(output.includes('data-theme="wine"'));
+  assert.equal(document.theme, "nebula");
+  assert.ok(output.includes('data-theme="nebula"'));
   assert.notEqual(document.documentId, seed.documentId);
   for (const id of ["core-script", "app-script"]) {
     const script = output.match(
@@ -708,4 +709,60 @@ test("built standalone output has no external runtime assets or unresolved marke
   assert.ok(html.includes("data-toolbar-step-value"));
   assert.ok(html.includes("layers-panel"));
   assert.ok(html.includes("--slide-exit-duration"));
+});
+
+test("a document saved before the gamut was closed still opens, translated", () => {
+  /* A retired palette or theme is the presenter's own saved copy. Failing the
+     whole document over a table that got narrower would eat their work, so
+     every removed name resolves to the option that took its role. */
+  const older = C.clone(seed);
+  older.theme = "wine";
+  older.slides[0].palette = "amber";
+  older.slides[1].palette = "danger";
+  const document = C.validate(older);
+  assert.equal(document.theme, "nebula");
+  assert.equal(document.slides[0].palette, "violet");
+  assert.equal(document.slides[1].palette, "steel");
+  for (const [gone, took] of Object.entries(C.RETIRED_PALETTES)) {
+    assert.ok(!Object.hasOwn(C.PALETTES, gone), `${gone} is still offered`);
+    assert.ok(Object.hasOwn(C.PALETTE_STYLES, took), `${took} has no tokens`);
+  }
+  // A name that never existed is still a bad file, not a silent fallback.
+  const bogus = C.clone(seed);
+  bogus.slides[0].palette = "chartreuse";
+  assert.throws(() => C.validate(bogus));
+});
+
+test("every palette declares a tone, and the closed gamut stays closed", () => {
+  assert.equal(Object.keys(C.PALETTES).length, 7); // six plus "deck"
+  assert.equal(Object.keys(C.THEMES).length, 4);
+  for (const [key, style] of Object.entries(C.PALETTE_STYLES)) {
+    assert.ok(["light", "dark"].includes(style.tone), `${key} has no tone`);
+    assert.ok(Object.hasOwn(C.PALETTES, key), `${key} is not offered`);
+  }
+});
+
+test("a tool mark on a light slide is never the white variant", () => {
+  /* The reported bug: a white ChatGPT mark on a white stage simply is not
+     there. `tone` is what makes the rule checkable rather than remembered. */
+  const light = new Set(
+    Object.entries(C.PALETTE_STYLES)
+      .filter(([, style]) => style.tone === "light")
+      .map(([key]) => key),
+  );
+  const marks = JSON.parse(
+    readFileSync(new URL("../assets/tool-marks.json", import.meta.url), "utf8"),
+  );
+  const named = new Map(
+    Object.entries(marks).map(([name, mark]) => [mark.picture, name]),
+  );
+  for (const slide of seed.slides) {
+    if (!slide.mark || !light.has(slide.palette)) continue;
+    const name = named.get(slide.mark);
+    assert.ok(name, `slide ${slide.id} carries a mark not in the manifest`);
+    assert.ok(
+      !/-(white|light)-/.test(name),
+      `slide ${slide.id} is on ${slide.palette} and carries ${name}`,
+    );
+  }
 });
