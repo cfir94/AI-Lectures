@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "documentId": "chatbot-to-agent-interactive-v9",
+  "documentId": "chatbot-to-agent-interactive-v10-composition",
   "revision": "",
   "theme": "carbon",
   "transition": "fade",
@@ -290,7 +290,7 @@
       "accent": "לסוכן.",
       "caption": "ממילים למעשים.",
       "visibility": "shown",
-      "layout": "low",
+      "layout": "center",
       "scale": "large",
       "palette": "cobalt",
       "textStyle": "solid",
@@ -372,7 +372,7 @@
       "accent": "",
       "caption": "אני כפיר משה יעקובי.",
       "visibility": "shown",
-      "layout": "edge",
+      "layout": "center",
       "scale": "large",
       "palette": "ice",
       "textStyle": "solid",
@@ -475,7 +475,7 @@
       "title": "מה מחשב יודע לעשות",
       "composition": "split",
       "visibility": "shown",
-      "layout": "corner",
+      "layout": "center",
       "scale": "medium",
       "palette": "prism",
       "textStyle": "solid",
@@ -510,26 +510,7 @@
           "label3": "שקט · נפלא · חדש"
         }
       ],
-      "objects": [
-        {
-          "id": "accent-dots-15",
-          "type": "shape",
-          "x": "9",
-          "y": "58",
-          "width": "22",
-          "height": "26",
-          "rotation": "0",
-          "opacity": "26",
-          "snap": "off",
-          "entrance": "fade",
-          "exit": "fade",
-          "style": "solid",
-          "shape": "dots",
-          "color": "auto",
-          "stroke": "auto",
-          "strokeWidth": "1.6"
-        }
-      ]
+      "objects": []
     },
     {
       "id": "lecture-document-demo",
@@ -537,12 +518,12 @@
       "title": "מסמך שנשמע",
       "tool": "ChatGPT",
       "accent": "אמיתי.",
-      "mark": "data:image/webp;base64,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",
+      "mark": "",
       "link": "https://chatgpt.com/",
       "caption": "הניסוח משכנע. העובדות עוד לא נבדקו.",
       "prompt": "כתוב [סוג טקסט שהקהל הזה מכיר] בעברית מקצועית.\nאורך: בערך 120 מילים.\nכולל 3 סעיפים שנשמעים קונקרטיים.\nאל תציין מה בדוי ואל תבקש ממני פרטים חסרים.\nנושא: [מצב יומיומי אצלם]",
       "visibility": "shown",
-      "layout": "low",
+      "layout": "center",
       "scale": "large",
       "palette": "prism",
       "textStyle": "solid",
@@ -921,26 +902,7 @@
       "backdropPicture": "",
       "transition": "cut",
       "note": "צ׳אטבוט הוא חלון שיחה. אני כותב והוא מחזיר טקסט. מה שיוצא ממנו אני מעתיק, שולח או זורק. הוא לא נכנס למערכות שלי לבד. עכשיו מראים שלושה שימושים שעובדים לפני שמראים את הגבול.",
-      "objects": [
-        {
-          "id": "accent-rule-21",
-          "type": "shape",
-          "x": "56",
-          "y": "62",
-          "width": "36",
-          "height": "2",
-          "rotation": "0",
-          "opacity": "55",
-          "snap": "off",
-          "entrance": "fade",
-          "exit": "fade",
-          "style": "solid",
-          "shape": "rule",
-          "color": "auto",
-          "stroke": "auto",
-          "strokeWidth": "2"
-        }
-      ]
+      "objects": []
     },
     {
       "id": "lecture-tools",
@@ -1116,7 +1078,7 @@
       "caption": "סיכום, החלטות ומשימות — רק מתוך המקור שהעליתי.",
       "prompt": "תסכם את ההקלטה הזו למי שלא היה.\nמה הוחלט.\nמה נשאר פתוח.\nמה [שם אדם / נושא רלוונטי לקהל] ביקש.\nרק מתוך המקור שהעליתי.",
       "visibility": "shown",
-      "layout": "corner",
+      "layout": "center",
       "scale": "medium",
       "palette": "cobalt",
       "textStyle": "solid",
@@ -1296,12 +1258,12 @@
       "title": "כתיבה.",
       "tool": "ChatGPT",
       "accent": "",
-      "mark": "data:image/webp;base64,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",
+      "mark": "",
       "link": "https://chatgpt.com/",
       "caption": "הוא כותב מהר. אני עדיין מי ששולח.",
       "prompt": "כתוב [מייל / מכתב / טיוטת מסמך] בעברית מקצועית.\nאורך בינוני.\nמען: [מצב יומיומי אצל הקהל].\nאל תבקש ממני פרטים חסרים. סמן בסוגריים מה צריך לבדוק לפני שליחה.",
       "visibility": "shown",
-      "layout": "low",
+      "layout": "center",
       "scale": "large",
       "palette": "prism",
       "textStyle": "solid",
@@ -1446,12 +1408,12 @@
       "title": "אותה מטרה.",
       "tool": "ChatGPT Work / Codex",
       "accent": "חלון אחר.",
-      "mark": "data:image/webp;base64,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",
+      "mark": "",
       "link": "https://chatgpt.com/",
       "caption": "לא תשובה. תוצר.",
       "prompt": "מטרה: [אותה משימה שהצ׳אטבוט לא הצליח לבצע]\nעבוד בתיקייה המחוברת.\nאל תסתפק בתשובה בשיחה.\nתוצר סופי: [קובץ / טיוטת מייל / טבלה]\nלפני שליחה, תשלום או מחיקה: עצור ושאל אותי.\nבסוף הצג מה שינית ומה לא.",
       "visibility": "shown",
-      "layout": "corner",
+      "layout": "center",
       "scale": "large",
       "palette": "prism",
       "textStyle": "solid",
@@ -1675,7 +1637,7 @@
       "title": "מה כבר ראינו",
       "composition": "theatre",
       "visibility": "shown",
-      "layout": "wide",
+      "layout": "center",
       "scale": "medium",
       "palette": "prism",
       "textStyle": "solid",
@@ -1728,26 +1690,7 @@
       "backdropPicture": "",
       "transition": "cut",
       "note": "סגירת החלק השני. אותו מנוע, אבל עכשיו הוא מקבל מטרה, משתמש בכלים ובחיבורים ועובד לפי נוהל. עוברים לארבע כותרות מהעולם ואז לידיים פיזיות.",
-      "objects": [
-        {
-          "id": "accent-rule-31",
-          "type": "shape",
-          "x": "8",
-          "y": "66",
-          "width": "34",
-          "height": "2",
-          "rotation": "0",
-          "opacity": "55",
-          "snap": "off",
-          "entrance": "fade",
-          "exit": "fade",
-          "style": "solid",
-          "shape": "rule",
-          "color": "auto",
-          "stroke": "auto",
-          "strokeWidth": "2"
-        }
-      ]
+      "objects": []
     },
     {
       "id": "lecture-nobel",
@@ -2009,7 +1952,7 @@
       "title": "מה עושים מכאן",
       "composition": "theatre",
       "visibility": "shown",
-      "layout": "corner",
+      "layout": "center",
       "scale": "medium",
       "palette": "prism",
       "textStyle": "solid",
@@ -2044,26 +1987,7 @@
           "label3": "ידע · הקשר · אחריות"
         }
       ],
-      "objects": [
-        {
-          "id": "accent-dots-44",
-          "type": "shape",
-          "x": "10",
-          "y": "24",
-          "width": "24",
-          "height": "30",
-          "rotation": "0",
-          "opacity": "26",
-          "snap": "off",
-          "entrance": "fade",
-          "exit": "fade",
-          "style": "solid",
-          "shape": "dots",
-          "color": "auto",
-          "stroke": "auto",
-          "strokeWidth": "1.6"
-        }
-      ]
+      "objects": []
     },
     {
       "id": "lecture-bottom-line",
@@ -2081,26 +2005,7 @@
       "backdropPicture": "",
       "transition": "zoom",
       "note": "אותו מנוע קיבל נובל על חלבון, גנב מיליונים בזום מזויף, נכנס לחברות בבדיקה ובנה דוגמנית בלי גוף. אחר כך הוא מקבל ידיים ומשכתב עיר. צ׳אטבוט עונה, סוכן מסיים, ואתם מחליטים איפה נגמר האישור.",
-      "objects": [
-        {
-          "id": "accent-rule-45",
-          "type": "shape",
-          "x": "56",
-          "y": "63",
-          "width": "36",
-          "height": "2",
-          "rotation": "0",
-          "opacity": "55",
-          "snap": "off",
-          "entrance": "fade",
-          "exit": "fade",
-          "style": "solid",
-          "shape": "rule",
-          "color": "auto",
-          "stroke": "auto",
-          "strokeWidth": "2"
-        }
-      ]
+      "objects": []
     },
     {
       "id": "lecture-thanks",
@@ -2109,7 +2014,7 @@
       "accent": "",
       "caption": "",
       "visibility": "shown",
-      "layout": "low",
+      "layout": "center",
       "scale": "large",
       "palette": "cobalt",
       "textStyle": "solid",
