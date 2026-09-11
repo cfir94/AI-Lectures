@@ -1205,36 +1205,36 @@ h1 {
 
 /* Anchored into the upper corner, with the diagonal left empty. In RTL the
    words start at the right, so that is the corner they take. */
-.layout-corner .scene {
+.layout-corner:not(.spans-stage) .scene {
   justify-content: flex-start;
   align-items: flex-start;
   text-align: right;
   padding: 11% 9% 12% 26%;
 }
-.layout-corner .scene-caption {
+.layout-corner:not(.spans-stage) .scene-caption {
   max-width: 32ch;
 }
 
 /* Hard against the leading edge, mid-height, with a wide clear field beside it.
    The one that most obviously is not a centred slide. */
-.layout-edge .scene {
+.layout-edge:not(.spans-stage) .scene {
   justify-content: center;
   align-items: flex-start;
   text-align: right;
   padding: 8% 7% 10% 34%;
 }
-.layout-edge .scene-caption {
+.layout-edge:not(.spans-stage) .scene-caption {
   max-width: 30ch;
 }
 
 /* Sitting low, with the air above it. Good for a line that lands. */
-.layout-low .scene {
+.layout-low:not(.spans-stage) .scene {
   justify-content: flex-end;
   align-items: flex-start;
   text-align: right;
   padding: 10% 9% 14% 22%;
 }
-.layout-low .scene-caption {
+.layout-low:not(.spans-stage) .scene-caption {
   max-width: 34ch;
 }
 
@@ -1552,7 +1552,16 @@ h1 {
 .slide:not(.leaving) {
   z-index: 2;
 }
-[data-transition="fade"] .slide.entering {
+/* A crossfade must not put two sentences on the screen at once. Fading the
+   whole incoming slide fades its background with it, so for a third of a second
+   the outgoing headline read straight through the incoming one — which is what
+   the presenter saw as a garbled slide. The slide box arrives opaque and covers
+   immediately; only what is drawn on it dissolves in. The three children are
+   named rather than matched with `> *`, so a child that carries its own
+   animation can never be overwritten by this one. */
+[data-transition="fade"] .slide.entering > .atmosphere,
+[data-transition="fade"] .slide.entering > .scene,
+[data-transition="fade"] .slide.entering > .free-object-layer {
   animation: t-fade-in 0.36s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 [data-transition="push"] .slide.leaving {

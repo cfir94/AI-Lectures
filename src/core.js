@@ -165,6 +165,13 @@
     wipe: "סגירה",
     curtain: "וילון · סגירה מימין לשמאל",
   };
+  /* A video that starts by itself has to be silent — every browser refuses an
+     unmuted autoplay — so this is for an animation standing in for a still,
+     not for a clip with a voice in it. */
+  const VIDEO_AUTOPLAY = {
+    manual: "מתנגן בלחיצה",
+    once: "מתנגן פעם אחת, בלי קול, בכניסה לשקף",
+  };
   const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
   const EXAMPLE_FIELDS = {
     name: text(40),
@@ -488,6 +495,7 @@
       fields: {
         url: { max: 300, required: false, video: true },
         poster: picture(),
+        autoplay: choice(VIDEO_AUTOPLAY),
         title: text(40, false),
         caption: text(150, false),
       },
@@ -555,7 +563,7 @@
       ],
     },
     timer: { minutes: "10", title: "", caption: "" },
-    video: { url: "", poster: "", title: "", caption: "" },
+    video: { url: "", poster: "", autoplay: "manual", title: "", caption: "" },
     canvas: { objects: [] },
     experiment: { title: "הנה הצעה." },
   };
@@ -1074,6 +1082,7 @@
     MOTIONS,
     BACKDROPS,
     TRANSITIONS,
+    VIDEO_AUTOPLAY,
     PALETTES,
     PALETTE_STYLES,
     RETIRED_PALETTES,

@@ -372,6 +372,21 @@ test("a video link is only ever an ID from a known source", () => {
     assert.equal(C.videoEmbed(bad), null);
 });
 
+test("a video slide says whether it opens itself, and defaults to not", () => {
+  const document = C.clone(seed);
+  const slide = C.blankSlide("video");
+  document.slides.push(slide);
+  // Absent in documents written before a video could start on its own.
+  delete document.slides.at(-1).autoplay;
+  assert.equal(C.validate(document).slides.at(-1).autoplay, "manual");
+  const auto = C.clone(document);
+  auto.slides.at(-1).autoplay = "once";
+  assert.equal(C.validate(auto).slides.at(-1).autoplay, "once");
+  const wrong = C.clone(document);
+  wrong.slides.at(-1).autoplay = "loop";
+  assert.throws(() => C.validate(wrong));
+});
+
 test("a local video is a relative path under the deck, and nothing else", () => {
   for (const path of [
     "videos/demo.mp4",

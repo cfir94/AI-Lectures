@@ -622,8 +622,20 @@
      where a white tool mark would vanish, so the stage says which it is. */
   const paletteTone = (slide) =>
     slide.palette === "deck" ? "" : (C.PALETTE_STYLES[slide.palette]?.tone ?? "dark");
+  /* `corner`, `edge` and `low` hold a third of the frame clear for something to
+     sit beside the words. A scene that already lays itself out across the stage
+     has nothing to give: the split's two columns were squeezed into the right
+     of the frame with a dead field beside them. Declared once, here, rather
+     than discovered again the next time a layout meets a wide scene. */
+  const SPANS_STAGE = new Set([
+    "split",
+    "tokens",
+    "illustrated",
+    "language",
+    "experiment",
+  ]);
   const frame = (slide, index, classes, style, body) =>
-    `<section class="slide ${classes} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
+    `<section class="slide ${classes} ${SPANS_STAGE.has(slide.type) ? "spans-stage" : ""} ${slide.objects?.some(object => object.bind === "title") ? "composed-slide" : ""} ${C.isShown(slide) ? "" : "is-skipped"} motion-${slide.motion} slide-text-${slide.textStyle} layout-${slide.layout} scale-${slide.scale}${slide.arrangement ? ` arrange-${slide.arrangement}` : ""}" aria-label="שקף ${index + 1}"${paletteTone(slide) ? ` data-tone="${paletteTone(slide)}"` : ""} style="${paletteStyle(slide)}${style}">${backdrop(slide)}${body}${freeObjects(slide)}${C.isShown(slide) ? "" : '<span class="skipped-badge">שקף מדולג — לא יופיע בהרצאה</span>'}</section>`;
 
   const isBound = (slide, key) =>
     slide.objects?.some((object) => object.bind === key);
@@ -832,14 +844,19 @@
      still looks like the deck — with no network at all. */
   function videoSlide(slide, index) {
     const video = C.videoEmbed(slide.url);
-    const started = video && playing.has(slide.id);
+    /* An animation standing in for a still should not need a click to become
+       the slide. It starts muted and plays once. Someone who asked the system
+       for less motion gets the poster and the button instead. */
+    const opensItself =
+      slide.autoplay === "once" && video?.kind === "file" && !reducedMotion();
+    const started = video && (playing.has(slide.id) || opensItself);
     const poster = slide.poster
       ? `<img class="video-still" src="${esc(slide.poster)}" alt="">`
       : '<span class="video-still empty"></span>';
     const offline = navigator.onLine === false && video?.kind === "iframe";
     let media;
     if (started && video.kind === "file")
-      media = `<video class="video-embed" src="${esc(pickedVideos.get(slide.id) || video.src)}" controls autoplay playsinline ${slide.poster ? `poster="${esc(slide.poster)}"` : ""}></video>`;
+      media = `<video class="video-embed" src="${esc(pickedVideos.get(slide.id) || video.src)}" ${opensItself && !playing.has(slide.id) ? "muted" : "controls"} autoplay playsinline ${slide.poster ? `poster="${esc(slide.poster)}"` : ""}></video>`;
     else if (started)
       media = `<iframe class="video-embed" src="${esc(video.src)}" title="${esc(slide.title || "סרטון")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
     else if (video)
@@ -1505,6 +1522,7 @@
     unit: "יחידה",
     picture: "התמונה",
     url: "קישור לסרטון",
+    autoplay: "הפעלה",
     link: "קישור — נפתח בלשונית חדשה",
     poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",
