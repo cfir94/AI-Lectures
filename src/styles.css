@@ -1981,8 +1981,8 @@ h1 {
    which reads backwards here: the light should arrive where the sentence
    starts. */
 @keyframes text-shimmer-sweep {
-  from { background-position: 0% center; }
-  to { background-position: 100% center; }
+  from { background-position: 0% center, center; }
+  to { background-position: 100% center, center; }
 }
 @keyframes text-sheen-sweep {
   0% { background-position-x: 250%; }
@@ -2020,14 +2020,19 @@ h1 {
 .slide-text-shimmer .reveal-list li[data-state="now"],
 .slide-text-shimmer .token-sentence,
 .slide-text-shimmer .scene-word {
-  background-color: color-mix(in srgb, var(--sweep-tint) 42%, var(--surface));
-  background-image: linear-gradient(
-    90deg,
-    transparent calc(50% - var(--sweep-spread)),
-    var(--sweep-tint),
-    transparent calc(50% + var(--sweep-spread))
-  );
-  background-size: 250% 100%;
+  /* The first layer is the moving light; the second keeps the deck's colour
+     ramp visible underneath it. Previously shimmer replaced the spectrum with
+     `--text`, which made an auto-colour object turn black on a pearl slide. */
+  background-color: transparent;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - var(--sweep-spread)),
+      rgba(255, 255, 255, 0.96) 50%,
+      transparent calc(50% + var(--sweep-spread))
+    ),
+    var(--spectrum);
+  background-size: 250% 100%, 100% 100%;
   animation: text-shimmer-sweep 2.6s linear infinite;
 }
 .slide-text-shimmer .scene > :is(h1, .scene-eyebrow, .split-heading) {
@@ -2108,6 +2113,18 @@ h1 {
     background-image: none;
     color: var(--sweep-tint);
     -webkit-text-fill-color: var(--sweep-tint);
+  }
+  .object-text.text-shimmer,
+  .slide-text-shimmer h1,
+  .slide-text-shimmer .scene-eyebrow,
+  .slide-text-shimmer .split-heading,
+  .slide-text-shimmer .reveal-list li[data-state="now"],
+  .slide-text-shimmer .token-sentence,
+  .slide-text-shimmer .scene-word {
+    background-image: var(--spectrum);
+    background-size: 100% 100%;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
 }
 

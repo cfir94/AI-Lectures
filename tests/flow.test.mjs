@@ -24,3 +24,13 @@ test('curtain and gathering presets survive portable serialization',()=>{
   const invalid=C.clone(copy);invalid.slides.find(s=>s.id===gemini.id).objects[0].exit='untrusted';
   assert.throws(()=>C.validate(invalid));
 });
+
+test('opening, audience question and presenter motion stay staged as designed',()=>{
+  const opening=deck.slides.find(s=>s.id==='lecture-open');
+  const question=deck.slides.find(s=>s.id==='lecture-question');
+  const presenter=deck.slides.find(s=>s.id==='lecture-good-morning');
+  assert.equal(opening.objects.find(o=>o.bind==='title').style,'shimmer');
+  assert.equal(question.objects.find(o=>o.bind==='title').y,'32');
+  assert.equal(question.objects.find(o=>o.bind==='accent').y,'47');
+  assert.ok(presenter.objects.every(o=>o.exit==='none'));
+});
