@@ -93,6 +93,10 @@
      opens instead of failing whole. */
   const choice = (options, retired) => ({ choice: options, retired });
   const picture = () => ({ picture: true, max: LIMITS.image });
+  /* A number the presenter drags rather than picks from a list. `fallback` is
+     what a document that predates the field gets, so adding one never changes
+     a slide that was authored before it existed. */
+  const percent = (fallback, min, max) => ({ percent: true, fallback, min, max });
   const link = () => ({ max: 300, required: false, link: true });
   /* A link is opened by the presenter mid-talk, so only https is accepted:
      never javascript:, data: or file:, and never a document's idea of a local
@@ -232,6 +236,7 @@
     orbit: "קשתות נעות",
     ribbons: "סרטי אור",
     comet: "אור נודד",
+    corner: "קשתות בפינה",
     grid: "רשת",
     particles: "חלקיקים",
     aurora: "זוהר",
@@ -423,6 +428,12 @@
     backdropPicture: picture(),
     transition: choice(TRANSITIONS),
     pace: choice(PACES),
+    /* 100 is the backdrop as designed. Below it the whole atmosphere fades;
+       above it the arc family paints its own light stronger, because an
+       atmosphere already at full opacity cannot be made more present by
+       raising opacity — the arcs are faint by their own alpha, not by the
+       layer's. */
+    backdropStrength: percent("100", 0, 240),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -785,6 +796,10 @@
         // Empty is a slide waiting for its link; anything else must resolve.
         if (value.trim() && !videoEmbed(value)) fail();
         return value.trim();
+      }
+      if (spec.percent) {
+        if (v === undefined) return spec.fallback;
+        return number(v, spec.min, spec.max);
       }
       if (spec.choice) {
         // An absent preset falls back to the default; a wrong one is a bad file.
