@@ -1058,10 +1058,17 @@
       previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
     const exitsOnly =
       previous && !sameSlide && slide.transition === "cut" && hasObjectExits;
-    const slideExitTime = { cut: 0, fade: 340, push: 440, zoom: 400 }[
+    const slideExitTime = { cut: 0, fade: 340, push: 520, zoom: 400 }[
       slide.transition
     ];
     const outgoingTime = Math.max(slideExitTime, hasObjectExits ? 520 : 0);
+    /* A push carries the arriving slide's content in with it. Holding the words
+       back until the slide lands turns one move into two — an empty coloured
+       panel slides in, then the sentence appears on it — which is the part of
+       this the presenter reported as not smooth. Objects leaving still have to
+       finish first, so that case keeps the wait. */
+    const enterDelay =
+      slide.transition === "push" && !hasObjectExits ? 120 : outgoingTime + 40;
     if (
       previous &&
       !sameSlide &&
@@ -1090,7 +1097,7 @@
       root.lastElementChild.classList.add("entering");
       root.lastElementChild.style.setProperty(
         "--enter-delay",
-        `${(outgoingTime + 40) / 1000}s`,
+        `${enterDelay / 1000}s`,
       );
     } else root.innerHTML = html;
     const current = root.lastElementChild;

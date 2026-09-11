@@ -529,3 +529,36 @@
 - **ארבעה סמלים לבנים על שקפים בהירים.** הבדיקה הקודמת בדקה רק את `slide.mark`; אלה היו אובייקטי תמונה חופשיים, ולכן חמקו. `tools/reink-marks.mjs` צובע מחדש כל סמל בעל דיו שטוח לצבע שהשקף שלו מבקש, משמר אלפא והחלקת קצוות, ומסרב לכל מה שאינו מונוכרומטי — כך שתצלום לא ייפגע.
 - **תמונת הפתיחה הוחזרה.** הסרתי אותה כי היא ענבר וירוק וכהה; המרצה דיווח על היעדרה כבאג. היא חוזרת עד שתגיע התמונה שהוא בחר לשקף הזה.
 - **`tools/stage-audit.mjs`** — הולך על המצגת הבנויה בדפדפן אמיתי ונכשל על טקסט לא קריא, גרדיאנט שלא נצבע, תמונה שלא נטענה, מסגרת שלא תואמת לשקף, ושגיאות קונסולה. זה מכסה חלק מהפער שנרשם ב־`TASKS.md` — בדיקות הסכימה לא רואות את הבמה, וכל באג שהמרצה דיווח עליו עד היום חי שם.
+
+## 2026-09-11 — Transitions that cover, and a headline that does not collide
+
+Two things the presenter reported after the previous round.
+
+**The garbled headline.** `שוטפות זה לא בדיקה.` renders clean at every viewport
+in Chromium on Linux, which is why the previous round's crossfade fix did not
+touch it — it was never a crossfade. `cascade` puts every word in its own
+`inline-block`, and `h1` is tracked at `-0.045em`. That tracking is applied
+after the last glyph of a word as well as between letters, so each word's box
+is narrower than the glyphs it holds and the next word is laid out on top of
+the previous word's final letter — the leftmost one, in Hebrew. Whether it
+shows depends on the font's sidebearings: the Linux fallback absorbs it, Segoe
+UI, which is what the presenter reads this on, does not. `.cascade-word` now
+carries `margin-inline-end: 0.045em`, which gives each word back exactly the
+tracking its own box took. Verified: the word gaps grow by the expected amount
+at 1280, 1366, 1600 and 1920, and the sentence still sits on one line at all
+four.
+
+**The transitions.** `push` drifted the two slides nine percent past each
+other, which left the arriving slide short of one edge and a strip of the
+departing slide showing beside it — a previous slide flashing up cut in half,
+which is how the presenter described it. Both slides now travel a full stage
+width and tile exactly; measured frame by frame, the stage is covered edge to
+edge for every frame of the move, with no uncovered column at any point. The
+arriving slide also carries its content in with it now instead of landing blank
+and animating the words afterwards, which was the second half of "not smooth".
+
+`zoom` had the defect the crossfade had and was missed: it started the arriving
+slide at `opacity: 0`, so the outgoing headline read through the incoming one.
+Only the slide's contents dissolve now; the box arrives opaque and scales.
+
+Build, 39 tests and `tools/stage-audit.mjs` (37 shown slides) all pass.
