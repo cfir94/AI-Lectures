@@ -200,7 +200,14 @@
     still: "בלי תנועה",
   };
   const BACKDROPS = {
+    /* The arc family. `arcs` is the quiet original the presenter picked out —
+       two hairline curves that arrive once and then hold still. The three
+       below are the same language turned up: they keep moving, and they carry
+       the ramp's purple as well as the slide's accent. */
     arcs: "קשתות אור",
+    orbit: "קשתות נעות",
+    ribbons: "סרטי אור",
+    comet: "אור נודד",
     grid: "רשת",
     particles: "חלקיקים",
     aurora: "זוהר",
@@ -217,6 +224,32 @@
   /* How a slide arrives. The moving ones animate the slide's *contents*, never
      the slide box — a box that starts off-centre leaves a strip of stage
      uncovered, and the outgoing slide drifts across it in full view. */
+  /* How long a slide's own animations run. `natural` is first, so a document
+     that predates this field gets it and nothing about that document changes.
+     The number multiplies every duration on the slide — its transition, and
+     the entrance and exit of every free object on it — so one choice moves the
+     whole slide's pace instead of a dozen separate timings. */
+  const PACES = {
+    natural: "קצב רגיל",
+    brisk: "מהיר",
+    calm: "רגוע",
+    slow: "איטי מאוד",
+  };
+  const PACE_RATE = { natural: 1, brisk: 0.6, calm: 1.45, slow: 2 };
+  /* The base milliseconds each transition takes. The CSS reads these through
+     `--arrive-base`; `app.js` reads them to decide when the outgoing slide can
+     be removed. Two copies of this drifted apart the moment two transitions
+     were added and the outgoing slide started vanishing on frame one, so there
+     is one copy and both sides ask it. */
+  const TRANSITION_MS = {
+    cut: 0,
+    fade: 360,
+    dissolve: 860,
+    push: 720,
+    zoom: 700,
+    recede: 700,
+  };
+  const OBJECT_MS = 720;
   const TRANSITIONS = {
     fade: "הצלבה",
     dissolve: "המסה רכה",
@@ -365,6 +398,7 @@
     backdrop: choice(BACKDROPS),
     backdropPicture: picture(),
     transition: choice(TRANSITIONS),
+    pace: choice(PACES),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -1094,6 +1128,10 @@
     VIDEO_AUTOPLAY,
     PALETTES,
     PALETTE_STYLES,
+    PACES,
+    PACE_RATE,
+    TRANSITION_MS,
+    OBJECT_MS,
     RETIRED_PALETTES,
     RETIRED_THEMES,
     VISIBILITY,
