@@ -1,36 +1,37 @@
 /* Keynote canvas: one focal point. Editing controls live on a separate layer.
-   The deck runs on one closed gamut — white, black, purple and blue/cyan — and
-   these four themes are the whole of it. Slide palettes in `core.js` are cut
+   The deck runs on one closed gamut — white, black, violet and blue/cyan — and
+   these four themes are the whole of it. The ramp is the presenter's own key
+   art: sky, vivid blue, indigo, violet. Slide palettes in `core.js` are cut
    from the same ramp; nothing here should introduce a hue that is not on it. */
 :root {
   font-family: "Segoe UI", Arial, sans-serif;
   font-size: 16px;
   color-scheme: dark;
-  --bg: #101323;
-  --surface: #101323;
-  --raised: #1e2440;
+  --bg: #0e1226;
+  --surface: #0e1226;
+  --raised: #1c2244;
   --text: #ffffff;
-  --muted: #b9c5e4;
-  --accent: #a3efff;
-  --accent-rgb: 163, 239, 255;
-  --line: #414d76;
-  --soft: #191d34;
-  --spectrum: linear-gradient(110deg, #a3efff 5%, #a3bfff 52%, #c3a1ff 96%);
+  --muted: #b3bde0;
+  --accent: #ac94df;
+  --accent-rgb: 172, 148, 223;
+  --line: #3a4372;
+  --soft: #161b36;
+  --spectrum: linear-gradient(110deg, #7fb2d9 2%, #96a3dc 50%, #ac94df 98%);
   --shadow: 0 20px 80px #0006;
 }
 :root[data-theme="paper"] {
   color-scheme: light;
-  --bg: #f8faff;
-  --surface: #f8faff;
+  --bg: #fafbfd;
+  --surface: #fafbfd;
   --raised: #ffffff;
-  --text: #182442;
-  --muted: #52617d;
-  --accent: #5264cb;
-  --accent-rgb: 82, 100, 203;
-  --line: #bac8e0;
-  --soft: #eaf0ff;
-  --shadow: 0 20px 80px #0001;
-  --spectrum: linear-gradient(110deg, #087caa 5%, #4464d6 50%, #8451c2 96%);
+  --text: #141726;
+  --muted: #5a6480;
+  --accent: #4f5ea8;
+  --accent-rgb: 79, 94, 168;
+  --line: #d3daea;
+  --soft: #eff2f9;
+  --shadow: 0 20px 80px #14172614;
+  --spectrum: linear-gradient(110deg, #4378ab 2%, #5e68b3 50%, #7a59bc 98%);
 }
 :root[data-theme="ink"] {
   --bg: #0a0b0d;
@@ -45,16 +46,16 @@
   --spectrum: linear-gradient(110deg, #ffffff 4%, #d2d8e0 52%, #9aa3af 96%);
 }
 :root[data-theme="nebula"] {
-  --bg: #120e22;
-  --surface: #120e22;
-  --raised: #241c40;
-  --text: #f8f5ff;
-  --muted: #bdb2da;
-  --accent: #a88cff;
-  --accent-rgb: 168, 140, 255;
-  --line: #453a6e;
-  --soft: #191333;
-  --spectrum: linear-gradient(110deg, #ded2ff 4%, #a88cff 50%, #6e9dff 96%);
+  --bg: #140e26;
+  --surface: #140e26;
+  --raised: #271c48;
+  --text: #f9f6ff;
+  --muted: #c0b3e0;
+  --accent: #b79ee6;
+  --accent-rgb: 183, 158, 230;
+  --line: #4a3a7a;
+  --soft: #1a1338;
+  --spectrum: linear-gradient(110deg, #ac94df 2%, #b79ee6 50%, #96a3dc 98%);
 }
 * {
   box-sizing: border-box;
@@ -485,7 +486,7 @@ p {
   background: var(--visual-gradient);
 }
 .visual-window.is-spectrum header b {
-  color: #101323;
+  color: #0e1226;
 }
 
 /* A slow mesh of colour — large, quiet, and never the subject of the slide. */
@@ -511,14 +512,14 @@ p {
 .mesh-blob:nth-child(2) {
   bottom: -24%;
   inset-inline-end: -14%;
-  background: color-mix(in oklch, rgb(var(--accent-rgb)) 62%, #7b5cff);
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 62%, #4378ab);
   opacity: 0.44;
 }
 .mesh-blob:nth-child(3) {
   top: 18%;
   inset-inline-end: 6%;
   width: 44%;
-  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #8451c2);
+  background: color-mix(in oklch, rgb(var(--accent-rgb)) 55%, #7a59bc);
   opacity: 0.34;
 }
 .mesh-blob:nth-child(4) {
@@ -544,7 +545,7 @@ p {
   border-color: transparent;
 }
 .visual-accordion.is-spectrum span {
-  color: #101323;
+  color: #0e1226;
 }
 :is(.visual-glass, .visual-approval).is-spectrum {
   border-color: transparent;
@@ -553,7 +554,7 @@ p {
     var(--visual-gradient);
 }
 :is(.visual-glass, .visual-approval).is-spectrum span {
-  color: #101323;
+  color: #0e1226;
 }
 :is(.visual-glass, .visual-approval).is-spectrum i {
   background: var(--visual-colour);
@@ -581,8 +582,12 @@ p {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* A spectrum object whose colour the presenter actually chose gets a ramp
+   derived from that colour. One left on "auto" follows the slide instead, so
+   it carries the deck's own ramp rather than a gradient around the text
+   colour — which is what "follows the slide it sits on" has to mean. */
 @supports (color: oklch(from red l c h)) {
-  .object-text.text-spectrum {
+  .object-text.text-spectrum:not(.auto-colour) {
     background: linear-gradient(
       110deg,
       oklch(from var(--object-colour) calc(l + 0.15) c calc(h - 40)),
@@ -1291,13 +1296,13 @@ h1 {
   /* The ramp walks the deck's own gamut and no further: cyan through blue to
      purple. A wider step per token was prettier in isolation and put pink and
      orange on a slide that has no business carrying either. */
-  background: hsl(calc(192deg + var(--token) * 17deg) 62% 55% / 0.32);
+  background: hsl(calc(208deg + var(--token) * 12deg) 38% 58% / 0.34);
   animation: token-in 0.45s both;
   animation-delay: calc(var(--token) * 45ms);
 }
 :root[data-theme="paper"] .token,
 .slide[data-tone="light"] .token {
-  background: hsl(calc(192deg + var(--token) * 17deg) 68% 58% / 0.4);
+  background: hsl(calc(208deg + var(--token) * 12deg) 40% 56% / 0.34);
 }
 .tokens-scene .scene-caption {
   margin-top: 3.2cqw;

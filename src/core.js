@@ -7,10 +7,10 @@
      theme nobody would choose is not an option, it is a way to make the deck
      look like a different deck by accident. */
   const THEMES = {
-    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#101323", "#a3efff"] },
-    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#f8faff", "#4464d6"] },
+    carbon: { name: "פחם ותכלת", hint: "עמוק · טכנולוגי", swatch: ["#0e1226", "#ac94df"] },
+    paper: { name: "לבן וכחול", hint: "בהיר · מדויק", swatch: ["#fafbfd", "#4f5ea8"] },
     ink: { name: "שחור ולבן", hint: "מינימלי · חד", swatch: ["#0a0b0d", "#ffffff"] },
-    nebula: { name: "סגול", hint: "לילי · רחוק", swatch: ["#120e22", "#a88cff"] },
+    nebula: { name: "סגול", hint: "לילי · רחוק", swatch: ["#140e26", "#b79ee6"] },
   };
   const LIMITS = {
     drafts: 25,
@@ -248,48 +248,53 @@
   };
   const RETIRED_THEMES = { wine: "nebula", forest: "carbon", ember: "carbon" };
   const PALETTE_STYLES = {
-    /* Light stages. Everything on the stage is built from these tokens, so a
-       pale surface with dark text works the same way round — but `raised` and
-       `soft` have to go *darker* than the surface here, not lighter, or every
-       panel and chip disappears into the background.
-       `pearl` carries the reference gradient the presenter picked out, and a
-       tool mark dropped on it must be the black variant: a white mark on a
-       white stage is an invisible mark. */
+    /* THE RAMP. The presenter sampled it off his own reference slide, from the
+       core of the letters rather than their anti-aliased edges:
+         purple #7a59bc  ·  blue #4378ab
+       Hebrew reads right to left, so the purple end is the 98% stop and the
+       blue end is the 2% one. Both are muted on purpose — a saturated version
+       of the same two hues was tried and read as neon, not as this deck.
+       Six palettes, two hues. They cannot tell themselves apart by colour, so
+       they do it by *value*: white, light ink, charcoal, navy, aubergine,
+       black. That ladder is also what lets the talk step between light and
+       dark without the jump landing like a slap. */
     pearl: {
-      surface: "#f8faff", raised: "#ffffff", soft: "#eaf0ff", line: "#bac8e0",
-      text: "#182442", muted: "#52617d", accent: "#5264cb", rgb: "82,100,203",
-      spectrum: "linear-gradient(110deg,#087caa 5%,#4464d6 50%,#8451c2 96%)",
+      surface: "#fafbfd", raised: "#ffffff", soft: "#eff2f9", line: "#d3daea",
+      text: "#141726", muted: "#5b6480", accent: "#4f5ea8", rgb: "79,94,168",
+      spectrum: "linear-gradient(110deg,#4378ab 2%,#5e68b3 50%,#7a59bc 98%)",
       tone: "light",
     },
-    /* The same ramp on ink: the dark half of the deck's own light field. */
+    /* A dark stage needs the ramp lifted or both hues go to mud against the
+       surface. Same two colours, same order, raised in lightness only. */
     prism: {
-      surface: "#101323", raised: "#1e2440", soft: "#191d34", line: "#414d76",
-      text: "#ffffff", muted: "#b9c5e4", accent: "#adceff", rgb: "173,206,255",
-      spectrum: "linear-gradient(110deg,#a3efff 5%,#a3bfff 52%,#c3a1ff 96%)",
+      surface: "#0e1226", raised: "#1c2244", soft: "#161b36", line: "#3a4372",
+      text: "#ffffff", muted: "#b3bde0", accent: "#ac94df", rgb: "172,148,223",
+      spectrum: "linear-gradient(110deg,#7fb2d9 2%,#96a3dc 50%,#ac94df 98%)",
       tone: "dark",
     },
-    /* The house. Charcoal that reads as black from the back of the room, with
-       the cyan end of the ramp on it. */
+    /* The house. Charcoal that reads as black from the back of the room. It
+       takes the blue end of the ramp; `prism` takes the purple end. */
     ice: {
-      surface: "#0b0f14", raised: "#171e26", soft: "#10161d", line: "#2e3a47",
-      text: "#f7fafd", muted: "#a9b6c3", accent: "#7fe3ff", rgb: "127,227,255",
-      spectrum: "linear-gradient(110deg,#bff2ff 5%,#5b8cff 52%,#a77cff 96%)",
+      surface: "#0a0d12", raised: "#161b24", soft: "#0f141b", line: "#2b3442",
+      text: "#f6fafe", muted: "#a4b1c2", accent: "#7fb2d9", rgb: "127,178,217",
+      spectrum: "linear-gradient(110deg,#7fb2d9 2%,#96a3dc 50%,#ac94df 98%)",
       tone: "dark",
     },
     /* One step deeper into blue. This is where the talk stops explaining and
        starts doing. */
     cobalt: {
-      surface: "#080e1e", raised: "#142244", soft: "#0d1730", line: "#27467a",
-      text: "#f4f8ff", muted: "#a8bad8", accent: "#6e9dff", rgb: "110,157,255",
-      spectrum: "linear-gradient(110deg,#cfe1ff 4%,#6e9dff 50%,#a77cff 96%)",
+      surface: "#070d20", raised: "#122046", soft: "#0b1430", line: "#24407c",
+      text: "#f3f7ff", muted: "#a3b6d9", accent: "#8fb0e0", rgb: "143,176,224",
+      spectrum: "linear-gradient(110deg,#7fb2d9 2%,#96a3dc 50%,#ac94df 98%)",
       tone: "dark",
     },
-    /* The far end of the same ramp. One slide in the talk is about a person
-       rather than a tool, and this is the colour it gets — once, on purpose. */
+    /* The purple end of the ramp, taken all the way into the surface. One
+       slide in the talk is about a person rather than a tool, and this is the
+       colour it gets — once, on purpose. */
     violet: {
-      surface: "#120e22", raised: "#241c40", soft: "#191333", line: "#453a6e",
-      text: "#f8f5ff", muted: "#bdb2da", accent: "#a88cff", rgb: "168,140,255",
-      spectrum: "linear-gradient(110deg,#ded2ff 4%,#a88cff 50%,#6e9dff 96%)",
+      surface: "#140e26", raised: "#271c48", soft: "#1a1338", line: "#4a3a7a",
+      text: "#f9f6ff", muted: "#c0b3e0", accent: "#b79ee6", rgb: "183,158,230",
+      spectrum: "linear-gradient(110deg,#ac94df 2%,#b79ee6 50%,#96a3dc 98%)",
       tone: "dark",
     },
     /* No hue at all: black and white and nothing else. It is what a slide looks
