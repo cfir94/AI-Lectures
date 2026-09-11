@@ -62,16 +62,31 @@
      moved on since the stored copy was taken, the stored copy is still what
      loads — and the presenter is told, and can take the new one. */
   let supersededBy = null;
+  let startupProblem = "";
+  let stored = null;
   try {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
+    stored = localStorage.getItem(storageKey);
+  } catch {
+    /* Reading is refused outright — private mode, blocked site data. Nothing
+       was saved here and nothing can be. */
+    canSave = false;
+    startupProblem = "הדפדפן חוסם שמירה מקומית. ההרצאה נטענה מהקישור, ושינויים לא יישמרו כאן.";
+  }
+  if (stored) {
+    try {
       const saved = C.validate(JSON.parse(stored));
       deck = saved;
       if (embedded.revision && embedded.revision !== saved.revision)
         supersededBy = embedded;
+    } catch {
+      /* The stored copy exists but no longer validates. That is a defect in
+         this app or a corrupted write — not a storage failure, and calling it
+         one sends the presenter looking in the wrong place. The embedded
+         document loads instead, and the broken copy is left untouched so it can
+         still be recovered. */
+      startupProblem =
+        "העותק ששמור במכשיר אינו תקין ולכן לא נטען. ההרצאה נטענה מהקישור. אל תשמרו מעליו עד שנבדוק.";
     }
-  } catch {
-    canSave = false;
   }
   const icons = {
     next: '<path d="m14 6-6 6 6 6"/>',
@@ -376,12 +391,18 @@
     const style = `left:${object.x}%;top:${object.y}%;width:${object.width}%;height:${object.height}%;--object-rotation:${object.rotation}deg;--object-opacity:${Number(object.opacity) / 100};z-index:${index + 1}`;
     let body = "";
     if (object.type === "text")
+      /* `dir="auto"` because the stage is RTL and some of what goes on it is
+         not: an English quotation opens with a neutral quote mark, so the
+         paragraph direction decides where that mark lands, and in an RTL
+         paragraph it lands at the wrong end with the full stop beside it. The
+         browser reads the first strong character and gets it right for Hebrew
+         and for English without either being declared anywhere. */
       /* A bound text object holds the same string as its slide field, so it
          has to emphasise the same way the structured field does — otherwise
          `*word*` reads as prose in one place and as markup in the other. While
          the box is contenteditable it stays plain text: the presenter edits the
          string they typed, not the markup it renders to. */
-      body = `<p class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : rich(object.text)}</p>`;
+      body = `<p dir="auto" class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : rich(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
@@ -1177,16 +1198,29 @@
       4500,
     );
   }
+  /* A browser gives one origin a few megabytes, and it counts strings as UTF-16
+     — so a document of N characters costs 2N bytes, and this deck is mostly
+     embedded pictures. "Storage is unavailable" is true but useless when the
+     real answer is that the deck plus its saved drafts no longer fit. */
+  const megabytes = (text) => (text.length * 2) / 1024 / 1024;
+  const isQuota = (error) =>
+    error instanceof DOMException &&
+    (error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED");
   function persist(payload) {
+    let reason = "";
     try {
       localStorage.setItem(storageKey, payload);
       canSave = true;
-    } catch {
+    } catch (error) {
       canSave = false;
+      reason = isQuota(error)
+        ? `אין מקום בדפדפן. ההרצאה שוקלת ${megabytes(payload).toFixed(1)} מ״ב, והמקום לאתר הזה כמעט תמיד 5 מ״ב — מחיקת טיוטות שמורות תפנה מקום.`
+        : "השמירה במכשיר אינה זמינה.";
     }
     $("#save-status").textContent = canSave
       ? "נשמר במכשיר הזה · אפשר להוריד עותק לגיבוי"
-      : "השמירה במכשיר אינה זמינה. יש להוריד עותק לפני הסגירה.";
+      : `${reason} יש להוריד עותק לפני הסגירה.`;
   }
   /* Two very different failures used to share one message. Invalid content is a
      defect in this app, not a storage problem, and saying so is what lets it be
@@ -1782,6 +1816,11 @@
       })
       .join("")}</div></section>`;
   }
+  /* Which of a slide's fields belong to the look row rather than its content.
+     This is the only list: the row itself is built from whatever lands in
+     `look`, because naming the keys twice is how `pace` was added to the schema
+     and to the row but not to this set — `look.pace` came back undefined, the
+     row threw on it, and the whole slides panel rendered empty. */
   const LOOK_KEYS = new Set([
     "visibility",
     "palette",
@@ -1790,7 +1829,13 @@
     "backdrop",
     "backdropPicture",
     "transition",
+    "pace",
   ]);
+  // The picture that goes with `backdrop: picture` gets its own field below.
+  const lookRow = (look) =>
+    Object.fromEntries(
+      Object.entries(look).filter(([key]) => key !== "backdropPicture"),
+    );
   const splitSpecs = (specs) => {
     const content = {},
       look = {};
@@ -1809,7 +1854,7 @@
       ${projectableTextTools(slide, index, content)}
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
-      <div class="look-row">${fieldsFor(slide, { visibility: look.visibility, palette: look.palette, textStyle: look.textStyle, motion: look.motion, backdrop: look.backdrop, transition: look.transition, pace: look.pace }, `slides.${index}`)}</div>
+      <div class="look-row">${fieldsFor(slide, lookRow(look), `slides.${index}`)}</div>
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -2090,11 +2135,17 @@
       return [];
     }
   };
+  let draftFailure = "";
   const writeDrafts = (list) => {
+    const payload = JSON.stringify(list);
     try {
-      localStorage.setItem(draftsKey, JSON.stringify(list));
+      localStorage.setItem(draftsKey, payload);
+      draftFailure = "";
       return true;
-    } catch {
+    } catch (error) {
+      draftFailure = isQuota(error)
+        ? `אין מקום בדפדפן: ${list.length} טיוטות שוקלות ${megabytes(payload).toFixed(1)} מ״ב. מחקו טיוטה, או הורידו אותה כקובץ ואז מחקו.`
+        : "השמירה במכשיר אינה זמינה.";
       return false;
     }
   };
@@ -2150,7 +2201,8 @@
     } else list.push(entry);
     if (!writeDrafts(list)) {
       draftStatus(
-        "אין מספיק מקום בדפדפן. הורידו טיוטה כקובץ ומחקו אותה מכאן, ואז נסו שוב.",
+        draftFailure ||
+          "אין מספיק מקום בדפדפן. הורידו טיוטה כקובץ ומחקו אותה מכאן, ואז נסו שוב.",
       );
       return;
     }
@@ -3536,6 +3588,12 @@
   render();
   save();
   document.body.classList.add("controls-idle");
-  if (!canSave)
+  /* Whatever went wrong at startup says what it was. "Storage is unavailable"
+     used to cover a blocked browser and a stored copy that no longer validates
+     alike, which is the one thing this app must not do with the presenter's
+     own work: it sends them looking in the wrong place while the real copy sits
+     untouched and unexplained. */
+  if (startupProblem) notify(startupProblem);
+  else if (!canSave)
     notify("השמירה המקומית אינה זמינה. אפשר לערוך ולהוריד עותק דרך העורך.");
 })();

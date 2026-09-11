@@ -25,6 +25,13 @@ const GLYPHS = {
   chatbot: `
     <path d="M4 6.5a2.5 2.5 0 0 1 2.5-2.5h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9.8L5.6 19.6A.6.6 0 0 1 4.6 19v-3H4.5"/>
     <path d="M4 6.5v9.6"/>`,
+  /* A subscription: a card with a stripe, and the small spark that marks the
+     thing you are paying for. */
+  subscription: `
+    <rect x="2.6" y="5.2" width="18.8" height="13.6" rx="2.6"/>
+    <path d="M2.6 9.4h18.8"/>
+    <path d="M6 14.4h4.4"/>
+    <path d="M17.4 13.1v3.6M15.6 14.9h3.6"/>`,
   agent: `
     <path d="M12 2.6v2.6"/>
     <circle cx="12" cy="2" r="1.1"/>
