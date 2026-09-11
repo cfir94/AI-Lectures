@@ -161,7 +161,11 @@
     recede: "התרחקות",
     push: "החלקה",
     wipe: "חשיפה",
+    reveal: "חשיפה כלפי מעלה",
     cascade: "מילה אחרי מילה",
+    settle: "נחיתה רכה",
+    unfold: "פרישה",
+    glide: "גלישה מהצד",
     pop: "קפיצה רכה",
     gather: "תנועה משמאל למרכז",
     curtain: "וילון · פתיחה משמאל לימין",
@@ -178,6 +182,10 @@
     recede: "זום החוצה",
     push: "החלקה",
     wipe: "סגירה",
+    reveal: "סגירה כלפי מטה",
+    settle: "שקיעה רכה",
+    unfold: "קיפול",
+    glide: "גלישה החוצה",
     cascade: "מילה אחרי מילה",
     curtain: "וילון · סגירה מימין לשמאל",
   };
@@ -211,8 +219,12 @@
     rise: "עלייה רכה",
     blur: "התבהרות",
     wipe: "חשיפה",
+    reveal: "חשיפה כלפי מעלה",
     cascade: "מילה אחרי מילה",
     zoom: "התקרבות",
+    settle: "נחיתה רכה",
+    unfold: "פרישה",
+    glide: "גלישה מהצד",
     still: "בלי תנועה",
   };
   /* A slide motion is also the default entrance for any freely positioned
@@ -223,8 +235,12 @@
     rise: "rise",
     blur: "blur",
     wipe: "wipe",
+    reveal: "reveal",
     cascade: "cascade",
     zoom: "zoom",
+    settle: "settle",
+    unfold: "unfold",
+    glide: "glide",
     still: "none",
   };
   const BACKDROPS = {

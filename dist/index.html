@@ -233,6 +233,13 @@ p {
 .object-enter-recede { animation-name: object-recede-in; }
 .object-enter-push { animation-name: object-push-in; }
 .object-enter-wipe { animation-name: object-wipe-in; }
+.object-enter-reveal { animation-name: object-reveal-in; }
+.object-enter-settle { animation-name: object-settle-in; }
+.object-enter-unfold {
+  animation-name: object-unfold-in;
+  transform-origin: 50% 100%;
+}
+.object-enter-glide { animation-name: object-glide-in; }
 .object-enter-pop { animation-name: object-pop-in; }
 /* The one move in the deck that is meant to be *read* as a move: the Gemini
    mark travels from where it stood on the previous slide to the middle of this
@@ -280,6 +287,13 @@ p {
 .slide.leaving .object-exit-recede { animation-name: object-recede-out; }
 .slide.leaving .object-exit-push { animation-name: object-push-out; }
 .slide.leaving .object-exit-wipe { animation-name: object-wipe-out; }
+.slide.leaving .object-exit-reveal { animation-name: object-reveal-out; }
+.slide.leaving .object-exit-settle { animation-name: object-settle-out; }
+.slide.leaving .object-exit-unfold {
+  animation-name: object-unfold-out;
+  transform-origin: 50% 100%;
+}
+.slide.leaving .object-exit-glide { animation-name: object-glide-out; }
 .slide.leaving .object-exit-curtain { animation-name: object-curtain-out; }
 /* A live transition preview demonstrates the stage change in isolation. The
    incoming slide already carries `no-motion`; this also keeps any configured
@@ -1674,6 +1688,24 @@ h1 {
   --entrance-name: m-fade;
   animation-name: m-fade;
 }
+.motion-reveal .scene > * {
+  --entrance-name: m-reveal;
+  animation-name: m-reveal;
+}
+.motion-settle .scene > * {
+  --entrance-name: m-settle;
+  animation-name: m-settle;
+}
+/* Unfolding happens about its own base, like a panel opening upward. */
+.motion-unfold .scene > * {
+  --entrance-name: m-unfold;
+  animation-name: m-unfold;
+  transform-origin: 50% 100%;
+}
+.motion-glide .scene > * {
+  --entrance-name: m-glide;
+  animation-name: m-glide;
+}
 .motion-still .scene > * {
   --entrance-name: none;
   animation-name: none;
@@ -1726,6 +1758,41 @@ h1 {
     transform: scale(0.82);
   }
 }
+/* `m-wipe` opens downward from the top edge. This one is its mirror: the
+   inset is on the top, so the line is uncovered from its base upward, and the
+   small rise underneath it moves the same way the reveal does. */
+@keyframes m-reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(14px);
+  }
+  to {
+    clip-path: inset(-20% 0 0 0);
+  }
+}
+/* The counterpart to `m-rise`: it comes down onto the line instead of up to
+   it, and stops without a bounce. */
+@keyframes m-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.012);
+  }
+}
+@keyframes m-unfold {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(-14deg) translateY(10px);
+  }
+}
+/* The stage is RTL, so the leading edge is the right one — but a transform is
+   physical, not logical, and has to be written that way. */
+@keyframes m-glide {
+  from {
+    opacity: 0;
+    transform: translateX(34px);
+  }
+}
 @keyframes m-fade {
   from {
     opacity: 0;
@@ -1763,6 +1830,22 @@ h1 {
   from { opacity: 0; clip-path: inset(0 100% 0 0); }
   to { opacity: var(--object-opacity, 1); clip-path: inset(0); }
 }
+@keyframes object-reveal-in {
+  from { opacity: 0; clip-path: inset(100% 0 0 0); }
+  to { opacity: var(--object-opacity, 1); clip-path: inset(0); }
+}
+@keyframes object-settle-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(-22px); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-unfold-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) perspective(900px) rotateX(-14deg) translateY(9px); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-glide-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(30px); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
 @keyframes object-pop-in {
   0% { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.72); }
   72% { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)) scale(1.05); }
@@ -1794,6 +1877,26 @@ h1 {
 }
 @keyframes object-push-out {
   to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(7cqw); }
+}
+/* The mirror of the upward reveal: it closes back down onto its base. */
+@keyframes object-reveal-out {
+  from { opacity: var(--object-opacity, 1); clip-path: inset(0); }
+  to { opacity: 0; clip-path: inset(100% 0 0 0); }
+}
+/* Each of these leaves the way its entrance arrived, reversed: settling sinks
+   back down, unfolding folds shut about its base, and a glide carries on past
+   the edge it came from instead of turning around. */
+@keyframes object-settle-out {
+  from { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(16px) scale(0.985); }
+}
+@keyframes object-unfold-out {
+  from { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) perspective(900px) rotateX(-12deg) translateY(8px); }
+}
+@keyframes object-glide-out {
+  from { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(-28px); }
 }
 @keyframes object-wipe-out {
   to { opacity: 0; clip-path: inset(0 0 0 100%); }
@@ -3562,6 +3665,34 @@ summary small {
 .object-cascade-word {
   display: inline-block;
 }
+/* The same trap the headline hit, one level down, and the one the presenter
+   reported as "word after word mangles my text". A free text object paints
+   `spectrum`, `shimmer` and `sheen` the same way a headline does — a gradient
+   clipped to the glyphs over a transparent fill — and every cascade word holds
+   a transform, even at rest, because its animation fills both ways. That
+   composites each word on its own layer, the ancestor's `background-clip: text`
+   never reaches it, and the word paints nothing at all: the name was still
+   there, still the right size, and invisible.
+
+   So each word carries the paint itself. `inherit` takes whichever gradient the
+   paragraph resolved to — the deck ramp, or the one derived from a colour the
+   presenter chose — so neither variant has to be restated here, and a fourth
+   text style added later inherits correctly by saying so once below. */
+.object-text.text-spectrum .object-cascade-word,
+.object-text.text-shimmer .object-cascade-word,
+.object-text.text-sheen .object-cascade-word,
+.slide-text-shimmer .cascade-word,
+.slide-text-sheen .cascade-word {
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* An outlined word strokes itself; the stroke is per element, so splitting the
+   string is all that is needed. */
+.object-text.text-outline .object-cascade-word {
+  -webkit-text-stroke: inherit;
+}
 .object-enter-cascade .object-cascade-word {
   animation: object-word-in 0.52s cubic-bezier(0.22, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--enter-delay, 0s) + var(--w) * 0.06s);
@@ -4639,7 +4770,11 @@ kbd {
     recede: "התרחקות",
     push: "החלקה",
     wipe: "חשיפה",
+    reveal: "חשיפה כלפי מעלה",
     cascade: "מילה אחרי מילה",
+    settle: "נחיתה רכה",
+    unfold: "פרישה",
+    glide: "גלישה מהצד",
     pop: "קפיצה רכה",
     gather: "תנועה משמאל למרכז",
     curtain: "וילון · פתיחה משמאל לימין",
@@ -4656,6 +4791,10 @@ kbd {
     recede: "זום החוצה",
     push: "החלקה",
     wipe: "סגירה",
+    reveal: "סגירה כלפי מטה",
+    settle: "שקיעה רכה",
+    unfold: "קיפול",
+    glide: "גלישה החוצה",
     cascade: "מילה אחרי מילה",
     curtain: "וילון · סגירה מימין לשמאל",
   };
@@ -4689,8 +4828,12 @@ kbd {
     rise: "עלייה רכה",
     blur: "התבהרות",
     wipe: "חשיפה",
+    reveal: "חשיפה כלפי מעלה",
     cascade: "מילה אחרי מילה",
     zoom: "התקרבות",
+    settle: "נחיתה רכה",
+    unfold: "פרישה",
+    glide: "גלישה מהצד",
     still: "בלי תנועה",
   };
   /* A slide motion is also the default entrance for any freely positioned
@@ -4701,8 +4844,12 @@ kbd {
     rise: "rise",
     blur: "blur",
     wipe: "wipe",
+    reveal: "reveal",
     cascade: "cascade",
     zoom: "zoom",
+    settle: "settle",
+    unfold: "unfold",
+    glide: "glide",
     still: "none",
   };
   const BACKDROPS = {
