@@ -54,6 +54,7 @@
     activeObjectPointer = null,
     renderedSlide = -1,
     renderedSceneKey = null,
+    previewingSlideMotion = false,
     renderedDots = "";
   /* A copy saved in this browser wins, because it is the presenter's own work
      and losing it would be unforgivable. But it also used to hide every later
@@ -274,6 +275,18 @@
     const inner = BACKDROP_PARTS[kind]?.(slide) ?? "";
     return `<div class="atmosphere backdrop-${kind}" aria-hidden="true">${inner}</div>`;
   }
+  const sameBackdrop = (a, b) =>
+    !!a &&
+    !!b &&
+    a.backdrop === b.backdrop &&
+    (a.backdropPicture || "") === (b.backdropPicture || "");
+  function carryBackdrop(previous, incoming) {
+    const held = previous.querySelector(":scope > .atmosphere");
+    const fresh = incoming.querySelector(":scope > .atmosphere");
+    if (!held || !fresh) return;
+    held.classList.add("backdrop-retained");
+    fresh.replaceWith(held);
+  }
   // An imported ID is any string, so it is scrubbed before it becomes a
   // gradient reference rather than trusted inside url(#…).
   const paintId = (object, index) =>
@@ -402,7 +415,7 @@
          `*word*` reads as prose in one place and as markup in the other. While
          the box is contenteditable it stays plain text: the presenter edits the
          string they typed, not the markup it renders to. */
-      body = `<p dir="auto" class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : rich(object.text)}</p>`;
+      body = `<p dir="auto" class="object-text text-${object.style} ${object.color === "auto" ? "auto-colour" : ""} ${editingText ? "is-editing" : ""}" data-editable-text="true" style="--object-size:${object.fontSize};--object-weight:${object.weight};--object-align:${object.align};--object-colour:${esc(resolveColour(object.color))}" ${editingText ? 'contenteditable="true" spellcheck="true" data-object-text-editor="true" aria-label="עריכת הטקסט על הבמה"' : 'aria-label="טקסט חופשי — לחיצה כפולה לעריכה"'}>${editingText ? esc(object.text) : object.entrance === "cascade" || object.exit === "cascade" ? object.text.split(/\s+/).map((word, wordIndex) => `<span class="object-cascade-word" style="--w:${Math.min(wordIndex, 12)}">${rich(word)}</span>`).join(" ") : rich(object.text)}</p>`;
     else if (object.type === "image")
       body = object.picture
         ? `<span class="object-crop" style="border-radius:${object.radius}%"><img class="object-image" draggable="false" src="${esc(object.picture)}" alt="${esc(object.alt)}" style="object-fit:${object.fit};object-position:${object.focusX}% ${object.focusY}%;transform:scale(${Number(object.zoom) / 100})"></span>`
@@ -594,12 +607,32 @@
       const opacity = "var(--object-opacity, 1)";
       const entrance = {
         fade: [{ opacity: 0 }, { opacity }],
+        dissolve: [
+          {
+            opacity: 0,
+            filter: "blur(14px)",
+            transform: `${rotation} scale(1.015)`,
+          },
+          { opacity, filter: "blur(0)", transform: rotation },
+        ],
+        blur: [
+          { opacity: 0, filter: "blur(14px)" },
+          { opacity, filter: "blur(0)" },
+        ],
         rise: [
           { opacity: 0, transform: `${rotation} translateY(28px)` },
           { opacity, transform: rotation },
         ],
         zoom: [
           { opacity: 0, transform: `${rotation} scale(0.78)` },
+          { opacity, transform: rotation },
+        ],
+        recede: [
+          { opacity: 0, transform: `${rotation} scale(1.08)` },
+          { opacity, transform: rotation },
+        ],
+        push: [
+          { opacity: 0, transform: `${rotation} translateX(-7cqw)` },
           { opacity, transform: rotation },
         ],
         wipe: [
@@ -614,19 +647,72 @@
       };
       const exit = {
         fade: [{ opacity }, { opacity: 0 }],
+        dissolve: [
+          { opacity, filter: "blur(0)", transform: rotation },
+          {
+            opacity: 0,
+            filter: "blur(14px)",
+            transform: `${rotation} scale(1.015)`,
+          },
+        ],
+        blur: [
+          { opacity, filter: "blur(0)" },
+          { opacity: 0, filter: "blur(14px)" },
+        ],
         fall: [
           { opacity, transform: rotation },
           { opacity: 0, transform: `${rotation} translateY(34px)` },
         ],
+        rise: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} translateY(-34px)` },
+        ],
         shrink: [
           { opacity, transform: rotation },
           { opacity: 0, transform: `${rotation} scale(0.72)` },
+        ],
+        zoom: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} scale(1.18)` },
+        ],
+        recede: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} scale(0.78)` },
+        ],
+        push: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} translateX(7cqw)` },
         ],
         wipe: [
           { opacity, clipPath: "inset(0)" },
           { opacity: 0, clipPath: "inset(0 0 0 100%)" },
         ],
       };
+      if (preset === "cascade") {
+        const words = [...element.querySelectorAll(".object-cascade-word")];
+        const entering = phase === "entrance";
+        words.forEach((word, index) =>
+          word.animate(
+            entering
+              ? [
+                  { opacity: 0, transform: "translateY(0.45em)" },
+                  { opacity: 1, transform: "translateY(0)" },
+                ]
+              : [
+                  { opacity: 1, transform: "translateY(0)" },
+                  { opacity: 0, transform: "translateY(-0.35em)" },
+                ],
+            {
+              duration: entering ? 520 : 380,
+              delay: Math.min(index, 12) * (entering ? 60 : 32),
+              easing: entering
+                ? "cubic-bezier(0.22, 0.7, 0.3, 1)"
+                : "cubic-bezier(0.4, 0, 1, 1)",
+            },
+          ),
+        );
+        return;
+      }
       const frames = (phase === "entrance" ? entrance : exit)[preset];
       if (!frames) return;
       element.animate(frames, {
@@ -1084,10 +1170,12 @@
     const direction = state.slide < renderedSlide ? -1 : 1;
     root.querySelectorAll(".slide.leaving").forEach((el) => el.remove());
     const previous = root.lastElementChild;
+    const previousSlide = deck.slides[renderedSlide];
+    const retainBackdrop = previous && sameBackdrop(previousSlide, slide);
     const hasObjectExits =
       previous?.querySelector(".free-object:not(.object-exit-none)") ?? null;
     const exitsOnly =
-      previous && !sameSlide && slide.transition === "cut" && hasObjectExits;
+      previous && !sameSlide && hasObjectExits;
     /* Both halves of the timing come from `core`, and both are scaled by the
        pace of the slide they belong to: the outgoing slide's own pace governs
        how long it takes to leave, the incoming one's how long it takes to
@@ -1095,7 +1183,6 @@
        outgoing slide vanish on frame one the moment two transitions were
        added and this table had not heard of them. */
     const rate = (s) => C.PACE_RATE[s?.pace] ?? 1;
-    const previousSlide = deck.slides[renderedSlide];
     const outRate = rate(previousSlide);
     const slideExitTime = (C.TRANSITION_MS[slide.transition] ?? 360) * outRate;
     const objectExitTime = hasObjectExits ? C.OBJECT_MS * outRate : 0;
@@ -1125,16 +1212,25 @@
         });
       setTimeout(drop, outgoingTime + 80);
       root.insertAdjacentHTML("beforeend", html);
-      root.lastElementChild.classList.add("entering");
-      root.lastElementChild.style.setProperty(
+      const incoming = root.lastElementChild;
+      if (retainBackdrop) carryBackdrop(previous, incoming);
+      incoming.classList.add("entering");
+      incoming.style.setProperty(
         "--enter-delay",
         `${(outgoingTime + 40) / 1000}s`,
       );
+    } else if (retainBackdrop) {
+      root.insertAdjacentHTML("beforeend", html);
+      const incoming = root.lastElementChild;
+      carryBackdrop(previous, incoming);
+      previous.remove();
     } else root.innerHTML = html;
     const current = root.lastElementChild;
     current.style.setProperty("--dir", direction);
     // A step inside the same slide keeps the stage still; only beats animate.
-    if (sameSlide) current.classList.remove(`motion-${slide.motion}`);
+    if (sameSlide && !previewingSlideMotion)
+      current.classList.remove(`motion-${slide.motion}`);
+    previewingSlideMotion = false;
     renderedSlide = state.slide;
     const sceneKey = `${state.slide}:${state.step}`;
     if (renderedSceneKey === sceneKey) current.classList.add("no-motion");
@@ -1580,9 +1676,9 @@
     alt: "תיאור לקורא מסך",
     heading: "הכותרת בצד",
     line: "שורה מתחת",
-    motion: "תנועת הכניסה",
+    motion: "כניסת התוכן",
     backdrop: "רקע הבמה",
-    transition: "מעבר לשקף הזה",
+    transition: "מעבר הבמה לשקף הזה",
     textStyle: "מראה הטקסט",
     palette: "פלטת השקף",
     visibility: "הצגה בהרצאה",
@@ -1832,10 +1928,15 @@
     "pace",
   ]);
   // The picture that goes with `backdrop: picture` gets its own field below.
+  const MOTION_KEYS = new Set(["motion", "transition", "pace"]);
   const lookRow = (look) =>
     Object.fromEntries(
-      Object.entries(look).filter(([key]) => key !== "backdropPicture"),
+      Object.entries(look).filter(
+        ([key]) => key !== "backdropPicture" && !MOTION_KEYS.has(key),
+      ),
     );
+  const motionPanel = (slide, index, look) =>
+    `<section class="motion-panel"><div class="motion-panel-head"><strong>תנועה ומעבר</strong><small>מעבר הבמה מחליף את השקף; כניסת התוכן מפעילה את הכותרת והטקסט. הם פועלים בשכבות נפרדות.</small></div><div class="motion-grid">${picker("מעבר הבמה", `slides.${index}.transition`, slide.transition, look.transition.choice)}${picker("כניסת התוכן", `slides.${index}.motion`, slide.motion, look.motion.choice)}${picker("קצב", `slides.${index}.pace`, slide.pace, look.pace.choice)}</div></section>`;
   const splitSpecs = (specs) => {
     const content = {},
       look = {};
@@ -1855,6 +1956,7 @@
       ${type.list ? listEditor(slide, index, type.list) : ""}
       ${objectTools(slide, index)}
       <div class="look-row">${fieldsFor(slide, lookRow(look), `slides.${index}`)}</div>
+      ${motionPanel(slide, index, look)}
       ${slide.backdrop === "picture" ? pictureField("תמונת הרקע", `slides.${index}.backdropPicture`, slide.backdropPicture) : ""}
       ${field("הערת מרצה — לא מוקרנת", `slides.${index}.note`, slide.note, C.LIMITS.note, true, false)}</details>`;
   }
@@ -3210,6 +3312,13 @@
       if (e.target.dataset.field.endsWith(".transition")) {
         save();
         $("#slide-root").dataset.transition = e.target.value;
+        return;
+      }
+      if (e.target.dataset.field.endsWith(".motion")) {
+        previewingSlideMotion = true;
+        renderedSceneKey = null;
+        save();
+        render();
         return;
       }
       // Replay the entrance so the presenter sees the preset they just picked.

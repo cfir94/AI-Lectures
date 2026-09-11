@@ -150,9 +150,14 @@
   const OBJECT_ENTRANCES = {
     none: "בלי כניסה",
     fade: "הופעה",
+    dissolve: "המסה רכה",
     rise: "עלייה",
+    blur: "התבהרות",
     zoom: "התקרבות",
+    recede: "התרחקות",
+    push: "החלקה",
     wipe: "חשיפה",
+    cascade: "מילה אחרי מילה",
     pop: "קפיצה רכה",
     gather: "תנועה משמאל למרכז",
     curtain: "וילון · פתיחה משמאל לימין",
@@ -160,9 +165,16 @@
   const OBJECT_EXITS = {
     none: "בלי יציאה",
     fade: "היעלמות",
+    dissolve: "המסה רכה",
     fall: "ירידה",
+    rise: "עלייה",
+    blur: "טשטוש",
     shrink: "התרחקות",
+    zoom: "זום פנימה",
+    recede: "זום החוצה",
+    push: "החלקה",
     wipe: "סגירה",
+    cascade: "מילה אחרי מילה",
     curtain: "וילון · סגירה מימין לשמאל",
   };
   /* A video that starts by itself has to be silent — every browser refuses an

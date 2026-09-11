@@ -217,8 +217,12 @@ p {
   animation-delay: var(--enter-delay, 0s);
 }
 .object-enter-fade { animation-name: object-fade-in; }
+.object-enter-dissolve { animation-name: object-dissolve-in; }
 .object-enter-rise { animation-name: object-rise-in; }
+.object-enter-blur { animation-name: object-blur-in; }
 .object-enter-zoom { animation-name: object-zoom-in; }
+.object-enter-recede { animation-name: object-recede-in; }
+.object-enter-push { animation-name: object-push-in; }
 .object-enter-wipe { animation-name: object-wipe-in; }
 .object-enter-pop { animation-name: object-pop-in; }
 /* The one move in the deck that is meant to be *read* as a move: the Gemini
@@ -258,12 +262,20 @@ p {
   animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
 }
 .slide.leaving .object-exit-fade { animation-name: object-fade-out; }
+.slide.leaving .object-exit-dissolve { animation-name: object-dissolve-out; }
 .slide.leaving .object-exit-fall { animation-name: object-fall-out; }
+.slide.leaving .object-exit-rise { animation-name: object-rise-out; }
+.slide.leaving .object-exit-blur { animation-name: object-blur-out; }
 .slide.leaving .object-exit-shrink { animation-name: object-shrink-out; }
+.slide.leaving .object-exit-zoom { animation-name: object-zoom-out; }
+.slide.leaving .object-exit-recede { animation-name: object-recede-out; }
+.slide.leaving .object-exit-push { animation-name: object-push-out; }
 .slide.leaving .object-exit-wipe { animation-name: object-wipe-out; }
 .slide.leaving .object-exit-curtain { animation-name: object-curtain-out; }
 .slide.object-exits-only {
-  background-color: var(--surface);
+  z-index: 3;
+  background: transparent;
+  animation: none !important;
 }
 .slide.object-exits-only > :not(.free-object-layer) {
   visibility: hidden;
@@ -1658,12 +1670,28 @@ h1 {
   from { opacity: 0; }
   to { opacity: var(--object-opacity, 1); }
 }
+@keyframes object-dissolve-in {
+  from { opacity: 0; filter: blur(14px); transform: rotate(var(--object-rotation, 0deg)) scale(1.015); }
+  to { opacity: var(--object-opacity, 1); filter: blur(0); transform: rotate(var(--object-rotation, 0deg)); }
+}
 @keyframes object-rise-in {
   from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(28px); }
   to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
 }
+@keyframes object-blur-in {
+  from { opacity: 0; filter: blur(14px); }
+  to { opacity: var(--object-opacity, 1); filter: blur(0); }
+}
 @keyframes object-zoom-in {
   from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.78); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-recede-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(1.08); }
+  to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
+}
+@keyframes object-push-in {
+  from { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(-7cqw); }
   to { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
 }
 @keyframes object-wipe-in {
@@ -1678,11 +1706,29 @@ h1 {
 @keyframes object-fade-out {
   to { opacity: 0; }
 }
+@keyframes object-dissolve-out {
+  to { opacity: 0; filter: blur(14px); transform: rotate(var(--object-rotation, 0deg)) scale(1.015); }
+}
+@keyframes object-blur-out {
+  to { opacity: 0; filter: blur(14px); }
+}
+@keyframes object-rise-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(-34px); }
+}
 @keyframes object-fall-out {
   to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateY(34px); }
 }
 @keyframes object-shrink-out {
   to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.72); }
+}
+@keyframes object-zoom-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(1.18); }
+}
+@keyframes object-recede-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) scale(0.78); }
+}
+@keyframes object-push-out {
+  to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(7cqw); }
 }
 @keyframes object-wipe-out {
   to { opacity: 0; clip-path: inset(0 0 0 100%); }
@@ -1696,15 +1742,11 @@ h1 {
    and dissolve, which meant that for a third of a second the audience read the
    incoming headline straight through the outgoing one — two sentences at once.
 
-   And the incoming slide *box* never moves, scales or fades. Only what is drawn
-   on it does. A box that starts 9% to the left, or at scale 0.94, does not
-   cover the stage, and the outgoing slide drifts across the uncovered strip in
-   full view — which is the slide the presenter saw "jump, vanish, then slide
-   away to the right". The box arrives opaque and covers on frame one; the
-   scene, the atmosphere and the free objects are what arrive.
-
-   The three children are named rather than matched with `> *`, so a child that
-   carries its own animation can never be overwritten by one of these. */
+   And the incoming slide *box* never moves, scales or fades. Its transition is
+   confined to the atmosphere. Structured content and free objects keep their
+   own entrance presets, so choosing a slide push can no longer mask a
+   word-by-word entrance. When an outgoing object has an exit, its transparent
+   object-only layer sits above the incoming frame until that exit completes. */
 .slide.leaving {
   position: absolute;
   inset: 0;
@@ -1714,39 +1756,27 @@ h1 {
 .slide:not(.leaving) {
   z-index: 2;
 }
-.slide.entering > .atmosphere,
-.slide.entering > .scene,
-.slide.entering > .free-object-layer {
+.slide.entering > .atmosphere:not(.backdrop-retained) {
   animation-duration: calc(var(--arrive-base, 0.36s) * var(--pace, 1));
   animation-timing-function: cubic-bezier(0.33, 0.1, 0.2, 1);
   animation-fill-mode: both;
 }
-[data-transition="fade"] .slide.entering > .atmosphere,
-[data-transition="fade"] .slide.entering > .scene,
-[data-transition="fade"] .slide.entering > .free-object-layer {
+[data-transition="fade"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   animation-name: t-fade-in;
 }
-[data-transition="dissolve"] .slide.entering > .atmosphere,
-[data-transition="dissolve"] .slide.entering > .scene,
-[data-transition="dissolve"] .slide.entering > .free-object-layer {
+[data-transition="dissolve"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   --arrive-base: 0.86s;
   animation-name: t-dissolve-in;
 }
-[data-transition="push"] .slide.entering > .atmosphere,
-[data-transition="push"] .slide.entering > .scene,
-[data-transition="push"] .slide.entering > .free-object-layer {
+[data-transition="push"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   --arrive-base: 0.72s;
   animation-name: t-push-in;
 }
-[data-transition="zoom"] .slide.entering > .atmosphere,
-[data-transition="zoom"] .slide.entering > .scene,
-[data-transition="zoom"] .slide.entering > .free-object-layer {
+[data-transition="zoom"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   --arrive-base: 0.7s;
   animation-name: t-zoom-in;
 }
-[data-transition="recede"] .slide.entering > .atmosphere,
-[data-transition="recede"] .slide.entering > .scene,
-[data-transition="recede"] .slide.entering > .free-object-layer {
+[data-transition="recede"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   --arrive-base: 0.7s;
   animation-name: t-recede-in;
 }
@@ -3464,6 +3494,23 @@ summary small {
 .object-animation-grid .object-field:last-child {
   grid-column: 1 / -1;
 }
+.object-cascade-word {
+  display: inline-block;
+}
+.object-enter-cascade .object-cascade-word {
+  animation: object-word-in 0.52s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--enter-delay, 0s) + var(--w) * 0.06s);
+}
+.slide.leaving .object-exit-cascade .object-cascade-word {
+  animation: object-word-out 0.38s cubic-bezier(0.4, 0, 1, 1) both;
+  animation-delay: calc(var(--w) * 0.032s);
+}
+@keyframes object-word-in {
+  from { opacity: 0; transform: translateY(0.45em); }
+}
+@keyframes object-word-out {
+  to { opacity: 0; transform: translateY(-0.35em); }
+}
 .object-field {
   display: block;
   min-width: 0;
@@ -3582,6 +3629,30 @@ summary small {
   margin-top: 0;
 }
 .look-row .field:nth-child(3) {
+  grid-column: 1 / -1;
+}
+.motion-panel {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--soft) 64%, transparent);
+}
+.motion-panel-head strong,
+.motion-panel-head small {
+  display: block;
+}
+.motion-panel-head small {
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.motion-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.motion-grid .field:last-child {
   grid-column: 1 / -1;
 }
 .dialog-subhead {
@@ -3975,6 +4046,12 @@ kbd {
   }
   .transition-options {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .motion-grid {
+    grid-template-columns: 1fr;
+  }
+  .motion-grid .field:last-child {
+    grid-column: auto;
   }
   .demo-tool {
     margin-bottom: 22px;

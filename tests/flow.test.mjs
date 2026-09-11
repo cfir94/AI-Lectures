@@ -34,3 +34,23 @@ test('opening, audience question and presenter motion stay staged as designed',(
   assert.equal(question.objects.find(o=>o.bind==='accent').y,'47');
   assert.ok(presenter.objects.every(o=>o.exit==='none'));
 });
+
+test('slide 8 dissolves and motion layers expose matching object presets',()=>{
+  const slide8=deck.slides.find(s=>s.id==='lecture-three-families');
+  assert.equal(slide8.transition,'dissolve');
+  for(const key of [...Object.keys(C.MOTIONS),...Object.keys(C.TRANSITIONS)]){
+    if(key==='still'||key==='cut') continue;
+    assert.ok(C.OBJECT_ENTRANCES[key],`${key} is missing from object entrances`);
+    assert.ok(C.OBJECT_EXITS[key],`${key} is missing from object exits`);
+  }
+});
+
+test('slide transitions cannot overwrite content or object entrances',()=>{
+  const css=readFileSync(new URL('../src/styles.css',import.meta.url),'utf8');
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  assert.ok(!css.includes('.slide.entering > .scene'));
+  assert.ok(!css.includes('.slide.entering > .free-object-layer'));
+  assert.match(css,/\.slide\.entering > \.atmosphere:not\(\.backdrop-retained\)/);
+  assert.match(app,/previewingSlideMotion = true/);
+  assert.match(app,/fresh\.replaceWith\(held\)/);
+});
