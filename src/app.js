@@ -802,7 +802,7 @@
     const sides = slide.sides
       .map(
         (side, i) =>
-          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}"><span class="split-heading" data-slide-text="sides.${i}.heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line" data-slide-text="sides.${i}.line">${esc(side.line)}</span>` : ""}</li>`,
+          `<li data-state="${i < step ? "past" : i === step ? "now" : "next"}" style="--w:${i}">${side.icon ? `<img class="split-icon" src="${esc(side.icon)}" alt="">` : ""}<span class="split-heading" data-slide-text="sides.${i}.heading">${headline(slide, side.heading)}</span>${side.line ? `<span class="split-line" data-slide-text="sides.${i}.line">${esc(side.line)}</span>` : ""}</li>`,
       )
       .join("");
     return frame(

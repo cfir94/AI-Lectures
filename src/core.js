@@ -214,10 +214,15 @@
     picture: "תמונה משלך",
     plain: "רקע נקי",
   };
+  /* How a slide arrives. The moving ones animate the slide's *contents*, never
+     the slide box — a box that starts off-centre leaves a strip of stage
+     uncovered, and the outgoing slide drifts across it in full view. */
   const TRANSITIONS = {
     fade: "הצלבה",
+    dissolve: "המסה רכה",
     push: "החלקה",
-    zoom: "זום",
+    zoom: "זום פנימה",
+    recede: "זום החוצה",
     cut: "חיתוך",
   };
   /* A slide palette changes the whole light field, not just one highlighted
@@ -475,7 +480,11 @@
         label: "צד",
         min: 2,
         max: 3,
-        fields: { heading: text(20), line: text(120, false) },
+        /* A side may carry a glyph of its own. It is optional because most
+           comparisons are carried by the words alone — but where the two sides
+           are two kinds of thing rather than two opinions, a mark says which is
+           which before the sentence does. */
+        fields: { heading: text(20), line: text(120, false), icon: picture() },
       },
       beats: (slide) => slide.sides.length,
     },
