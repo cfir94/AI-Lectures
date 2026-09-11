@@ -33,8 +33,21 @@ let changed = 0;
 for (const slide of doc.slides) {
   const palette = tones[slide.palette];
   if (!palette) continue;
-  for (const object of slide.objects ?? []) {
-    if (object.type !== "image" || typeof object.picture !== "string") continue;
+  /* Every place a mark can hide in a slide. A free image object was the only
+     one this knew about, and a glyph on a split side went straight back to
+     being invisible the first time that slide turned light. */
+  const marks = [
+    ...(slide.objects ?? [])
+      .filter((o) => o.type === "image")
+      .map((o) => ({ id: o.id, get: () => o.picture, set: (v) => (o.picture = v) })),
+    ...(slide.sides ?? []).map((side, i) => ({
+      id: `sides.${i}.icon`,
+      get: () => side.icon,
+      set: (v) => (side.icon = v),
+    })),
+  ];
+  for (const object of marks) {
+    if (typeof object.get() !== "string" || !object.get()) continue;
     const result = await page.evaluate(
       async ([src, ink]) => {
         const img = new Image();
@@ -61,8 +74,11 @@ for (const slide of doc.slides) {
         }
         if (!first || solid < 64) return { flat: false };
         const was = `#${first.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-        if (was.toLowerCase() === ink.toLowerCase()) return { flat: true, same: true, was };
         const to = [1, 3, 5].map((i) => parseInt(ink.slice(i, i + 2), 16));
+        /* Re-encoding drifts a channel by a unit or two, so an exact compare
+           would re-ink the same mark on every run and churn the document for
+           nothing. Close enough is already the right colour. */
+        if (first.every((v, i) => Math.abs(v - to[i]) <= 4)) return { flat: true, same: true, was };
         for (let i = 0; i < px.length; i += 4) {
           if (px[i + 3] === 0) continue;
           px[i] = to[0];
@@ -72,12 +88,12 @@ for (const slide of doc.slides) {
         ctx.putImageData(image, 0, 0);
         return { flat: true, same: false, was, picture: canvas.toDataURL("image/webp", 0.95) };
       },
-      [object.picture, palette.text],
+      [object.get(), palette.text],
     );
     if (!result.flat) continue;
     if (result.same) continue;
     console.log(`${slide.id} · ${object.id}: ${result.was} -> ${palette.text} (${slide.palette}, ${palette.tone})`);
-    if (write) object.picture = result.picture;
+    if (write) object.set(result.picture);
     changed++;
   }
 }
