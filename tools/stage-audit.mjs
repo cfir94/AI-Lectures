@@ -51,6 +51,23 @@ for (let step = 0; step < 200; step++) {
       const style = getComputedStyle(el);
       const painted = style.webkitTextFillColor === "rgba(0, 0, 0, 0)" || style.color === "rgba(0, 0, 0, 0)";
       if (painted) {
+        /* A cascade splits the string into words that carry their own paint, so
+           the paragraph is left transparent on purpose and the words are what
+           the room reads. Judge those instead, and only call it unpainted when
+           they are transparent too. */
+        const words = el.querySelectorAll(".object-cascade-word, .cascade-word");
+        if (words.length) {
+          const unpainted = [...words].every((word) => {
+            const w = getComputedStyle(word);
+            return (
+              (w.webkitTextFillColor === "rgba(0, 0, 0, 0)" || w.color === "rgba(0, 0, 0, 0)") &&
+              w.backgroundImage === "none"
+            );
+          });
+          if (unpainted)
+            faint.push(`"${el.textContent.trim().slice(0, 24)}" splits into words that paint nothing`);
+          return;
+        }
         /* Transparent fill means a gradient is meant to paint the glyphs. If the
            element has no background image, nothing paints them at all. */
         if (style.backgroundImage === "none")
