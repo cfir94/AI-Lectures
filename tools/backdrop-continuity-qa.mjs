@@ -18,11 +18,12 @@ for(const index of [12,13,12,11,12,13]) {
    const active=document.querySelector('.slide:not(.leaving)');
    const bg=active.querySelector(':scope > .atmosphere');
    const a=getComputedStyle(active),b=getComputedStyle(bg);
-   samples.push({cls:active.className,old:old?.className,bg:bg?.className,same:bg===old,visible:a.visibility==='visible'&&b.visibility==='visible',opacity:Number(b.opacity),transform:b.transform});
+   const logos=[...document.querySelectorAll('.object-image[alt="Gemini"]')].filter(img=>{for(let el=img;el&&el.id!=='slide-root';el=el.parentElement){const css=getComputedStyle(el);if(css.visibility==='hidden'||Number(css.opacity)===0)return false;}return true;}).length;
+   samples.push({logos,cls:active.className,old:old?.className,bg:bg?.className,same:bg===old,visible:a.visibility==='visible'&&b.visibility==='visible',opacity:Number(b.opacity),transform:b.transform});
   }
   return samples;
  },index);
- assert.ok(samples.every(s=>s.same&&s.visible&&s.opacity>0.9&&s.transform==='none'),JSON.stringify(samples.filter(s=>!s.visible||s.opacity<.9||s.transform!=='none')));
+ assert.ok(samples.every(s=>s.logos<=1&&s.same&&s.visible&&s.opacity>0.9&&s.transform==='none'),JSON.stringify(samples.filter(s=>!s.visible||s.opacity<.9||s.transform!=='none')));
  console.log('Continuous backdrop to slide',index+1, samples.length,'frames');
 }
 await page.waitForTimeout(2500);

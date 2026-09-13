@@ -664,3 +664,6 @@ The prior delayed hand-off left the atmosphere in an outgoing object-only slide,
 
 ## 2026-09-13 — supplied icons and reliability
 Six supplied icons embedded as raster WebP; large agenda icons and editable purpose images alongside tool marks. Added reliability statement immediately after chatbot. Portable content stays below 2.4MB; no slides removed.
+
+## 2026-09-13 — tool icon placement and duplicate logo
+Restored the tool logos to their original 15/34/18/32 geometry, matching the Gemini gather origin. Purpose icons now sit at 78/17/5/9 beside the tool name. Outgoing object-only layers hide objects with exit:none immediately; sibling exits previously kept the old Gemini visible alongside the new one. Browser regression samples 540 frames in both directions, asserting at most one visible Gemini and continuous background. All 53 tests pass.

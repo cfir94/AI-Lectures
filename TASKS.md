@@ -38,3 +38,5 @@
 Fixed the hidden atmosphere during the Gemini sequence using an immediately visible shared frame and content-only wait. Dedicated browser regression: tools/backdrop-continuity-qa.mjs. No lecture content changed.
 
 2026-09-13: Added six supplied icons and reliability slide. Current count: 61 total, 36 shown, 25 hidden; see LECTURE-FLOW.md.
+
+Tool purpose icons moved beside the tool names; agenda icons unchanged. Duplicate Gemini during transitions fixed and frame-sampled.
