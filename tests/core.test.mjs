@@ -915,3 +915,60 @@ test("a motion is a table row and a class, and split words keep their paint", ()
     );
   }
 });
+
+test("every entrance and exit the editor offers has a preview of its own", () => {
+  /* Choosing a preset in the editor plays it on the object through the Web
+     Animations API, from a map that is separate from the CSS. A key missing
+     there is silent: the option applies on the stage but previews as nothing,
+     so the presenter picks it, sees no change, and reports the feature as
+     broken for "some of them". Four entrances and four exits had drifted in
+     exactly that way the round they were added. */
+  const app = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  const body = app.slice(
+    app.indexOf("function previewObjectMotion("),
+    app.indexOf("if (preset === \"cascade\")"),
+  );
+  const map = (name) => {
+    const start = body.indexOf(`const ${name} = {`);
+    assert.ok(start !== -1, `the ${name} preview map is gone`);
+    return new Set(
+      [...body.slice(start).matchAll(/^\s{8}([a-z]+):/gm)].map((m) => m[1]),
+    );
+  };
+  const entrance = map("entrance");
+  const exit = map("exit");
+  for (const key of Object.keys(C.OBJECT_ENTRANCES))
+    if (key !== "none" && key !== "cascade")
+      assert.ok(entrance.has(key), `entrance ${key} previews as nothing`);
+  for (const key of Object.keys(C.OBJECT_EXITS))
+    if (key !== "none" && key !== "cascade")
+      assert.ok(exit.has(key), `exit ${key} previews as nothing`);
+});
+
+test("a clipped keyframe states both of its ends", () => {
+  /* `clip-path` does not interpolate from `none`, so a keyframe block that
+     names only `to` holds the starting value and swaps discretely halfway. The
+     wipe exit did that: the object faded and then snapped, and the wipe the
+     presenter chose never happened. */
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  /* Nested braces mean a regex cannot find the end of a @keyframes block, so
+     walk the braces. A vacuous guard is worse than none: the first version of
+     this test matched nothing and passed while the defect was still there. */
+  let checked = 0;
+  for (const head of css.matchAll(/@keyframes\s+([\w-]+)\s*\{/g)) {
+    let depth = 1;
+    let i = head.index + head[0].length;
+    for (; i < css.length && depth; i++) {
+      if (css[i] === "{") depth++;
+      else if (css[i] === "}") depth--;
+    }
+    const body = css.slice(head.index + head[0].length, i - 1);
+    if (!body.includes("clip-path")) continue;
+    checked++;
+    assert.ok(
+      /(^|\s)(from|0%)\s*\{/.test(body),
+      `@keyframes ${head[1]} animates clip-path without stating where it starts`,
+    );
+  }
+  assert.ok(checked >= 4, `only ${checked} clipped keyframes were examined — the walk is broken`);
+});

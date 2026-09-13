@@ -679,6 +679,30 @@
           { opacity, transform: `${rotation} scale(1.05)`, offset: 0.72 },
           { opacity, transform: rotation },
         ],
+        reveal: [
+          { opacity: 0, clipPath: "inset(100% 0 0 0)" },
+          { opacity, clipPath: "inset(0)" },
+        ],
+        settle: [
+          { opacity: 0, transform: `${rotation} translateY(-22px)` },
+          { opacity, transform: rotation },
+        ],
+        unfold: [
+          { opacity: 0, transform: `${rotation} perspective(900px) rotateX(-14deg) translateY(9px)` },
+          { opacity, transform: rotation },
+        ],
+        glide: [
+          { opacity: 0, transform: `${rotation} translateX(30px)` },
+          { opacity, transform: rotation },
+        ],
+        curtain: [
+          { opacity, clipPath: "inset(0 100% 0 0)" },
+          { opacity, clipPath: "inset(0)" },
+        ],
+        gather: [
+          { opacity: 0, transform: `${rotation} translateX(-26cqw)` },
+          { opacity, transform: rotation },
+        ],
       };
       const exit = {
         fade: [{ opacity }, { opacity: 0 }],
@@ -721,6 +745,26 @@
         wipe: [
           { opacity, clipPath: "inset(0)" },
           { opacity: 0, clipPath: "inset(0 0 0 100%)" },
+        ],
+        reveal: [
+          { opacity, clipPath: "inset(0)" },
+          { opacity: 0, clipPath: "inset(100% 0 0 0)" },
+        ],
+        settle: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} translateY(16px) scale(0.985)` },
+        ],
+        unfold: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} perspective(900px) rotateX(-12deg) translateY(8px)` },
+        ],
+        glide: [
+          { opacity, transform: rotation },
+          { opacity: 0, transform: `${rotation} translateX(-28px)` },
+        ],
+        curtain: [
+          { opacity, clipPath: "inset(0)" },
+          { opacity, clipPath: "inset(0 100% 0 0)" },
         ],
       };
       if (preset === "cascade") {
