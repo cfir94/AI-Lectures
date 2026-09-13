@@ -972,3 +972,27 @@ test("a clipped keyframe states both of its ends", () => {
   }
   assert.ok(checked >= 4, `only ${checked} clipped keyframes were examined — the walk is broken`);
 });
+
+test("an exiting object layer outranks the slide it is leaving on", () => {
+  /* `.slide.leaving` sets `z-index: 1` so the outgoing slide sits under the
+     arriving one. The rule that lifts an outgoing slide's object layer over
+     that arriving frame carries the same specificity, so if it does not also
+     name `.leaving` it loses on source order alone — and the exit runs
+     perfectly, behind an opaque slide. Only `cut` looked right, because
+     `cut-hold` hides the arriving frame until the objects finish, which is how
+     this came in as "it works one way and not the other". */
+  /* Strip comments first. The previous version of this check read the selector
+     straight out of the source, and the comment above the rule mentions
+     `.slide.leaving` — so it passed on the prose while the selector was wrong. */
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const lift = [...css.matchAll(/([^{}]*object-exits-only[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(lift.length >= 2, "the object-exits-only rules are gone");
+  const raising = lift.find((r) => /z-index/.test(r[2]));
+  assert.ok(raising, "nothing lifts the exiting object layer any more");
+  for (const rule of lift)
+    assert.ok(
+      rule[1].includes(".leaving"),
+      `"${rule[1].trim()}" does not name .leaving, so .slide.leaving wins on source order`,
+    );
+});
