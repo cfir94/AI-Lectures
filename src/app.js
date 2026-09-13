@@ -25,6 +25,11 @@
      before they have moved anything into place. It is a convenience for this
      session only — what the document stores is the path. */
   const pickedVideos = new Map();
+  /* A video file that is not beside the deck must not leave a dead player on
+     the stage: the slide falls back to its own poster, which is stored in the
+     document and is the whole reason the poster exists. The set also stops a
+     slide that opens itself from recreating the same missing file forever. */
+  const missingVideos = new Set();
   const embedded = C.validate(JSON.parse($("#deck-data").textContent));
   const storageKey = `lecture-stage:${embedded.documentId}`;
   const history = C.createHistory();
@@ -1075,8 +1080,12 @@
        the slide. It starts muted and plays once. Someone who asked the system
        for less motion gets the poster and the button instead. */
     const opensItself =
-      slide.autoplay === "once" && video?.kind === "file" && !reducedMotion();
-    const started = video && (playing.has(slide.id) || opensItself);
+      slide.autoplay === "once" &&
+      video?.kind === "file" &&
+      !reducedMotion() &&
+      !missingVideos.has(slide.id);
+    const started =
+      video && !missingVideos.has(slide.id) && (playing.has(slide.id) || opensItself);
     const poster = slide.poster
       ? `<img class="video-still" src="${esc(slide.poster)}" alt="">`
       : '<span class="video-still empty"></span>';
@@ -1421,6 +1430,17 @@
       current.classList.remove(`motion-${slide.motion}`);
     if (sameScene) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
+    const embed = current.querySelector("video.video-embed");
+    if (embed)
+      embed.addEventListener(
+        "error",
+        () => {
+          missingVideos.add(slide.id);
+          playing.delete(slide.id);
+          render();
+        },
+        { once: true },
+      );
     countUp(current);
     runTimer(current, slide);
     $("#notes").hidden = !notesOpen;
