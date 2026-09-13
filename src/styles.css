@@ -1522,7 +1522,8 @@ h1 {
   right: -62%;
   top: auto;
   bottom: -92%;
-  animation-direction: reverse;
+  /* The shorthand that starts the sweep carries !important, so the override has to as well. */
+  animation-direction: reverse !important;
 }
 .drift-arc:nth-child(3) {
   --ring: 0.14cqw;
@@ -3256,7 +3257,13 @@ body.presenting .superseded {
    do not use — so the columns and their marks sat a visible notch above the
    middle of the frame, which is what the presenter reported as the icons being
    too high. Matching the two puts the block on the centre line. */
+/* A split centres on the stage. The one that carries its own headline as a
+   free object is the exception: the words above push the columns down, so that
+   slide alone sits below the centre line, and the others stay on it. */
 .split-scene {
+  padding-block: 10.9%;
+}
+.slide:has(.free-object) .split-scene {
   padding-top: 15.5%;
   padding-bottom: 8.5%;
 }

@@ -1115,7 +1115,7 @@
       index,
       `video-slide ${started ? "is-playing" : ""}`,
       `--headline-size:${size}cqw`,
-      `<div class="scene video-scene">${title ? `<h1><span data-slide-text="title">${headline(slide, title)}</span></h1>` : ""}<div class="video-frame">${media}</div>${caption(slide, visibleText(slide, "caption"))}</div>`,
+      `<div class="scene video-scene">${title ? `<h1 dir="auto"><span data-slide-text="title">${headline(slide, title)}</span></h1>` : ""}<div class="video-frame">${media}</div>${caption(slide, visibleText(slide, "caption"))}</div>`,
     );
   }
   function canvasSlide(slide, index) {
