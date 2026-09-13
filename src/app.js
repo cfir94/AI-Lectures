@@ -1103,7 +1103,11 @@
       index,
       "canvas-slide",
       "",
-      '<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p></div>',
+      `<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p>${
+        C.safeLink(slide.link)
+          ? `<div class="scene-controls canvas-controls"><a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת הכלי</a></div>`
+          : ""
+      }</div>`,
     );
   }
   function experimentSlide(slide, index, step) {
