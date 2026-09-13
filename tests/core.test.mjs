@@ -996,3 +996,23 @@ test("an exiting object layer outranks the slide it is leaving on", () => {
       `"${rule[1].trim()}" does not name .leaving, so .slide.leaving wins on source order`,
     );
 });
+
+test("a held arrival waits with the slide it belongs to", () => {
+  /* `cut-hold` keeps a held slide invisible for `--enter-delay`, and the
+     transition animates the atmosphere with no delay of its own — so without
+     this the arrival plays out behind the hold and is already finished by the
+     time the slide appears. The presenter sets a wait and loses the zoom. */
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const held = [...css.matchAll(/([^{}]*\.entering\.held[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(held.length, "nothing delays a held arrival any more");
+  const atmosphere = held.find((r) => r[1].includes(".atmosphere"));
+  assert.ok(atmosphere, "the held atmosphere rule is gone");
+  assert.match(
+    atmosphere[2],
+    /animation-delay:\s*var\(--enter-delay/,
+    "a held atmosphere must start when the hold releases, not before",
+  );
+  // And the hold itself has to be what hides the slide in the first place.
+  assert.match(css, /\.slide\.entering\.held/, "nothing holds a held slide back");
+});
