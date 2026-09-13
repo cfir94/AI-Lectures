@@ -1806,9 +1806,9 @@
         {
           "id": "manus-logo-mark",
           "type": "image",
-          "x": "32",
+          "x": "27",
           "y": "35",
-          "width": "36",
+          "width": "46",
           "height": "30",
           "rotation": "0",
           "opacity": "100",
