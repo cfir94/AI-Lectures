@@ -4776,3 +4776,7 @@ kbd {
 /* No-exit objects disappear at navigation, even when siblings keep the
    outgoing object layer alive. Otherwise a carried logo is painted twice. */
 .slide.leaving.object-exits-only .object-exit-none { visibility: hidden; }
+
+/* Approval on a dark stage needs a dark artifact surface for readable copy. */
+.agent-slide[data-tone="dark"] .agent-artifact { background: linear-gradient(145deg, #22243be6, #302840dd); }
+@media (max-width: 600px) { .agent-chain { font-size: 12px; gap: 14px; } .agent-chain-mark { width: 7px; height: 7px; } }

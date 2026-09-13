@@ -667,3 +667,6 @@ Six supplied icons embedded as raster WebP; large agenda icons and editable purp
 
 ## 2026-09-13 — tool icon placement and duplicate logo
 Restored the tool logos to their original 15/34/18/32 geometry, matching the Gemini gather origin. Purpose icons now sit at 78/17/5/9 beside the tool name. Outgoing object-only layers hide objects with exit:none immediately; sibling exits previously kept the old Gemini visible alongside the new one. Browser regression samples 540 frames in both directions, asserting at most one visible Gemini and continuous background. All 53 tests pass.
+
+## 2026-09-13 — human approval
+Slide lecture-human-approval now uses the existing interactive agent scene: inspect a customer message, discover a wrong price, then approve the corrected copy. No external actions. Tested inspect, advance, explicit approval and reset, desktop and narrow layout. Dark artifact contrast corrected.

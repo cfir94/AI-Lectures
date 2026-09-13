@@ -23,7 +23,7 @@
 | 17 | נותנים מטרה. | lecture-agent-demo |
 | 18 | תאמו לי פגישה עם דנה | lecture-agent-anatomy |
 | 19 | אותה מטרה. דרך אחרת. | lecture-answer-finish |
-| 20 | כאן אדם | lecture-human-approval |
+| 20 | לשלוח לכל הלקוחות? | lecture-human-approval |
 | 21 | אחת מכל עשר משרות. | lecture-agents-work-article |
 | 22 | 200 מיליון מבנים. | lecture-nobel |
 | 23 | 4.9 מיליון דולר סינגפורי. | lecture-singapore |

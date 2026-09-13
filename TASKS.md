@@ -40,3 +40,5 @@ Fixed the hidden atmosphere during the Gemini sequence using an immediately visi
 2026-09-13: Added six supplied icons and reliability slide. Current count: 61 total, 36 shown, 25 hidden; see LECTURE-FLOW.md.
 
 Tool purpose icons moved beside the tool names; agenda icons unchanged. Duplicate Gemini during transitions fixed and frame-sampled.
+
+Slide 20 human approval now demonstrates a wrong price and explicit approval of the correction. Rehearse the two interactive beats.
