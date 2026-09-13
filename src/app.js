@@ -289,8 +289,28 @@
     const held = previous.querySelector(":scope > .atmosphere");
     const fresh = incoming.querySelector(":scope > .atmosphere");
     if (!held || !fresh) return;
+    /* Keeping the same DOM node is not enough to keep the same backdrop.
+       Moving an element restarts every CSS animation on it and on its subtree,
+       so the arcs play their one-shot arrival again on a slide that was meant
+       to inherit them untouched — the presenter sees the background reload for
+       no reason, which is exactly what carrying the node was supposed to
+       prevent. The nodes themselves survive the move, so read where each
+       animation had got to before it and put the clock back afterwards: one
+       that had already finished stays finished, and one still running carries
+       on from where it was. */
+    const clocks = new Map();
+    for (const animation of held.getAnimations({ subtree: true })) {
+      const target = animation.effect?.target;
+      if (!target || !animation.animationName) continue;
+      if (!clocks.has(target)) clocks.set(target, new Map());
+      clocks.get(target).set(animation.animationName, animation.currentTime);
+    }
     held.classList.add("backdrop-retained");
     fresh.replaceWith(held);
+    for (const animation of held.getAnimations({ subtree: true })) {
+      const was = clocks.get(animation.effect?.target)?.get(animation.animationName);
+      if (was != null) animation.currentTime = was;
+    }
   }
   // An imported ID is any string, so it is scrubbed before it becomes a
   // gradient reference rather than trusted inside url(#…).

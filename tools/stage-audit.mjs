@@ -22,6 +22,7 @@ await page.goto(url);
 await page.waitForTimeout(1200);
 
 const problems = [];
+let lastBackdrop = null;
 const seen = new Set();
 let total = 0;
 for (let step = 0; step < 200; step++) {
@@ -75,7 +76,18 @@ for (let step = 0; step < 200; step++) {
       .filter((t) => t.length >= 6);
     const doubled = [...new Set(strings.filter((t, i) => strings.indexOf(t) !== i))];
     const frame = getComputedStyle(document.querySelector(".theater")).backgroundColor;
-    return { name, bg, frame, faint, broken, clipped, doubled, tone: slide.dataset.tone ?? "-" };
+    /* A backdrop shared with the slide before is carried over as the same
+       DOM node so it does not restart. Carrying the node is not enough on its
+       own: moving an element restarts its CSS animations, so the clock is
+       read here and compared with the previous slide's. */
+    const atmosphere = slide.querySelector(":scope > .atmosphere");
+    const running = atmosphere ? atmosphere.getAnimations({ subtree: true }) : [];
+    const backdrop = {
+      kind: [...(atmosphere?.classList ?? [])].find((c) => c.startsWith("backdrop-") && c !== "backdrop-retained") ?? "-",
+      retained: !!atmosphere?.classList.contains("backdrop-retained"),
+      clock: running.length ? Math.max(...running.map((x) => Number(x.currentTime) || 0)) : null,
+    };
+    return { name, bg, frame, faint, broken, clipped, doubled, backdrop, tone: slide.dataset.tone ?? "-" };
   });
   if (!report) break;
   if (!seen.has(report.name)) {
@@ -87,6 +99,21 @@ for (let step = 0; step < 200; step++) {
     report.doubled.forEach((t) =>
       problems.push(`${report.name}: painted twice — "${t.slice(0, 34)}" renders in the scene and in a free object at once`),
     );
+    /* A carried backdrop that went back to the start of its own animation is
+       the background visibly reloading on a slide that was meant to inherit
+       it untouched. */
+    if (
+      report.backdrop.retained &&
+      lastBackdrop &&
+      lastBackdrop.kind === report.backdrop.kind &&
+      report.backdrop.clock !== null &&
+      lastBackdrop.clock !== null &&
+      report.backdrop.clock + 40 < lastBackdrop.clock
+    )
+      problems.push(
+        `${report.name}: the ${report.backdrop.kind} backdrop restarted (clock ${Math.round(lastBackdrop.clock)}ms → ${Math.round(report.backdrop.clock)}ms) although it is shared with the slide before it`,
+      );
+    lastBackdrop = report.backdrop;
     /* The ground crossfades to the new palette, so a channel or two of
        difference is that animation still running, not a slide floating in the
        wrong colour. Anything a human could see is far larger than this. */
