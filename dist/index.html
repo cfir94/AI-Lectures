@@ -302,12 +302,21 @@ p {
 .slide.transition-preview .object-cascade-word {
   animation: none !important;
 }
-.slide.object-exits-only {
+/* An outgoing slide whose objects have exits is emptied to its object layer
+   and lifted over the arriving frame, so the exit is something the audience
+   actually sees. It has to outrank `.slide.leaving`, which sets `z-index: 1`
+   sixteen hundred lines further down at the same specificity and therefore won
+   on source order alone: the exit ran perfectly and played behind an opaque
+   slide. Only `cut` looked right, because `cut-hold` keeps the arriving frame
+   hidden until the objects finish — which is why this read as working in one
+   direction and not the other, depending on which transition each neighbour
+   happened to carry. */
+.slide.leaving.object-exits-only {
   z-index: 3;
   background: transparent;
   animation: none !important;
 }
-.slide.object-exits-only > :not(.free-object-layer) {
+.slide.leaving.object-exits-only > :not(.free-object-layer) {
   visibility: hidden;
 }
 .object-crop {
