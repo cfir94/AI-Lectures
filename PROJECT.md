@@ -661,3 +661,6 @@
 ## Shared backdrop visibility — 2026-09-13
 
 The prior delayed hand-off left the atmosphere in an outgoing object-only slide, whose CSS hides it. The incoming shared frame now stays opaque and visible immediately; only its content waits for exits. The backdrop moves immediately, with moveBefore preserving animation state where supported and clock restoration as fallback. Removed the competing delayed transfer timers. Verified 540 animation frames across 12–14 in both directions; same backdrop node, visible, full opacity, no transition transform. 53 unit tests pass.
+
+## 2026-09-13 — supplied icons and reliability
+Six supplied icons embedded as raster WebP; large agenda icons and editable purpose images alongside tool marks. Added reliability statement immediately after chatbot. Portable content stays below 2.4MB; no slides removed.

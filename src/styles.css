@@ -4769,3 +4769,6 @@ kbd {
 .slide.entering.shared-backdrop > .scene {
   animation: cut-hold var(--enter-delay, 0s) step-end both;
 }
+
+/* Large three-column agenda marks remain legible from the audience. */
+.split-slide.scale-huge .split-icon { height: 8cqw; max-width: 100%; object-fit: contain; margin-bottom: 2cqw; }
