@@ -2760,6 +2760,44 @@
       notify(err.message);
     }
   }
+  /* Every picture in the document is stored at the size it looks best on a
+     screen the deck might be projected on — 2400 across for an article
+     screenshot. Thirty-nine pages of those is more than the print pipeline
+     will carry: Windows' own "Print to PDF" writes a file that will not open,
+     and Chrome's writes one that loads a few slides and stalls. A print page
+     is 1600 wide, so nothing in it needs more than that, and the same picture
+     used on several slides is only shrunk once. */
+  const PRINT_WIDTH = 1600;
+  async function shrinkForPrint(root) {
+    const done = new Map();
+    const smaller = async (src) => {
+      if (done.has(src)) return done.get(src);
+      const img = new Image();
+      img.src = src;
+      try {
+        await img.decode();
+      } catch {
+        return src;
+      }
+      if (img.naturalWidth <= PRINT_WIDTH) {
+        done.set(src, src);
+        return src;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = PRINT_WIDTH;
+      canvas.height = Math.max(1, Math.round((img.naturalHeight * PRINT_WIDTH) / img.naturalWidth));
+      const paint = canvas.getContext("2d");
+      paint.imageSmoothingQuality = "high";
+      paint.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // WebP rather than JPEG: a tool mark carries its own transparency.
+      const out = canvas.toDataURL("image/webp", 0.88);
+      done.set(src, out.length < src.length ? out : src);
+      return done.get(src);
+    };
+    for (const img of root.querySelectorAll('img[src^="data:image"]'))
+      img.src = await smaller(img.src);
+    await Promise.all([...root.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
+  }
   // Build a separate static stage for printing; never navigate or save the live deck.
   async function exportPDF() {
     if (!validEditor()) return;
@@ -2796,6 +2834,7 @@
     print.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
     document.body.append(print);
     await Promise.all([...print.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+    await shrinkForPrint(print);
     await document.fonts.ready;
     notify('בחלון ההדפסה בחרו שמירה כ־PDF. כל שקף מוצג יישמר בעמוד נפרד.');
     window.print();
