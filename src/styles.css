@@ -3247,7 +3247,8 @@ body.presenting .superseded {
    middle of the frame, which is what the presenter reported as the icons being
    too high. Matching the two puts the block on the centre line. */
 .split-scene {
-  padding-block: 10.9%;
+  padding-top: 12.4%;
+  padding-bottom: 10.9%;
 }
 .split-list {
   list-style: none;
