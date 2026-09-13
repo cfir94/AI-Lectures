@@ -350,7 +350,7 @@
       "title": "איך עולם העבודה שלכם",
       "accent": "יראה בשנת 2030",
       "caption": "",
-      "visibility": "shown",
+      "visibility": "hidden",
       "layout": "center",
       "scale": "large",
       "palette": "pearl",
@@ -427,6 +427,41 @@
       ]
     },
     {
+      "id": "lecture-agenda",
+      "type": "split",
+      "title": "שלוש שאלות.",
+      "visibility": "shown",
+      "layout": "center",
+      "scale": "huge",
+      "palette": "prism",
+      "textStyle": "solid",
+      "motion": "reveal",
+      "backdrop": "arcs",
+      "backdropPicture": "",
+      "transition": "cut",
+      "pace": "calm",
+      "backdropStrength": "100",
+      "note": "מפת ההרצאה בשלוש שאלות. כל שאלה נחשפת בלחיצה — לומר משפט על כל אחת ולהמשיך. לא להתעכב: זו ההבטחה, לא התוכן.",
+      "sides": [
+        {
+          "heading": "איפה אנחנו",
+          "line": "מה ה-AI באמת יודע לעשות היום.",
+          "icon": ""
+        },
+        {
+          "heading": "מה זה נותן",
+          "line": "איך הוא נכנס ליום עבודה אמיתי.",
+          "icon": ""
+        },
+        {
+          "heading": "לאן זה הולך",
+          "line": "ומה זה אומר עלינו.",
+          "icon": ""
+        }
+      ],
+      "objects": []
+    },
+    {
       "id": "lecture-good-morning",
       "type": "statement",
       "title": "בוקר טוב",
@@ -440,7 +475,7 @@
       "motion": "rise",
       "backdrop": "arcs",
       "backdropPicture": "",
-      "transition": "dissolve",
+      "transition": "cut",
       "note": "הצגה אישית קצרה. ברכה, שם ותפקיד. קשתות האור הן הרקע המובנה במערכת.",
       "objects": [
         {
