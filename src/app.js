@@ -1022,12 +1022,20 @@
   }
   function numberSlide(slide, index) {
     const size = Math.min(30, 128 / slide.value.length);
+    /* A number that counts down has to start somewhere. Far enough above the
+       target that the fall is legible, near enough that it is still the same
+       number — the presenter asked for a short drop, not a countdown clock. */
+    const target = Number(slide.value);
+    const from =
+      slide.count === "down" && /^\d{1,9}$/.test(slide.value)
+        ? Math.max(target + 19, Math.round(target * 1.4))
+        : 0;
     return frame(
       slide,
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-slide-text="value">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${caption(slide, slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-count-from="${from}" data-slide-text="value">${esc(from || slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${visibleText(slide, "lead") ? `<p class="number-lead" data-slide-text="lead">${esc(slide.lead)}</p>` : ""}${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
@@ -1265,11 +1273,14 @@
     const el = current.querySelector("[data-count]");
     if (!el || !/^\d{1,9}$/.test(el.dataset.count) || reducedMotion()) return;
     const target = Number(el.dataset.count);
+    /* Where the run begins. Absent — every document written before the slide
+       could count down — it is zero, which is the climb this always did. */
+    const from = Number(el.dataset.countFrom || 0);
     const started = performance.now();
     const tick = (now) => {
       const progress = Math.min(1, (now - started) / 900);
       el.textContent = String(
-        Math.round(target * (1 - Math.pow(1 - progress, 3))),
+        Math.round(from + (target - from) * (1 - Math.pow(1 - progress, 3))),
       );
       if (progress < 1) countFrame = requestAnimationFrame(tick);
     };
@@ -1898,6 +1909,8 @@
     picture: "התמונה",
     url: "קישור לסרטון",
     autoplay: "הפעלה",
+    count: "כיוון הספירה",
+    lead: "שורת הקריאה לפעולה",
     link: "קישור — נפתח בלשונית חדשה",
     poster: "תמונת פוסטר — מוצגת עד ההפעלה, וגם בלי רשת",
     fit: "איך היא יושבת",

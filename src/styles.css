@@ -3198,10 +3198,16 @@ body.presenting .superseded {
   z-index: 9;
 }
 /* One number, filling the stage. */
+/* In Hebrew a number with its unit beside it reads as a sentence running to
+   the right, and the figure ends up off-centre with a dead half-frame opposite
+   it. Stacking puts the number in the middle of the stage, where the one thing
+   the room should remember belongs, and hangs the unit under it. */
 .big-number {
   display: flex;
-  align-items: baseline;
-  gap: 0.16em;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.04em;
   font-size: clamp(4rem, var(--number-size, 26cqw), 20rem);
   font-weight: 300;
   letter-spacing: -0.06em;
@@ -3217,17 +3223,32 @@ body.presenting .superseded {
   font-variant-numeric: tabular-nums;
 }
 .big-number em {
-  font-size: 0.2em;
+  font-size: 0.17em;
   font-style: normal;
   font-weight: 400;
   letter-spacing: 0;
   -webkit-text-fill-color: var(--muted);
 }
+.number-lead {
+  margin: 2.2cqw 0 0;
+  font-size: 2.4cqw;
+  font-weight: 500;
+  color: var(--text);
+  text-wrap: balance;
+}
 .number-scene .scene-caption {
-  margin-top: 2.6cqw;
+  margin-top: 1cqw;
 }
 
 /* Two sides of the same stage. */
+/* A split centres on the stage, not on its own padding. The scene's top inset
+   is smaller than its bottom one — room for an eyebrow that most split slides
+   do not use — so the columns and their marks sat a visible notch above the
+   middle of the frame, which is what the presenter reported as the icons being
+   too high. Matching the two puts the block on the centre line. */
+.split-scene {
+  padding-block: 10.9%;
+}
 .split-list {
   list-style: none;
   margin: 0;
