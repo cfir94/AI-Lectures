@@ -1103,7 +1103,11 @@
       index,
       "canvas-slide",
       "",
-      '<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p></div>',
+      `<div class="scene canvas-scene"><p class="canvas-empty">הוסיפו אובייקטים דרך העורך.</p>${
+        C.safeLink(slide.link)
+          ? `<div class="scene-controls canvas-controls"><a class="quiet-button" href="${esc(C.safeLink(slide.link))}" target="_blank" rel="noopener noreferrer">${icon("open")}פתיחת הכלי</a></div>`
+          : ""
+      }</div>`,
     );
   }
   function experimentSlide(slide, index, step) {
@@ -1352,6 +1356,12 @@
        gone. Whichever is longer decides, so a hold shorter than the exit costs
        nothing and a longer one is a deliberate beat of silence. */
     const wait = Math.max(outgoingTime, holdTime);
+    /* A cut, and any hold, keep the arriving slide invisible for the whole
+       wait. A backdrop it is meant to inherit therefore cannot move into it
+       yet: the frame it is painted on is the outgoing one, and taking it off
+       there leaves the stage bare until the arrival shows. */
+    const hiddenUntilReveal =
+      wait > 0 && (holdTime > 0 || slide.transition === "cut");
     if (
       previous &&
       (!sameSlide || transitionPreview) &&
@@ -1371,16 +1381,36 @@
       if (hasObjectExits)
         previous.style.setProperty("--slide-exit-duration", `${objectExitTime}ms`);
       if (exitsOnly) previous.classList.add("object-exits-only");
-      const drop = () => previous.remove();
+      let carried = false;
+      /* The hand-off happens at the moment the arriving frame is revealed, and
+         never after the frame it is painted on has gone: whichever comes
+         first, the backdrop moves while both slides are still on the stage. */
+      const carry = () => {
+        if (carried || !previous.isConnected || !incoming.isConnected) return;
+        carried = true;
+        carryBackdrop(previous, incoming);
+      };
+      const drop = () => {
+        if (retainBackdrop) carry();
+        previous.remove();
+      };
       // animationend bubbles, so only the slide's own exit may retire it.
       if (!hasObjectExits)
         previous.addEventListener("animationend", (event) => {
           if (event.target === previous) drop();
         });
-      setTimeout(drop, wait + 80);
+      setTimeout(drop, wait + (hiddenUntilReveal && retainBackdrop ? 220 : 80));
       root.insertAdjacentHTML("beforeend", html);
       const incoming = root.lastElementChild;
-      if (retainBackdrop) carryBackdrop(previous, incoming);
+      /* A retained backdrop may not be handed to a frame that is still hidden.
+         A cut, and any hold, keep the arriving slide invisible for the whole
+         wait — so moving the atmosphere into it at once takes the background
+         off the screen, because the outgoing slide it was drawn on no longer
+         has one. The presenter sees it vanish and come back on every step of
+         a run that was supposed to share one backdrop. It stays where it is
+         painted until the moment the arriving slide is revealed. */
+      if (retainBackdrop && !hiddenUntilReveal) carry();
+      else if (retainBackdrop) setTimeout(carry, wait + 140);
       incoming.classList.add("entering");
       incoming.style.setProperty(
         "--enter-delay",

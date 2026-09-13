@@ -1565,7 +1565,8 @@
           "alt": "NotebookLM",
           "link": "https://notebooklm.google.com/"
         }
-      ]
+      ],
+      "link": "https://notebooklm.google.com/"
     },
     {
       "id": "lecture-chatbot",

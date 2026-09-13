@@ -617,7 +617,9 @@
     canvas: {
       label: "במה חופשית",
       hint: "שקף ריק עם תיבות טקסט, תמונות וצורות שאפשר למקם ולשנות ישירות על הבמה.",
-      fields: {},
+      /* A composed slide is often the one the presenter leaves for the tool
+         itself, so it gets the same way out that a demo slide has. */
+      fields: { link: link() },
       objects: true,
       beats: () => 1,
     },
