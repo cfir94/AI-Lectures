@@ -2855,7 +2855,9 @@ h1 {
   line-height: 1.16;
 }
 .image-slide.image-layout-editorial .image-frame {
-  inset: 5% 5% 24%;
+  /* The screenshot is the slide: the headline sits above it as a caption line
+     and the frame takes everything under it. */
+  inset: 15.5% 2% 3%;
   padding: 0;
   overflow: hidden;
   border-radius: 1.2cqw;
@@ -2866,7 +2868,7 @@ h1 {
   position: absolute;
   height: auto;
   min-height: 0;
-  inset: 79% 6% 7%;
+  inset: 4% 6% auto;
   padding: 0;
   justify-content: center;
 }
@@ -2983,7 +2985,7 @@ h1 {
   opacity: 1;
 }
 .agent-simulation { margin-inline-start: auto; color: var(--muted); font-size: 1cqw; }
-.image-layout-editorial .image-controls { bottom: 2%; left: 5%; }
+.image-layout-editorial .image-controls { top: 4.5%; bottom: auto; left: 4%; }
 .image-layout-editorial .image-controls .quiet-button { font-size: 1cqw; padding: .35cqw .7cqw; }
 .image-placeholder {
   position: absolute;
@@ -4752,12 +4754,12 @@ kbd {
   .agent-controls { flex-wrap: wrap; gap: 12px; }
   .agent-button { font-size: 15px; padding: 12px 18px; border-radius: 28px; }
   .agent-simulation { flex-basis: 100%; margin-top: 7px; font-size: 11px; }
-  .image-slide.image-layout-editorial .image-frame { inset: 15% 4% 38%; }
-  .image-slide.image-layout-editorial .image-scene { inset: 66% 7% 18%; }
+  .image-slide.image-layout-editorial .image-frame { inset: 24% 3% 5%; }
+  .image-slide.image-layout-editorial .image-scene { inset: 6% 7% auto; }
   .image-slide.image-layout-editorial .image-text { padding-inline-start: 12px; border-inline-start-width: 2px; }
   .image-slide.image-layout-editorial .image-text h1 { font-size: 27px; }
   .image-slide.image-layout-editorial .image-text .scene-caption { font-size: 14px; margin-top: 8px; }
-  .image-layout-editorial .image-controls { bottom: 11%; }
+  .image-layout-editorial .image-controls { top: 7%; bottom: auto; }
   .image-layout-editorial .image-controls .quiet-button { font-size: 12px; padding: 8px 12px; }
 }
 
