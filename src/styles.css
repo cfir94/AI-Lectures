@@ -1705,15 +1705,6 @@ h1 {
   display: inline-block;
   animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--w) * 0.09s + 0.12s + var(--enter-delay, 0s));
-  /* A word that both holds a transform and paints its own gradient through
-     transparent glyphs is the most fragile thing on this stage: the browser
-     has to invalidate exactly the pixels the glyphs covered, and when it gets
-     that wrong the previous frame stays on screen — the word appears drawn
-     twice, slightly apart, and it does not clear until something else forces
-     a repaint. Asking for the layer up front makes the invalidation the
-     compositor's job rather than a repaint guess. */
-  will-change: transform, opacity;
-  backface-visibility: hidden;
 }
 /* A transform on a descendant composites it on its own layer, and an
    ancestor's `background-clip: text` never reaches it. The animation holds an
@@ -1728,6 +1719,35 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+/* Two reports, two slides, and one pattern that decides it: on both of them
+   the plain words were clean and only the gradient-painted ones were drawn
+   twice. On the "good morning" slide the eyebrow and the caption were perfect
+   and the name was not; on the "fluency" slide the title was perfect and the
+   accent was not. The difference is not the cascade — it is that a gradient
+   word paints through transparent glyphs, so the browser must invalidate
+   exactly the pixels the letters covered rather than a rectangle, and a moving
+   transform makes it get that wrong and leave the previous frame behind.
+
+   So a gradient word does not move. It arrives by opacity alone, which still
+   reads as one word after another because the timing is what carries that,
+   not the eight pixels of rise. A plain word keeps the rise: it paints a solid
+   colour into a rectangle and has never had the problem. */
+.headline-accent .cascade-word,
+.slide-text-spectrum .cascade-word,
+.slide-text-shimmer .cascade-word,
+.slide-text-sheen .cascade-word,
+.object-text.text-spectrum .object-cascade-word,
+.object-text.text-shimmer .object-cascade-word,
+.object-text.text-sheen .object-cascade-word,
+.object-enter-cascade .object-text.text-spectrum .object-cascade-word {
+  animation-name: m-word-in;
+  transform: none;
+}
+@keyframes m-word-in {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes m-rise {
   from {
@@ -2862,6 +2882,69 @@ h1 {
 .agent-result { font-size: 2.3cqw; line-height: 1.6; color: var(--text); white-space: pre-line; }
 .agent-artifact.is-ready { border-color: var(--accent); }
 .agent-artifact.is-ready .agent-sheet-lines i { background: var(--accent); opacity: .35; }
+/* The chain of steps already taken. It is deliberately small and quiet — it
+   is the spine of the argument, not the argument, and the slide still carries
+   one idea at a time in the middle of the frame. */
+.agent-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6cqw;
+  margin: 1.6cqw 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 1.05cqw;
+  color: var(--muted);
+}
+.agent-chain li {
+  display: flex;
+  align-items: center;
+  gap: .5cqw;
+  opacity: .45;
+  transition: opacity .4s ease;
+}
+.agent-chain li[data-state="done"] { opacity: .8; }
+.agent-chain li[data-state="now"] { opacity: 1; color: var(--text); }
+.agent-chain-mark {
+  width: .8cqw;
+  height: .8cqw;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+.agent-chain li[data-state="done"] .agent-chain-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.agent-chain li[data-state="now"] .agent-chain-mark {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 .25cqw rgba(var(--accent-rgb), 0.18);
+}
+/* While the step is running the artifact has nothing to show yet, so the
+   waiting itself is the thing on screen. */
+.agent-await.is-working { color: var(--text); }
+.agent-working .agent-status-dot {
+  animation: agent-pulse 1.1s ease-in-out infinite;
+}
+.agent-working .agent-sheet-lines i {
+  animation: agent-pulse 1.1s ease-in-out infinite;
+}
+.agent-working .agent-sheet-lines i:nth-child(2) { animation-delay: .16s; }
+.agent-working .agent-sheet-lines i:nth-child(3) { animation-delay: .32s; }
+@keyframes agent-pulse {
+  50% { opacity: .3; }
+}
+.no-motion .agent-working .agent-status-dot,
+.no-motion .agent-working .agent-sheet-lines i {
+  animation: none;
+}
+/* The human-approval step is the moral beat of the talk, and it was wearing
+   the same clothes as the four mechanical steps before it. */
+.agent-kind-approve .agent-artifact {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  box-shadow: 0 2cqw 6cqw rgba(var(--accent-rgb), 0.16);
+}
+.agent-kind-approve .agent-copy h1 {
+  color: var(--accent);
+}
 .agent-controls { display: flex; align-items: center; gap: 1cqw; min-height: 3.5cqw; }
 .agent-button { padding: .9cqw 2cqw; border: 1px solid var(--accent); border-radius: 4cqw; background: var(--text); color: var(--surface); font: inherit; font-size: 1.4cqw; cursor: pointer; }
 .agent-button:hover, .agent-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
@@ -3732,9 +3815,6 @@ summary small {
 }
 .object-cascade-word {
   display: inline-block;
-  /* Same fragility as a headline word, and the same reason: see .cascade-word. */
-  will-change: transform, opacity;
-  backface-visibility: hidden;
 }
 /* The same trap the headline hit, one level down, and the one the presenter
    reported as "word after word mangles my text". A free text object paints

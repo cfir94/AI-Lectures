@@ -1079,13 +1079,26 @@
   }
   function agentSession(slide) {
     if (!agentSessions.has(slide.id))
-      agentSessions.set(slide.id, { completed: {}, choice: "" });
+      agentSessions.set(slide.id, { completed: {}, choice: "", working: null });
     return agentSessions.get(slide.id);
   }
   function agentSlide(slide, index, step) {
     const item = slide.items[step];
     const session = agentSession(slide);
     const done = Boolean(session.completed[step]);
+    /* An agent that answers the instant it is asked reads as a lookup. The
+       point being made is that it goes away and does something, so the demo
+       spends a moment doing it. */
+    const working = session.working === step && !done;
+    /* Everything already done stays on screen as one short line. Replacing
+       each step with the next showed a sequence of screens; keeping the chain
+       is what shows a chain. */
+    const chain = slide.items
+      .map((entry, i) => {
+        const state = session.completed[i] ? "done" : i === step ? "now" : "next";
+        return `<li data-state="${state}"><span class="agent-chain-mark" aria-hidden="true"></span><span>${esc(entry.tool)}</span></li>`;
+      })
+      .join("");
     const path = `items.${step}`;
     const choice = session.choice || "המועד שתבחרו";
     const result = item.result.replaceAll("{בחירה}", choice);
@@ -1101,8 +1114,8 @@
       : item.kind === "choose"
         ? ["first", "second"].filter(key => item[key]).map(key => action("agent-choose", `<span data-slide-text="${path}.${key}">${esc(item[key])}</span>`, `data-key="${key}"`)).join("")
         : action("agent-run", `<span data-slide-text="${path}.action">${esc(item.action)}</span>`);
-    return frame(slide, index, `agent-slide ${done ? "agent-done" : ""} agent-kind-${item.kind}`, "",
-      `<div class="scene agent-scene"><header class="agent-brief"><p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p><p data-slide-text="caption">${esc(slide.caption)}</p></header><div class="agent-work"><div class="agent-copy"><p class="agent-tool"><span class="agent-status-dot" aria-hidden="true"></span><span data-slide-text="${path}.tool">${esc(item.tool)}</span></p><h1 data-slide-text="${path}.word">${esc(item.word)}</h1><p class="scene-caption" data-slide-text="${path}.caption">${esc(item.caption)}</p></div><div class="agent-artifact ${done ? "is-ready" : ""}" role="status" aria-live="polite"><div class="agent-sheet-lines" aria-hidden="true"><i></i><i></i><i></i></div>${done ? `<p class="agent-result" data-slide-text="${path}.result">${esc(result)}</p>` : `<span class="agent-await">${item.kind === "approve" ? "ממתין לאישור שלכם" : item.kind === "choose" ? "אתם בוחרים את המועד" : "מוכן להפעלה"}</span>`}</div></div><div class="agent-controls">${controls}${!done && item.kind === "approve" ? '<button class="quiet-button" data-action="agent-revise">חזרה לטיוטה</button>' : ""}${canSkip ? '<button class="quiet-button agent-skip" data-action="agent-skip">דלג</button>' : ""}<span class="agent-simulation">המחשה · ללא חיבור לכלים אמיתיים</span></div></div>`);
+    return frame(slide, index, `agent-slide ${done ? "agent-done" : ""} ${working ? "agent-working" : ""} agent-kind-${item.kind}`, "",
+      `<div class="scene agent-scene"><header class="agent-brief"><p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p><p data-slide-text="caption">${esc(slide.caption)}</p></header><ol class="agent-chain" aria-label="שלבי ההמחשה">${chain}</ol><div class="agent-work"><div class="agent-copy"><p class="agent-tool"><span class="agent-status-dot" aria-hidden="true"></span><span data-slide-text="${path}.tool">${esc(item.tool)}</span></p><h1 data-slide-text="${path}.word">${esc(item.word)}</h1><p class="scene-caption" data-slide-text="${path}.caption">${esc(item.caption)}</p></div><div class="agent-artifact ${done ? "is-ready" : ""}" role="status" aria-live="polite"><div class="agent-sheet-lines" aria-hidden="true"><i></i><i></i><i></i></div>${done ? `<p class="agent-result" data-slide-text="${path}.result">${esc(result)}</p>` : working ? '<span class="agent-await is-working">עובד…</span>' : `<span class="agent-await">${item.kind === "approve" ? "ממתין לאישור שלכם" : item.kind === "choose" ? "אתם בוחרים את המועד" : "מוכן להפעלה"}</span>`}</div></div><div class="agent-controls">${controls}${!done && item.kind === "approve" ? '<button class="quiet-button" data-action="agent-revise">חזרה לטיוטה</button>' : ""}${canSkip ? '<button class="quiet-button agent-skip" data-action="agent-skip">דלג</button>' : ""}<span class="agent-simulation">המחשה · ללא חיבור לכלים אמיתיים</span></div></div>`);
   }
   const SCENES = {
     agent: agentSlide,
@@ -3128,6 +3141,7 @@
       const session = agentSession(slide);
       const item = slide.items[state.step];
       b.blur();
+      session.working = null;
       if (action === "agent-reset") {
         agentSessions.delete(slide.id);
         state = C.goTo(deck, state.slide);
@@ -3137,7 +3151,21 @@
         session.completed[state.step] = true;
         for (const key of Object.keys(session.completed))
           if (Number(key) > state.step) delete session.completed[key];
-      } else if (action === "agent-run") session.completed[state.step] = true;
+      } else if (action === "agent-run") {
+        if (reducedMotion()) session.completed[state.step] = true;
+        else {
+          const at = state.step;
+          session.working = at;
+          window.setTimeout(() => {
+            const live = agentSession(slide);
+            // The presenter may have moved on, reset, or skipped in the meantime.
+            if (live.working !== at) return;
+            live.working = null;
+            live.completed[at] = true;
+            if (deck.slides[state.slide]?.id === slide.id && state.step === at) render();
+          }, 900);
+        }
+      }
       else if (action === "agent-change") {
         session.choice = "";
         for (const key of Object.keys(session.completed))
