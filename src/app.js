@@ -1341,7 +1341,17 @@
     const outRate = rate(previousSlide);
     const slideExitTime = (C.TRANSITION_MS[slide.transition] ?? 360) * outRate;
     const objectExitTime = hasObjectExits ? C.OBJECT_MS * outRate : 0;
+    /* The slide being left decides how long the next one waits. Without it an
+       object exit runs underneath the arriving slide, which reads as the two
+       overlapping; with it the exit finishes in the clear first. It is the
+       presenter's own number of seconds, so `pace` does not scale it. */
+    const holdTime = Number(previousSlide?.hold ?? 0) * 100;
     const outgoingTime = Math.max(slideExitTime, objectExitTime);
+    /* The hold is how long the arriving frame waits, not an extra pause added
+       to the exit: adding them leaves the stage empty once the objects have
+       gone. Whichever is longer decides, so a hold shorter than the exit costs
+       nothing and a longer one is a deliberate beat of silence. */
+    const wait = Math.max(outgoingTime, holdTime);
     if (
       previous &&
       (!sameSlide || transitionPreview) &&
@@ -1367,15 +1377,17 @@
         previous.addEventListener("animationend", (event) => {
           if (event.target === previous) drop();
         });
-      setTimeout(drop, outgoingTime + 80);
+      setTimeout(drop, wait + 80);
       root.insertAdjacentHTML("beforeend", html);
       const incoming = root.lastElementChild;
       if (retainBackdrop) carryBackdrop(previous, incoming);
       incoming.classList.add("entering");
       incoming.style.setProperty(
         "--enter-delay",
-        `${(outgoingTime + 40) / 1000}s`,
+        `${(wait + 40) / 1000}s`,
       );
+      // A cut already keeps its arriving frame hidden; a hold asks for the same.
+      if (holdTime > 0) incoming.classList.add("held");
     } else if (retainBackdrop) {
       root.insertAdjacentHTML("beforeend", html);
       const incoming = root.lastElementChild;
@@ -1831,6 +1843,7 @@
     action: "כפתור הפעולה",
     result: "תוצאת הפעולה",
     backdropStrength: "עוצמת הרקע",
+    hold: "השהיית השקף הבא",
     pace: "קצב האנימציות",
     layout: "מיקום על הבמה",
     scale: "גודל הטקסט",
@@ -1947,8 +1960,12 @@
         ? `<button class="icon-button" data-clear-picture="${path}" aria-label="הסרת התמונה">${icon("trash")}</button>`
         : ""
     }</div></div>`;
-  const rangeField = (label, path, value, min, max) =>
-    `<label class="field range-field"><span class="field-head"><span>${label}</span><small data-range-readout>${esc(value)}%</small></span><input type="range" data-field="${path}" min="${min}" max="${max}" step="5" value="${esc(value)}"></label>`;
+  /* A slider that reads "120%" for a number of tenths of a second is a control
+     that lies about itself, so the unit travels with the field. */
+  const readout = (value, unit) =>
+    unit === "s" ? `${(Number(value) / 10).toFixed(1)} שנ׳` : `${value}%`;
+  const rangeField = (label, path, value, min, max, unit = "%", step = 5) =>
+    `<label class="field range-field"><span class="field-head"><span>${label}</span><small data-range-readout data-range-unit="${unit}">${esc(readout(value, unit))}</small></span><input type="range" data-field="${path}" min="${min}" max="${max}" step="${step}" value="${esc(value)}"></label>`;
   const fieldsFor = (source, specs, prefix) =>
     Object.entries(specs)
       .map(([key, spec]) =>
@@ -1972,13 +1989,15 @@
               `${prefix}.${key}`,
               source[key],
             )
-          : spec.percent
+          : spec.percent || spec.tenths
           ? rangeField(
               FIELD_LABELS[key] || key,
               `${prefix}.${key}`,
               source[key],
               spec.min,
               spec.max,
+              spec.tenths ? "s" : "%",
+              spec.tenths ? 1 : 5,
             )
           : spec.choice
           ? picker(
@@ -2175,6 +2194,7 @@
     "backdropPicture",
     "transition",
     "pace",
+    "hold",
     "backdropStrength",
   ]);
   // The picture that goes with `backdrop: picture` gets its own field below.
@@ -3512,7 +3532,7 @@
   /* The presenter changes these constantly and they were three clicks deep in a
      side panel. They are the same fields the editor renders — read from
      COMMON_FIELDS, so one added there shows up here too. */
-  const MOTION_DIALOG_KEYS = ["transition", "motion", "pace", "backdrop", "backdropStrength"];
+  const MOTION_DIALOG_KEYS = ["transition", "motion", "pace", "hold", "backdrop", "backdropStrength"];
   function renderMotionDialog() {
     const slide = deck.slides[state.slide];
     const specs = C.SLIDE_TYPES[slide.type].fields;
@@ -3538,8 +3558,8 @@
       if (event === "input" && target.tagName === "SELECT") return;
       if (event === "change" && target.tagName !== "SELECT") return;
       if (target.type === "range") {
-        const readout = target.closest(".range-field")?.querySelector("[data-range-readout]");
-        if (readout) readout.textContent = `${target.value}%`;
+        const live = target.closest(".range-field")?.querySelector("[data-range-readout]");
+        if (live) live.textContent = readout(target.value, live.dataset.rangeUnit);
       }
       const path = target.dataset.field;
       setPath(path, target.value);
@@ -3644,10 +3664,10 @@
          the editor mid-drag would replace the slider under the pointer and end
          the gesture. */
       if (e.target.type === "range") {
-        const readout = e.target
+        const live = e.target
           .closest(".range-field")
           ?.querySelector("[data-range-readout]");
-        if (readout) readout.textContent = `${e.target.value}%`;
+        if (live) live.textContent = readout(e.target.value, live.dataset.rangeUnit);
       }
       updateField(e.target);
     }
