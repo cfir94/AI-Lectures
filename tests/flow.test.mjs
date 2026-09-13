@@ -15,11 +15,17 @@ test('the supplied Meta article opens the article sequence',()=>{
   assert.equal(deck.slides[article+1].id,'lecture-nobel');
 });
 
-test('replacement ending preserves the three original slides as hidden',()=>{
-  for(const id of ['lecture-start-today','lecture-what-remains','lecture-revolution'])
-    assert.equal(C.isShown(deck.slides.find(s=>s.id===id)),false);
-  for(const id of ['lecture-finale-one-task','lecture-finale-responsibility','lecture-finale-future'])
-    assert.equal(C.isShown(deck.slides.find(s=>s.id===id)),true);
+/* Which of the ending slides is shown is the presenter's own running choice —
+   he has swapped them more than once. What may never happen is one of them
+   being deleted to make room, so this holds the whole set and the slide the
+   talk ends on rather than a frozen visibility. */
+test('the ending keeps every slide it has ever used',()=>{
+  for(const id of ['lecture-start-today','lecture-what-remains','lecture-revolution',
+    'lecture-tomorrow','lecture-bottom-line',
+    'lecture-finale-one-task','lecture-finale-responsibility','lecture-finale-future'])
+    assert.ok(deck.slides.some(s=>s.id===id),id);
+  const ending=deck.slides.filter(s=>C.isShown(s)).at(-1);
+  assert.equal(ending.id,'lecture-thanks');
 });
 
 test('agent actions and article layout survive portable validation',()=>{
