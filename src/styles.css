@@ -1918,7 +1918,13 @@ h1 {
   from { opacity: var(--object-opacity, 1); transform: rotate(var(--object-rotation, 0deg)); }
   to { opacity: 0; transform: rotate(var(--object-rotation, 0deg)) translateX(-28px); }
 }
+/* Without a `from`, `clip-path` starts at the element's computed value, which
+   is `none` — and `none` does not interpolate into an `inset()`, so the browser
+   holds it and swaps discretely at the halfway mark. The object faded and then
+   snapped; the wipe the presenter chose never happened. Every clipped keyframe
+   states both ends. */
 @keyframes object-wipe-out {
+  from { opacity: var(--object-opacity, 1); clip-path: inset(0); }
   to { opacity: 0; clip-path: inset(0 0 0 100%); }
 }
 
