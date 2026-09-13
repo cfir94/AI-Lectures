@@ -1705,6 +1705,15 @@ h1 {
   display: inline-block;
   animation: m-rise 0.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--w) * 0.09s + 0.12s + var(--enter-delay, 0s));
+  /* A word that both holds a transform and paints its own gradient through
+     transparent glyphs is the most fragile thing on this stage: the browser
+     has to invalidate exactly the pixels the glyphs covered, and when it gets
+     that wrong the previous frame stays on screen — the word appears drawn
+     twice, slightly apart, and it does not clear until something else forces
+     a repaint. Asking for the layer up front makes the invalidation the
+     compositor's job rather than a repaint guess. */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 /* A transform on a descendant composites it on its own layer, and an
    ancestor's `background-clip: text` never reaches it. The animation holds an
@@ -2856,6 +2865,16 @@ h1 {
 .agent-controls { display: flex; align-items: center; gap: 1cqw; min-height: 3.5cqw; }
 .agent-button { padding: .9cqw 2cqw; border: 1px solid var(--accent); border-radius: 4cqw; background: var(--text); color: var(--surface); font: inherit; font-size: 1.4cqw; cursor: pointer; }
 .agent-button:hover, .agent-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+/* The way out of the demo sits apart from the demo's own buttons, so it is
+   never mistaken for the next step of it. */
+.agent-controls .agent-skip {
+  margin-inline-start: auto;
+  opacity: 0.75;
+}
+.agent-controls .agent-skip:hover,
+.agent-controls .agent-skip:focus-visible {
+  opacity: 1;
+}
 .agent-simulation { margin-inline-start: auto; color: var(--muted); font-size: 1cqw; }
 .image-layout-editorial .image-controls { bottom: 2%; left: 5%; }
 .image-layout-editorial .image-controls .quiet-button { font-size: 1cqw; padding: .35cqw .7cqw; }
@@ -3713,6 +3732,9 @@ summary small {
 }
 .object-cascade-word {
   display: inline-block;
+  /* Same fragility as a headline word, and the same reason: see .cascade-word. */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 /* The same trap the headline hit, one level down, and the one the presenter
    reported as "word after word mangles my text". A free text object paints
