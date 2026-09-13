@@ -1090,13 +1090,19 @@
     const choice = session.choice || "המועד שתבחרו";
     const result = item.result.replaceAll("{בחירה}", choice);
     const action = (key, label, extra = "") => `<button class="agent-button" data-action="${key}" ${extra}>${label}</button>`;
+    /* The walk-through is an illustration, not a gate. A presenter who is
+       short on time, or whose room has already got the point, has to be able
+       to leave it at any step — the deck must never hold them hostage to a
+       demo. It is hidden only on the last step once the demo is finished,
+       where the ordinary forward key already moves on. */
+    const canSkip = !(done && step === slide.items.length - 1);
     const controls = done
       ? action(step === slide.items.length - 1 ? "agent-reset" : "agent-next", step === slide.items.length - 1 ? "ננסה שוב" : "המשך") + (item.kind === "choose" ? '<button class="quiet-button" data-action="agent-change">בחירת מועד אחר</button>' : "")
       : item.kind === "choose"
         ? ["first", "second"].filter(key => item[key]).map(key => action("agent-choose", `<span data-slide-text="${path}.${key}">${esc(item[key])}</span>`, `data-key="${key}"`)).join("")
         : action("agent-run", `<span data-slide-text="${path}.action">${esc(item.action)}</span>`);
     return frame(slide, index, `agent-slide ${done ? "agent-done" : ""} agent-kind-${item.kind}`, "",
-      `<div class="scene agent-scene"><header class="agent-brief"><p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p><p data-slide-text="caption">${esc(slide.caption)}</p></header><div class="agent-work"><div class="agent-copy"><p class="agent-tool"><span class="agent-status-dot" aria-hidden="true"></span><span data-slide-text="${path}.tool">${esc(item.tool)}</span></p><h1 data-slide-text="${path}.word">${esc(item.word)}</h1><p class="scene-caption" data-slide-text="${path}.caption">${esc(item.caption)}</p></div><div class="agent-artifact ${done ? "is-ready" : ""}" role="status" aria-live="polite"><div class="agent-sheet-lines" aria-hidden="true"><i></i><i></i><i></i></div>${done ? `<p class="agent-result" data-slide-text="${path}.result">${esc(result)}</p>` : `<span class="agent-await">${item.kind === "approve" ? "ממתין לאישור שלכם" : item.kind === "choose" ? "אתם בוחרים את המועד" : "מוכן להפעלה"}</span>`}</div></div><div class="agent-controls">${controls}${!done && item.kind === "approve" ? '<button class="quiet-button" data-action="agent-revise">חזרה לטיוטה</button>' : ""}<span class="agent-simulation">המחשה · ללא חיבור לכלים אמיתיים</span></div></div>`);
+      `<div class="scene agent-scene"><header class="agent-brief"><p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p><p data-slide-text="caption">${esc(slide.caption)}</p></header><div class="agent-work"><div class="agent-copy"><p class="agent-tool"><span class="agent-status-dot" aria-hidden="true"></span><span data-slide-text="${path}.tool">${esc(item.tool)}</span></p><h1 data-slide-text="${path}.word">${esc(item.word)}</h1><p class="scene-caption" data-slide-text="${path}.caption">${esc(item.caption)}</p></div><div class="agent-artifact ${done ? "is-ready" : ""}" role="status" aria-live="polite"><div class="agent-sheet-lines" aria-hidden="true"><i></i><i></i><i></i></div>${done ? `<p class="agent-result" data-slide-text="${path}.result">${esc(result)}</p>` : `<span class="agent-await">${item.kind === "approve" ? "ממתין לאישור שלכם" : item.kind === "choose" ? "אתם בוחרים את המועד" : "מוכן להפעלה"}</span>`}</div></div><div class="agent-controls">${controls}${!done && item.kind === "approve" ? '<button class="quiet-button" data-action="agent-revise">חזרה לטיוטה</button>' : ""}${canSkip ? '<button class="quiet-button agent-skip" data-action="agent-skip">דלג</button>' : ""}<span class="agent-simulation">המחשה · ללא חיבור לכלים אמיתיים</span></div></div>`);
   }
   const SCENES = {
     agent: agentSlide,
@@ -3143,6 +3149,11 @@
           if (Number(key) >= state.step) delete session.completed[key];
       } else if (action === "agent-next" && session.completed[state.step]) {
         state = C.transition(state, "next", deck);
+      } else if (action === "agent-skip") {
+        // Past the whole demo, walking over skipped slides as navigation does.
+        let next = state.slide + 1;
+        while (next < deck.slides.length && !C.isShown(deck.slides[next])) next++;
+        if (next < deck.slides.length) state = C.goTo(deck, next);
       }
       render();
     } else if (action.startsWith("language-")) {
