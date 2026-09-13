@@ -64,8 +64,18 @@ for (let step = 0; step < 200; step++) {
     const broken = [...slide.querySelectorAll("img")]
       .filter((i) => !i.complete || !i.naturalWidth || !i.getBoundingClientRect().width)
       .map((i) => i.className || "(object image)");
+    /* The same sentence must never be painted twice on one slide. A free text
+       box carries a `bind` to the field it replaces, and the scene renders that
+       field as the empty string while the bind holds — so if the bind is ever
+       lost, both copies paint, overlapping into an illegible tangle. That is
+       invisible to every other check here, because each copy on its own is
+       perfectly formed. */
+    const strings = [...slide.querySelectorAll("h1, .scene-caption, .scene-eyebrow, .object-text")]
+      .map((el) => el.textContent.replace(/\s+/g, " ").trim())
+      .filter((t) => t.length >= 6);
+    const doubled = [...new Set(strings.filter((t, i) => strings.indexOf(t) !== i))];
     const frame = getComputedStyle(document.querySelector(".theater")).backgroundColor;
-    return { name, bg, frame, faint, broken, clipped, tone: slide.dataset.tone ?? "-" };
+    return { name, bg, frame, faint, broken, clipped, doubled, tone: slide.dataset.tone ?? "-" };
   });
   if (!report) break;
   if (!seen.has(report.name)) {
@@ -74,6 +84,9 @@ for (let step = 0; step < 200; step++) {
     report.faint.forEach((f) => problems.push(`${report.name}: unreadable — ${f}`));
     report.broken.forEach((c) => problems.push(`${report.name}: image not painted — ${c}`));
     report.clipped.forEach((c) => problems.push(`${report.name}: text clipped — ${c}`));
+    report.doubled.forEach((t) =>
+      problems.push(`${report.name}: painted twice — "${t.slice(0, 34)}" renders in the scene and in a free object at once`),
+    );
     /* The ground crossfades to the new palette, so a channel or two of
        difference is that animation still running, not a slide floating in the
        wrong colour. Anything a human could see is far larger than this. */
