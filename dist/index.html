@@ -1974,6 +1974,14 @@ h1 {
   animation-timing-function: cubic-bezier(0.33, 0.1, 0.2, 1);
   animation-fill-mode: both;
 }
+/* A held slide is invisible until `cut-hold` releases it, and the transition
+   animates the atmosphere with no delay of its own — so the arrival played out
+   behind the hold and was already finished by the time the slide appeared. The
+   presenter set a wait and lost the zoom. Held, the arrival starts when the
+   slide does; the content layers already key off the same value. */
+.slide.entering.held > .atmosphere:not(.backdrop-retained) {
+  animation-delay: var(--enter-delay, 0s);
+}
 [data-transition="fade"] .slide.entering > .atmosphere:not(.backdrop-retained) {
   animation-name: t-fade-in;
 }
