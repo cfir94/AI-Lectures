@@ -202,6 +202,9 @@
     once: "מתנגן פעם אחת, בלי קול, בכניסה לשקף",
   };
   const SNAP_MODES = { on: "נצמד לגריד", off: "תנועה חופשית" };
+  /* Which way the big number travels. `up` is first, so it is the fallback, and
+     a document written before this field existed still climbs to its number. */
+  const COUNT_MODES = { up: "מטפס אל המספר", down: "יורד אל המספר" };
   const EXAMPLE_FIELDS = {
     name: text(40),
     task: text(110),
@@ -570,7 +573,9 @@
       fields: {
         value: text(9),
         unit: text(20, false),
+        count: choice(COUNT_MODES),
         title: text(40, false),
+        lead: text(60, false),
         caption: text(150, false),
       },
       beats: () => 1,
@@ -673,7 +678,7 @@
       chunks: [{ text: "חתי" }, { text: "כה" }, { text: " אחת" }],
     },
     image: { picture: "", fit: "cover", imageLayout: "overlay", title: "", caption: "", alt: "", link: "" },
-    number: { value: "100", unit: "", title: "", caption: "" },
+    number: { value: "100", unit: "", title: "", lead: "", caption: "" },
     split: {
       title: "",
       sides: [
