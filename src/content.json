@@ -706,7 +706,8 @@
           "alt": "Claude",
           "link": "https://claude.ai/"
         }
-      ]
+      ],
+      "hold": "10"
     },
     {
       "id": "lecture-model-intro",

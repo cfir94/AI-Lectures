@@ -257,7 +257,8 @@ p {
   to { clip-path: inset(0 100% 0 0); }
 }
 /* Keep the arriving opaque frame behind the departing object's full exit. */
-[data-transition="cut"] .slide.entering {
+[data-transition="cut"] .slide.entering,
+.slide.entering.held {
   animation: cut-hold var(--enter-delay, 0s) step-end both;
 }
 @keyframes cut-hold { from { visibility: hidden; } to { visibility: visible; } }

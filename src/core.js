@@ -97,6 +97,11 @@
      what a document that predates the field gets, so adding one never changes
      a slide that was authored before it existed. */
   const percent = (fallback, min, max) => ({ percent: true, fallback, min, max });
+  /* Tenths of a second, stored as a whole number so the document keeps its
+     "everything is a validated string" shape. `hold` is how long the slide
+     after this one waits before it arrives, which is the only way to let an
+     object exit finish on its own instead of running under the next slide. */
+  const tenths = (fallback, min, max) => ({ tenths: true, fallback, min, max });
   const link = () => ({ max: 300, required: false, link: true });
   /* A link is opened by the presenter mid-talk, so only https is accepted:
      never javascript:, data: or file:, and never a document's idea of a local
@@ -450,6 +455,7 @@
        raising opacity — the arcs are faint by their own alpha, not by the
        layer's. */
     backdropStrength: percent("100", 0, 240),
+    hold: tenths("0", 0, 30),
   };
 
   /* Every slide type declares its fields once: validation, the editor and the
@@ -831,6 +837,10 @@
         return value.trim();
       }
       if (spec.percent) {
+        if (v === undefined) return spec.fallback;
+        return number(v, spec.min, spec.max);
+      }
+      if (spec.tenths) {
         if (v === undefined) return spec.fallback;
         return number(v, spec.min, spec.max);
       }
