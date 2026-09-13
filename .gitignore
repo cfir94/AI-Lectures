@@ -8,3 +8,6 @@ node_modules/
 
 # Presenter's own video files: they live beside the deck, never in the repo.
 dist/videos/
+
+# Generated presentation exports
+output/pdf/

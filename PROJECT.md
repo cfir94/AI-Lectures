@@ -680,3 +680,6 @@ Restored the tool logos to their original 15/34/18/32 geometry, matching the Gem
 
 ## 2026-09-13 — human approval
 Slide lecture-human-approval now uses the existing interactive agent scene: inspect a customer message, discover a wrong price, then approve the corrected copy. No external actions. Tested inspect, advance, explicit approval and reset, desktop and narrow layout. Dark artifact contrast corrected.
+
+## 2026-09-13 — cascade, video, closing and PDF
+Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and opacity-only previews to avoid Chromium clipped-gradient glyph trails; normal text retains gradient effects. Fixed a misplaced spectrum h1 selector that inherited icon dimensions. Agent video copied to local dist/videos/agent-working.mp4, verified muted autoplay; it remains untracked and is unavailable on Pages unless separately hosted or selected locally. Picking a replacement now clears missingVideos. Slide 52 receives hidden slide 53 content with new object IDs; source preserved. Larger spectrum thanks headline. PDF button builds a separate print tree, shown slides only, final beats and video posters; no live navigation/storage changes. Print CSS removes controls/animations and costly blur effects. Verified 38-page PDF, autoplay, cascade glyphs, HTML export reopening and all 53 unit tests.

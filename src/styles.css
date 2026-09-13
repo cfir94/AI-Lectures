@@ -2182,7 +2182,6 @@ h1 {
 
 /* A slide-wide text style, so a headline can be the colourful one without
    turning it into a free object first. The accent word keeps its own gradient. */
-.slide-text-spectrum h1,
 /* The glyph a side carries. It sits above the heading, stays small, and dims
    with its own side so a step still reads as one side lit and one waiting. */
 .split-icon {
@@ -2195,6 +2194,7 @@ h1 {
 .split-list li[data-state="next"] .split-icon {
   opacity: 0.3;
 }
+.slide-text-spectrum h1,
 .slide-text-spectrum .split-heading,
 .slide-text-spectrum .reveal-list li[data-state="now"],
 .slide-text-spectrum .token-sentence,
@@ -4782,3 +4782,45 @@ kbd {
 /* Approval on a dark stage needs a dark artifact surface for readable copy. */
 .agent-slide[data-tone="dark"] .agent-artifact { background: linear-gradient(145deg, #22243be6, #302840dd); }
 @media (max-width: 600px) { .agent-chain { font-size: 12px; gap: 14px; } .agent-chain-mark { width: 7px; height: 7px; } }
+
+/* Cascades paint solid glyphs per word. No transparent clipped glyphs or moving
+   transforms in this mode: Chrome can retain stale glyph pixels during preview.
+   The sentence keeps the blue/purple palette; other text looks keep gradients. */
+:is(.object-text,.headline-accent,h1,.split-heading):has(.object-cascade-word,.cascade-word) { background-image: none !important; }
+.object-cascade-word, .cascade-word { transform: none !important; }
+:is(.text-spectrum,.text-shimmer,.text-sheen,.headline-accent) :is(.object-cascade-word,.cascade-word),
+:is(.slide-text-spectrum,.slide-text-shimmer,.slide-text-sheen) .cascade-word {
+  background: none !important;
+  color: var(--accent);
+  -webkit-text-fill-color: currentColor !important;
+}
+:is(.text-spectrum,.text-shimmer,.text-sheen,.headline-accent) :is(.object-cascade-word,.cascade-word):nth-child(even),
+:is(.slide-text-spectrum,.slide-text-shimmer,.slide-text-sheen) .cascade-word:nth-child(even) { color: color-mix(in srgb, var(--accent) 75%, var(--text)); }
+.object-text:not(.auto-colour) .object-cascade-word { color: var(--object-colour); }
+@keyframes object-word-in { from { opacity: 0; } }
+@keyframes object-word-out { to { opacity: 0; } }
+
+#print-deck { display: none; }
+@page { size: 1600px 900px; margin: 0; }
+@media print {
+  html, body { width: 1600px; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+  body > :not(#print-deck) { display: none !important; }
+  #print-deck { display: block; width: 1600px; }
+  .print-page { width: 1600px; height: 900px; position: relative; container-type: size; overflow: hidden; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .print-page:last-child { break-after: auto; }
+  .print-page .slide { width: 100%; height: 100%; opacity: 1 !important; visibility: visible !important; }
+  .print-page *, .print-page *::before, .print-page *::after { animation: none !important; transition: none !important; }
+  .print-page :is(.scene-controls,.agent-controls,.video-play,.video-warning,.canvas-empty) { display: none !important; }
+  .print-page .video-poster { display: block; }
+  .print-page [data-state] { opacity: 1 !important; }
+}
+
+@media print {
+ .print-page :is(.text-spectrum,.text-shimmer,.text-sheen,.headline-accent) { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; }
+}
+
+@media print { .print-page *, .print-page *::before, .print-page *::after { box-shadow: none !important; text-shadow: none !important; filter: none !important; backdrop-filter: none !important; } }
+
+@media print { .print-page.slide-text-spectrum h1, .print-page .slide-text-spectrum h1 { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }
+
+@media print { .print-page :is(.split-heading,.emph,.scene-word) { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }

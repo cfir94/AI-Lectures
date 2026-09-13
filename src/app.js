@@ -782,12 +782,12 @@
           word.animate(
             entering
               ? [
-                  { opacity: 0, transform: "translateY(0.45em)" },
-                  { opacity: 1, transform: "translateY(0)" },
+                  { opacity: 0 },
+                  { opacity: 1 },
                 ]
               : [
-                  { opacity: 1, transform: "translateY(0)" },
-                  { opacity: 0, transform: "translateY(-0.35em)" },
+                  { opacity: 1 },
+                  { opacity: 0 },
                 ],
             {
               duration: entering ? 520 : 380,
@@ -2726,6 +2726,48 @@
       notify(err.message);
     }
   }
+  // Build a separate static stage for printing; never navigate or save the live deck.
+  async function exportPDF() {
+    if (!validEditor()) return;
+    document.querySelector('#print-deck')?.remove();
+    const print = document.createElement('section');
+    print.id = 'print-deck';
+    print.setAttribute('aria-hidden', 'true');
+    for (const [index, original] of deck.slides.entries()) {
+      if (!C.isShown(original)) continue;
+      const slide = structuredClone(original);
+      slide.motion = 'still';
+      slide.objects.forEach(o => { o.entrance = 'none'; o.exit = 'none'; });
+      const savedPlaying = playing.has(slide.id);
+      const savedSession = agentSessions.get(slide.id);
+      playing.delete(slide.id);
+      slide.autoplay = 'manual';
+      const step = C.beats(deck, index) - 1;
+      if (slide.type === 'agent') agentSessions.set(slide.id, {
+        completed: Object.fromEntries(slide.items.map((_, i) => [i, true])),
+        choice: slide.items.find(i => i.kind === 'choose')?.first || '', working: null,
+      });
+      try {
+        print.insertAdjacentHTML('beforeend', '<div class="print-page">' + SCENES[slide.type](slide, index, step) + '</div>');
+      } finally {
+        if (savedPlaying) playing.add(slide.id);
+        if (savedSession) agentSessions.set(slide.id, savedSession); else agentSessions.delete(slide.id);
+      }
+    }
+    print.querySelectorAll('button.video-poster').forEach(button => {
+      const still = document.createElement('div'); still.className = 'video-poster';
+      still.innerHTML = button.innerHTML; button.replaceWith(still);
+    });
+    print.querySelectorAll('button:not(.language-seed):not(.language-option),iframe,video,.scene-controls,.scene-controls-inline,.agent-controls,.language-controls,.intro-controls').forEach(el => el.remove());
+    print.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    document.body.append(print);
+    await Promise.all([...print.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+    await document.fonts.ready;
+    notify('בחלון ההדפסה בחרו שמירה כ־PDF. כל שקף מוצג יישמר בעמוד נפרד.');
+    window.print();
+  }
+  window.addEventListener('afterprint', () => document.querySelector('#print-deck')?.remove());
+
   async function checkImportedPictures(document) {
     const values = new Set();
     for (const slide of document.slides) {
@@ -3872,6 +3914,7 @@
     }
   });
   $("#export-html").addEventListener("click", exportHTML);
+  $("#export-pdf").addEventListener("click", exportPDF);
   $("#export-json").addEventListener("click", () => {
     if (validEditor())
       download(
@@ -3908,6 +3951,7 @@
     if (slide) {
       pickedVideos.get(slide.id) &&
         URL.revokeObjectURL(pickedVideos.get(slide.id));
+      missingVideos.delete(slide.id);
       pickedVideos.set(slide.id, URL.createObjectURL(file));
       playing.add(slide.id);
       state = C.goTo(deck, slideIndex);

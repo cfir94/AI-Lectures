@@ -42,3 +42,5 @@ Fixed the hidden atmosphere during the Gemini sequence using an immediately visi
 Tool purpose icons moved beside the tool names; agenda icons unchanged. Duplicate Gemini during transitions fixed and frame-sampled.
 
 Slide 20 human approval now demonstrates a wrong price and explicit approval of the correction. Rehearse the two interactive beats.
+
+2026-09-13: PDF export added; use Save as PDF in the print dialog. Regression tools: pdf-export-qa.mjs and cascade-paint-qa.mjs. Agent video autoplay verified locally; Pages still needs the video file selected locally because local media is deliberately not committed. Check cascade on the presenter’s GPU during rehearsal; browser regression is clean.
