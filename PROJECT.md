@@ -657,3 +657,7 @@
 - כלי Playwright הותאמו ל־Windows ול־Linux; אין תלות נוספת בבנייה או בזמן ההצגה. tools/agent-flow-qa.mjs עבר: בחירה ושינוי מועד, טיוטה, בדיקה, אישור, חזרה, איפוס, מקלדת בשני הכיוונים, עורך, HTML מיוצא, כל סוגי השקפים ותצוגת 390px. אין שגיאות קונסולה או בקשות רשת. הבנייה ו־49 בדיקות יחידה עברו. צילומי הפריסות החדשות נבדקו חזותית.
 - הסרטונים המקומיים לא נוגנו מחדש. חזרת מרצה עליהם ועל הניסוחים החדשים נשארת ב־TASKS.md.
 - בדיקת הבמה הסופית עברה על כל 38 השקפים המוצגים ופתחה את שלושת פאנלי העריכה: stage is clean.
+
+## Shared backdrop visibility — 2026-09-13
+
+The prior delayed hand-off left the atmosphere in an outgoing object-only slide, whose CSS hides it. The incoming shared frame now stays opaque and visible immediately; only its content waits for exits. The backdrop moves immediately, with moveBefore preserving animation state where supported and clock restoration as fallback. Removed the competing delayed transfer timers. Verified 540 animation frames across 12–14 in both directions; same backdrop node, visible, full opacity, no transition transform. 53 unit tests pass.

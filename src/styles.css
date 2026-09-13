@@ -4760,3 +4760,12 @@ kbd {
   .image-layout-editorial .image-controls { bottom: 11%; }
   .image-layout-editorial .image-controls .quiet-button { font-size: 12px; padding: 8px 12px; }
 }
+
+/* Shared backgrounds stay visible; only content waits for object exits. */
+#slide-root .slide.entering.shared-backdrop {
+  animation: none;
+  visibility: visible;
+}
+.slide.entering.shared-backdrop > .scene {
+  animation: cut-hold var(--enter-delay, 0s) step-end both;
+}

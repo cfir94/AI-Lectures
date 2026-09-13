@@ -123,3 +123,5 @@ Cover every slide type, both directions of keyboard navigation, the editor, an e
 - Preserve the Sites project ID in `.openai/hosting.json`; do not register a second Site. Use the Sites skills for publication, keeping owner-only access unless a different audience is requested.
 - GitHub publication and Sites publication are separate. Do not assume a GitHub destination or overwrite an existing remote.
 - `.github/workflows/pages.yml` builds and publishes `dist` to GitHub Pages on every push to `main`. Keep the build and test steps in it; it is the live copy the user presents from.
+
+- Shared-backdrop arrivals must keep their opaque frame visible. Never delay the atmosphere transfer into a hidden frame or leave it inside object-exits-only (which hides non-object children). Hold content only; transfer immediately and preserve ambient clocks. tools/backdrop-continuity-qa.mjs samples actual transition frames.

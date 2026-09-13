@@ -32,3 +32,7 @@
 ## שמירה ופרסום
 
 לבנות ולבדוק לפני קומיט; dist/index.html נשאר בגיט. דחיפה ל־main מפעילה GitHub Pages. אם מופיעה הודעת גרסה חדשה בדפדפן, לבחור בטעינתה כדי לראות את התוכן החדש; העותק הקודם נשמר כטיוטה. Sites הוא ערוץ נפרד ולא פורסם בסבב הזה.
+
+## 2026-09-13 — backdrop follow-up
+
+Fixed the hidden atmosphere during the Gemini sequence using an immediately visible shared frame and content-only wait. Dedicated browser regression: tools/backdrop-continuity-qa.mjs. No lecture content changed.
