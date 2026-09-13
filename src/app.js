@@ -44,6 +44,7 @@
     idleTimer,
     toastTimer,
     countFrame,
+    countDelay,
     timerTick,
     notesOpen = false,
     pendingOpenId = null,
@@ -1035,7 +1036,7 @@
       index,
       "number-slide",
       `--number-size:${size}cqw`,
-      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-count-from="${from}" data-slide-text="value">${esc(from || slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${visibleText(slide, "lead") ? `<p class="number-lead" data-slide-text="lead">${esc(slide.lead)}</p>` : ""}${caption(slide, slide.caption)}</div>`,
+      `<div class="scene number-scene">${visibleText(slide, "title") ? `<p class="scene-eyebrow" data-slide-text="title">${esc(slide.title)}</p>` : ""}<p class="big-number"><span data-count="${esc(slide.value)}" data-count-from="${from}" data-slide-text="value">${esc(slide.value)}</span>${visibleText(slide, "unit") ? `<em data-slide-text="unit">${esc(slide.unit)}</em>` : ""}</p>${visibleText(slide, "lead") ? `<p class="number-lead" data-slide-text="lead">${esc(slide.lead)}</p>` : ""}${caption(slide, slide.caption)}</div>`,
     );
   }
   function splitSlide(slide, index, step) {
@@ -1268,23 +1269,43 @@
     });
   }
   // A number slide climbs to its value once, and never past the current render.
-  function countUp(current) {
+  /* The run belongs to the slide's arrival, not to the render that built it.
+     A transition holds the incoming frame for `--enter-delay` and the scene
+     fades in on top of that, so a count started at render time was spending
+     itself behind a slide nobody could see yet — the presenter saw no count at
+     all while presenting, and a different fragment of one each time he left
+     and came back. It waits for the frame to be on the screen, and a re-render
+     that changed no beat leaves the settled number alone. */
+  const COUNT_MS = 1100;
+  function countUp(current, sameScene) {
+    clearTimeout(countDelay);
     cancelAnimationFrame(countFrame);
     const el = current.querySelector("[data-count]");
     if (!el || !/^\d{1,9}$/.test(el.dataset.count) || reducedMotion()) return;
+    if (sameScene) return;
     const target = Number(el.dataset.count);
     /* Where the run begins. Absent — every document written before the slide
        could count down — it is zero, which is the climb this always did. */
     const from = Number(el.dataset.countFrom || 0);
-    const started = performance.now();
-    const tick = (now) => {
-      const progress = Math.min(1, (now - started) / 900);
-      el.textContent = String(
-        Math.round(from + (target - from) * (1 - Math.pow(1 - progress, 3))),
-      );
-      if (progress < 1) countFrame = requestAnimationFrame(tick);
+    const delay =
+      (parseFloat(getComputedStyle(current).getPropertyValue("--enter-delay")) || 0) * 1000;
+    const run = () => {
+      const started = performance.now();
+      const tick = (now) => {
+        const progress = Math.min(1, (now - started) / COUNT_MS);
+        /* Quartic rather than cubic: the presenter asked for the numbers to
+           keep easing off towards the end, so most of the distance is spent
+           early and the last few land one at a time. */
+        el.textContent = String(
+          Math.round(from + (target - from) * (1 - Math.pow(1 - progress, 4))),
+        );
+        if (progress < 1) countFrame = requestAnimationFrame(tick);
+      };
+      el.textContent = String(from);
+      countFrame = requestAnimationFrame(tick);
     };
-    countFrame = requestAnimationFrame(tick);
+    if (delay > 0) countDelay = setTimeout(run, delay);
+    else run();
   }
   // The countdown survives a re-render: its state lives outside the deck.
   function runTimer(current, slide) {
@@ -1452,7 +1473,7 @@
         },
         { once: true },
       );
-    countUp(current);
+    countUp(current, sameScene);
     runTimer(current, slide);
     $("#notes").hidden = !notesOpen;
     $("#notes").textContent = slide.note || "אין הערת מרצה לשקף הזה.";
