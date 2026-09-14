@@ -694,3 +694,8 @@ Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and op
 - Reproduced slow PDF rendering in PDFium: decorative gradient pages took up to 2.29 seconds each. File size and successful opening were insufficient checks.
 - Export now bakes each slide background and decorative atmosphere to a 1600×900 JPEG, while keeping text and foreground artwork native. Original picture backdrops remain images. This affects only the isolated print tree.
 - All 39 output pages rendered in 1.26 seconds total, slowest 0.059 seconds at scale 1; 53 tests and browser export checks passed. Viewer/hardware timings will vary.
+
+### 2026-09-15 — Closing contact details
+- Musk video title: איך העתיד שלנו ייראה.
+- Closing slide includes the professional role beneath the name; email and phone increased from 24 to 34 with taller text boxes to preserve descenders.
+- Build and 53 tests passed; visually checked closing slide and regenerated the 39-page PDF through browser export QA.
