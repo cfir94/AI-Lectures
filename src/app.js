@@ -2799,8 +2799,12 @@
     await Promise.all([...root.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
   }
   // Build a separate static stage for printing; never navigate or save the live deck.
+  let preparingPDF = false;
   async function exportPDF() {
-    if (!validEditor()) return;
+    if (preparingPDF || !validEditor()) return;
+    preparingPDF = true;
+    notify("מכין את השקפים ל־PDF…");
+    try {
     document.querySelector('#print-deck')?.remove();
     const print = document.createElement('section');
     print.id = 'print-deck';
@@ -2835,9 +2839,26 @@
     document.body.append(print);
     await Promise.all([...print.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
     await shrinkForPrint(print);
+    print.getBoundingClientRect(); // Load fonts from every laid-out slide before printing.
     await document.fonts.ready;
+    for (const el of print.querySelectorAll('*')) {
+      const style = getComputedStyle(el);
+      if (style.backgroundClip === 'text' || style.webkitBackgroundClip === 'text') {
+        const ink = style.getPropertyValue('--accent').trim() || '#4378ab';
+        el.style.setProperty('background', 'none', 'important');
+        el.style.setProperty('color', ink, 'important');
+        el.style.setProperty('-webkit-text-fill-color', ink, 'important');
+      }
+    }
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     notify('בחלון ההדפסה בחרו שמירה כ־PDF. כל שקף מוצג יישמר בעמוד נפרד.');
     window.print();
+    } catch (error) {
+      document.querySelector('#print-deck')?.remove();
+      notify('הכנת ה־PDF נכשלה. נסו שוב: ' + error.message);
+    } finally {
+      preparingPDF = false;
+    }
   }
   window.addEventListener('afterprint', () => document.querySelector('#print-deck')?.remove());
 

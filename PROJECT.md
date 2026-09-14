@@ -683,3 +683,9 @@ Slide lecture-human-approval now uses the existing interactive agent scene: insp
 
 ## 2026-09-13 — cascade, video, closing and PDF
 Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and opacity-only previews to avoid Chromium clipped-gradient glyph trails; normal text retains gradient effects. Fixed a misplaced spectrum h1 selector that inherited icon dimensions. Agent video copied to local dist/videos/agent-working.mp4, verified muted autoplay; it remains untracked and is unavailable on Pages unless separately hosted or selected locally. Picking a replacement now clears missingVideos. Slide 52 receives hidden slide 53 content with new object IDs; source preserved. Larger spectrum thanks headline. PDF button builds a separate print tree, shown slides only, final beats and video posters; no live navigation/storage changes. Print CSS removes controls/animations and costly blur effects. Verified 38-page PDF, autoplay, cascade glyphs, HTML export reopening and all 53 unit tests.
+
+### 2026-09-14 — PDF preparation and Manus artwork
+- Pulled main through 60ec77e; retained the updated finale/countdown and split positioning.
+- Replaced Manus with the supplied full logo, lossless WebP at 2400 × 640; centered at 50% stage width like Gemini/Claude.
+- Print pages now lay out off-screen before printing, await fonts and two paint frames, and flatten clipped-gradient text for native PDF drivers. Editing outlines are excluded; preparation is guarded against duplicate clicks and reports errors.
+- Verified: build, 53 unit tests, browser PDF/portable-export QA, 39-page PDF rendered with Poppler. Windows printer-driver UI itself is not automated.

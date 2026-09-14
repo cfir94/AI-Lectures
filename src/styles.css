@@ -4839,12 +4839,17 @@ kbd {
 @keyframes object-word-in { from { opacity: 0; } }
 @keyframes object-word-out { to { opacity: 0; } }
 
-#print-deck { display: none; }
+/* Lay out the export before opening print preview so every font is loaded.
+   Off-screen, not display:none: hidden trees defer font selection and layout. */
+#print-deck { position: fixed; left: -20000px; top: 0; width: 1600px; pointer-events: none; }
+.print-page { width: 1600px; height: 900px; position: relative; container-type: size; overflow: hidden; }
+.print-page .slide { width: 100%; height: 100%; }
+.print-page *, .print-page *::before, .print-page *::after { animation: none !important; transition: none !important; }
 @page { size: 1600px 900px; margin: 0; }
 @media print {
   html, body { width: 1600px; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
   body > :not(#print-deck) { display: none !important; }
-  #print-deck { display: block; width: 1600px; }
+  #print-deck { display: block; position: static; width: 1600px; }
   .print-page { width: 1600px; height: 900px; position: relative; container-type: size; overflow: hidden; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .print-page:last-child { break-after: auto; }
   .print-page .slide { width: 100%; height: 100%; opacity: 1 !important; visibility: visible !important; }
@@ -4863,3 +4868,5 @@ kbd {
 @media print { .print-page.slide-text-spectrum h1, .print-page .slide-text-spectrum h1 { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }
 
 @media print { .print-page :is(.split-heading,.emph,.scene-word) { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }
+
+@media print { .print-page * { outline: none !important; } }
