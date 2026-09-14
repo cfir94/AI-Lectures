@@ -4879,6 +4879,8 @@ kbd {
 @media print { .print-page :is(.split-heading,.emph,.scene-word) { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }
 
 @media print { .print-page * { outline: none !important; } }
+
+.print-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -9002,6 +9004,50 @@ kbd {
       img.src = await smaller(img.src);
     await Promise.all([...root.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
   }
+  // PDF readers repeatedly evaluate CSS gradients/masks as expensive vector
+  // shadings. Bake the decorative background once; leave foreground text native.
+  async function flattenPrintBackgrounds(root) {
+    for (const slide of root.querySelectorAll('.slide')) {
+      const paint = getComputedStyle(slide);
+      const background = document.createElement('div');
+      background.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+      background.style.cssText = 'position:relative;width:1600px;height:900px;overflow:hidden;';
+      background.style.backgroundColor = paint.backgroundColor;
+      background.style.backgroundImage = paint.backgroundImage;
+      const atmosphere = slide.querySelector(':scope > .atmosphere');
+      // Picture backdrops remain original images; decorative DOM can be baked.
+      if (atmosphere && !atmosphere.querySelector('img')) {
+        const copy = atmosphere.cloneNode(true);
+        const originals = [atmosphere, ...atmosphere.querySelectorAll('*')];
+        const copies = [copy, ...copy.querySelectorAll('*')];
+        originals.forEach((node, i) => {
+          const computed = getComputedStyle(node);
+          for (const key of computed) copies[i].style.setProperty(key, computed.getPropertyValue(key));
+          copies[i].style.animation = 'none';
+          copies[i].style.filter = 'none';
+        });
+        background.append(copy);
+      }
+      const markup = new XMLSerializer().serializeToString(background);
+      const image = new Image();
+      image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><foreignObject width="1600" height="900">' + markup + '</foreignObject></svg>');
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600; canvas.height = 900;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#ffffff'; context.fillRect(0, 0, 1600, 900);
+      context.drawImage(image, 0, 0);
+      const bitmap = document.createElement('img');
+      bitmap.src = canvas.toDataURL('image/jpeg', 0.92);
+      bitmap.className = 'print-background';
+      bitmap.alt = '';
+      await bitmap.decode();
+      slide.style.setProperty('background', 'none', 'important');
+      if (atmosphere && !atmosphere.querySelector('img')) atmosphere.remove();
+      slide.prepend(bitmap);
+    }
+  }
   // Build a separate static stage for printing; never navigate or save the live deck.
   let preparingPDF = false;
   async function exportPDF() {
@@ -9045,6 +9091,7 @@ kbd {
     await shrinkForPrint(print);
     print.getBoundingClientRect(); // Load fonts from every laid-out slide before printing.
     await document.fonts.ready;
+    await flattenPrintBackgrounds(print);
     for (const el of print.querySelectorAll('*')) {
       const style = getComputedStyle(el);
       if (style.backgroundClip === 'text' || style.webkitBackgroundClip === 'text') {

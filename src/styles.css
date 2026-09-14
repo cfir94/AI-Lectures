@@ -4870,3 +4870,5 @@ kbd {
 @media print { .print-page :is(.split-heading,.emph,.scene-word) { background: none !important; color: var(--accent) !important; -webkit-text-fill-color: currentColor !important; } }
 
 @media print { .print-page * { outline: none !important; } }
+
+.print-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }

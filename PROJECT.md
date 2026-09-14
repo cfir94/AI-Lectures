@@ -689,3 +689,8 @@ Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and op
 - Replaced Manus with the supplied full logo, lossless WebP at 2400 × 640; centered at 50% stage width like Gemini/Claude.
 - Print pages now lay out off-screen before printing, await fonts and two paint frames, and flatten clipped-gradient text for native PDF drivers. Editing outlines are excluded; preparation is guarded against duplicate clicks and reports errors.
 - Verified: build, 53 unit tests, browser PDF/portable-export QA, 39-page PDF rendered with Poppler. Windows printer-driver UI itself is not automated.
+
+### 2026-09-14 — PDF rendering performance
+- Reproduced slow PDF rendering in PDFium: decorative gradient pages took up to 2.29 seconds each. File size and successful opening were insufficient checks.
+- Export now bakes each slide background and decorative atmosphere to a 1600×900 JPEG, while keeping text and foreground artwork native. Original picture backdrops remain images. This affects only the isolated print tree.
+- All 39 output pages rendered in 1.26 seconds total, slowest 0.059 seconds at scale 1; 53 tests and browser export checks passed. Viewer/hardware timings will vary.
