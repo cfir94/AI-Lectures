@@ -4109,6 +4109,24 @@
     pendingPicturePath = null;
     e.target.value = "";
   });
+  /* A presenter holding a clicker is pressing the left button, not a key, so a
+     click on the stage advances the same way the forward key does. It only
+     does that while the deck is being shown: in edit mode the same click picks
+     an object up, and anything the slide itself offers keeps its own click — a
+     button, a link, a free object, a word being edited. A double click and a
+     click that ends a drag over text are not a request to move on. */
+  $("#stage").addEventListener("click", (e) => {
+    if (editing || editingObjectTextId || editingSlideText) return;
+    if (e.detail > 1) return;
+    if (
+      e.target.closest(
+        'button, a, input, select, textarea, label, [contenteditable="true"], .free-object',
+      )
+    )
+      return;
+    if (!getSelection().isCollapsed) return;
+    act("next");
+  });
   function nudgeSelectedObject(key) {
     const object = currentObject();
     if (!object) return false;
