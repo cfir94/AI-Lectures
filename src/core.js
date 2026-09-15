@@ -15,13 +15,13 @@
   const LIMITS = {
     drafts: 25,
     draftName: 60,
-    slides: 64,
+    slides: 72,
     examples: 20,
     steps: 6,
     objects: 40,
     note: 500,
     image: 1500000,
-    importBytes: 2400000,
+    importBytes: 2600000,
   };
   // Only raster data URIs the editor itself produced. SVG is excluded on purpose:
   // it can carry script, and nothing here needs it.
