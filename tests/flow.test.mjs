@@ -90,3 +90,29 @@ test('slide transitions cannot overwrite content or object entrances',()=>{
   assert.match(app,/objectEntrance === "cascade" && object\.type !== "text"/);
   assert.match(app,/fresh\.replaceWith\(held\)/);
 });
+
+/* A QR code is the one thing on a slide nobody in the room can proof-read: a
+   code pointing at the wrong tool looks exactly like a code pointing at the
+   right one. `tools/check-qr.mjs` proves each stored code decodes to its own
+   URL; this holds the other half — that the slide carrying it says the same
+   thing its asset does, and sits behind the tool it belongs to. */
+test('every QR slide carries its own tool\'s code',()=>{
+  const codes=JSON.parse(readFileSync(new URL('../assets/qr-codes.json',import.meta.url),'utf8'));
+  const after={chatgpt:'lecture-search-sources',claude:'lecture-writing',
+    gemini:'lecture-notebooklm-concept',notebooklm:'lecture-notebooklm',manus:'lecture-manus-logo'};
+  for(const [key,code] of Object.entries(codes)){
+    const index=deck.slides.findIndex(s=>s.id==='qr-'+key);
+    assert.ok(index>0,key);
+    const slide=deck.slides[index];
+    assert.equal(deck.slides[index-1].id,after[key]);
+    assert.equal(C.isShown(slide),true);
+    // the smooth hand-off the presenter asked for: same ground, same backdrop
+    assert.equal(slide.palette,deck.slides[index-1].palette);
+    assert.equal(slide.backdrop,deck.slides[index-1].backdrop);
+    const picture=slide.objects.find(o=>o.type==='image');
+    assert.equal(picture.picture,code.picture);
+    assert.equal(picture.link,code.url);
+    assert.equal(slide.link,code.url);
+    assert.ok(picture.picture.startsWith('data:image/png;base64,'));
+  }
+});
