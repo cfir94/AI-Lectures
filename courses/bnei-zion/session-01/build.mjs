@@ -121,7 +121,8 @@ for (const [i,item] of slides.entries()) {
 const candidate=path.join(tmp,'session-01-draft.pptx');
 await(await PresentationFile.exportPptx(presentation)).save(candidate);
 // Declare RTL paragraphs in the package too, not only right alignment.
-// The artifact renderer already lays Hebrew out correctly; PowerPoint needs rtl.
+// Native PowerPoint needs RTL paragraph metadata. Artifact Tool's preview
+// may reverse Hebrew word order; native PowerPoint renders are authoritative.
 const {spawnSync}=await import('node:child_process');
 const py=path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe');
 const patch=spawnSync(py,[path.join(root,'courses/bnei-zion/session-01/rtl-package.py'),candidate],{encoding:'utf8'});

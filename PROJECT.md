@@ -717,3 +717,10 @@ Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and op
 - Session 2–4 and optional Claude session are a roadmap only; develop those decks after first-session feedback.
 - Native PowerPoint opened/exported the final deck: 220 editable text boxes, no measured vertical text overflows. Inspected native slide renders; web prompt-copy button worked on file://. Native PDF: 48 pages, about 1 MB, all pages rendered in 0.55 seconds with PDFium at scale 1.
 - Output kit: output/bnei-zion-session-01, archive output/בני ציון - ערכת מפגש ראשון.zip. No syllabus price page or real clinical records included.
+
+### 2026-10-12 — Native PowerPoint motion for course session one
+- Added a separate animated, editable PPTX and updated the kit's opening link/archive. All 48 slides have native motion; 160 entrance effects, six deliberate transition choices, no object exits or timed slide advances.
+- Lists reveal on presenter clicks; selected headlines reveal word by word; logos and exercise figures use zoom/rise. Gradient text fades without geometric movement. Full-frame artwork stays static during content entrances.
+- Reproducible animation plan, native PowerPoint augmentation and exact-package finalization are in courses/bnei-zion/session-01. The original static deck remains as the build source.
+- Reopened in PowerPoint and verified effects, then inspected actual PowerPoint video frames for Hebrew word reveal, colored text, logo entrances, list reveals and exercise figure. Final package passes integrity/layout/import checks; all slide text is unchanged. PDF remains static.
+- Hebrew preview limitation: Artifact Tool's image renderer reverses Hebrew word order even with Unicode directional controls. The native PPTX contains 182 RTL Hebrew paragraphs and renders correctly in PowerPoint. Do not reverse source strings to compensate. Re-exported all 48 native slides and PDF from the animated deck; 220 editable text boxes, no vertical overflow. Guide explains opening in PowerPoint or using native PDF for static preview.
