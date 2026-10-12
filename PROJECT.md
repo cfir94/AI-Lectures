@@ -709,3 +709,11 @@ Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and op
 - Musk video title: איך העתיד שלנו ייראה.
 - Closing slide includes the professional role beneath the name; email and phone increased from 24 to 34 with taller text boxes to preserve descenders.
 - Build and 53 tests passed; visually checked closing slide and regenerated the 39-page PDF through browser export QA.
+
+### 2026-10-12 — Bnei Zion course, session one
+- New independent course materials in courses/bnei-zion/session-01. Confirmed audience: 11 participants from medical and administrative backgrounds, personal computers, no paid subscriptions.
+- Delivered a fully editable 48-slide, 180-minute PowerPoint with speaker notes, four practical exercises plus a combined exercise, 14 copyable prompts, three fictional source documents, homework, instructor timetable and fallback paths.
+- Visual language and supplied artwork/logos reused from the lecture. Existing lecture source content was not rewritten.
+- Session 2–4 and optional Claude session are a roadmap only; develop those decks after first-session feedback.
+- Native PowerPoint opened/exported the final deck: 220 editable text boxes, no measured vertical text overflows. Inspected native slide renders; web prompt-copy button worked on file://. Native PDF: 48 pages, about 1 MB, all pages rendered in 0.55 seconds with PDFium at scale 1.
+- Output kit: output/bnei-zion-session-01, archive output/בני ציון - ערכת מפגש ראשון.zip. No syllabus price page or real clinical records included.
