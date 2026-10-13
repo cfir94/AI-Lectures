@@ -61,7 +61,7 @@ for (const [i,item] of slides.entries()) {
   case 'list': {
    title(slide,item.title,c.fg,58,90,72,1100,134);
    const lines=item.body.split('\n'),gap=lines.length===4?91:108;
-   lines.forEach((line,j)=>text(slide,line,120,225+j*gap,1060,72,40,j===0?c.accent:c.fg));break;
+   lines.forEach((line,j)=>text(slide,line,90,225+j*gap,1100,76,42,j===0?c.accent:c.fg));break;
   }
   case 'compare': {
    title(slide,item.title,c.fg,58,90,80,1100,160);
@@ -86,7 +86,7 @@ for (const [i,item] of slides.entries()) {
    text(slide,item.minutes,70,175,280,215,144,c.accent,'center');
    text(slide,'דקות',100,390,220,65,31,c.muted,'center');
    title(slide,item.title,c.fg,56,440,105,740,190);
-   text(slide,item.body,440,345,740,210,35,c.accent);
+   text(slide,item.body,440,332,740,224,38,c.accent);
    text(slide,'הפרומפט המלא בדף התרגול',440,608,740,44,25,c.muted);break;
   case 'break':
    text(slide,item.minutes,90,125,1100,230,168,c.accent,'center');
@@ -96,8 +96,8 @@ for (const [i,item] of slides.entries()) {
    image(slide,art.ending,0,0,1280,720,'cover','יצירת הסיום שסיפק המרצה');
    title(slide,item.title,c.fg,60,570,130,620,135);
    text(slide,item.body,570,320,620,140,40,c.accent);
-   text(slide,'cfir94@gmail.com',570,532,620,60,30,c.blue,'right');
-   text(slide,'052-656-8094',570,610,620,60,30,c.blue,'right');break;
+   text(slide,'cfir94@gmail.com',570,532,620,68,34,c.blue,'right');
+   text(slide,'052-656-8094',570,607,620,68,34,c.blue,'right');break;
   case 'quote':
    title(slide,item.title,c.muted,33,90,95,1100,70);
    text(slide,item.body,110,250,1060,250,58,c.accent,'center',false);break;
@@ -107,7 +107,7 @@ for (const [i,item] of slides.entries()) {
    text(slide,'הנוסח המלא בדף התרגול',110,590,1070,54,26,c.muted);break;
   default:
    title(slide,item.title,c.accent,68,90,130,1100,230,'center');
-   text(slide,item.body,130,420,1020,170,36,c.fg,'center');
+   text(slide,item.body,130,390,1020,200,item.body.split('\n').length===3?48:40,c.fg,'center');
  }
  if(item.prompt)text(slide,item.prompt,90,656,450,35,21,c.muted,'left');
  text(slide,String(i+1).padStart(2,'0'),1192,659,44,28,16,c.muted,'right');

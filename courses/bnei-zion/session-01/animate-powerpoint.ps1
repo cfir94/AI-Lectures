@@ -1,4 +1,4 @@
-# Native PowerPoint animation pass. Never animate the full-frame background.
+﻿# Native PowerPoint animation pass. Never animate the full-frame background.
 param(
     [string]$DeckPath = 'output/bnei-zion-session-01/בינה מלאכותית בעבודה שלכם - מפגש ראשון.pptx',
     [string]$PlanPath = '.cache/course-build/motion-plan.json',
@@ -33,7 +33,7 @@ try {
         $sequence = $slide.TimeLine.MainSequence
         while ($sequence.Count -gt 0) { $sequence.Item(1).Delete() }
         $slide.SlideShowTransition.EntryEffect = [int][Enum]::Parse([Microsoft.Office.Interop.PowerPoint.PpEntryEffect], $plan.transition)
-        $slide.SlideShowTransition.Duration = 0.7
+        $slide.SlideShowTransition.Duration = 0.35
         $slide.SlideShowTransition.AdvanceOnClick = -1
         $slide.SlideShowTransition.AdvanceOnTime = 0
         $slide.SlideShowTransition.SoundEffect.Type = 0
@@ -51,48 +51,25 @@ try {
             if ($hasText -and (($value -match '^\d{2}$' -and $shape.Top -gt 480 -and $shape.Width -lt 80) -or $value -match '^P\d{2}')) { continue }
             if ($hasText -and ($shape.Top -gt 455 -and $shape.Height -lt 45)) { continue } # Quiet links and copy hints.
             $shapeIndex++
-            $trigger = if ($shapeIndex -eq 1) { 2 } else { 3 }
+            # Quiet fade, concurrent within an idea. Only teaching beats wait for clicks.
+            $trigger = 2
             $kind = 10
-            $delay = if ($shapeIndex -eq 1) { 0.08 } else { 0.10 }
-            $duration = 0.65
+            $delay = 0
+            $duration = 0.42
             $byWord = $false
-            $gradientText = $hasText -and $shape.TextFrame2.TextRange.Font.Fill.Type -eq 2
-            $isHeading = (($value -replace '\s+', ' ') -eq ($plan.title -replace '\s+', ' '))
-            if (-not $hasText) {
-                $markIndex++
-                $kind = @(23,34,23,10)[($markIndex - 1) % 4]
-                $duration = 0.75
-                if ($plan.layout -eq 'portrait') { $kind = 10; $duration = 0.85 }
-            } elseif ($isHeading) {
-                # Gradient glyphs arrive only by opacity, matching the deck's rule.
-                $kind = if ($gradientText) { 10 } else { @(10,34,10,34)[($slide.SlideIndex - 1) % 4] }
-                $duration = 0.75
-                if ($plan.cascadeTitle) { $byWord = $true; $kind = 10; $duration = 0.30 }
-            } elseif ($plan.layout -eq 'list' -and $shape.Top -gt 155 -and $shape.Top -lt 470) {
+            if ($plan.layout -eq 'list' -and $hasText -and $shape.Top -gt 155 -and $shape.Top -lt 470) {
                 $rowIndex++
-                $trigger = 1 # One deliberate presenter click per idea.
-                $kind = 34
-                $delay = 0
-                $duration = 0.55
-            } elseif ($plan.layout -eq 'quote') {
-                $kind = 10; $byWord = $true; $duration = 0.28; $delay = 0.1
-            } elseif ($plan.layout -eq 'exercise' -and $value -match '^\d+$') {
-                $kind = 23; $trigger = 2; $duration = 0.8
-            } elseif ($plan.layout -eq 'compare') {
-                $kind = 10
-                $duration = 0.7
-                if ($shape.Left -lt 450 -and $rowIndex -eq 0) { $trigger = 1; $rowIndex++ }
-                elseif ($value -match '^\d{2}:\d{2}$') { $kind = 23 }
-            } elseif ($plan.layout -in @('hero','closing','prompt')) {
-                $kind = @(10,34,10)[($slide.SlideIndex - 1) % 3]
-                $duration = 0.6
+                $trigger = 1
+                $duration = 0.28
+            } elseif ($plan.layout -eq 'compare' -and $shape.Left -lt 450) {
+                if ($rowIndex -eq 0) { $trigger = 1; $rowIndex++ }
+                $duration = 0.3
             }
-            # Gradient text is frozen geometrically during its entrance.
-            if ($gradientText) { $kind = 10 }
             $null = Add-CourseEffect $sequence $shape $kind $trigger $delay $duration $byWord
         }
         $notes = $slide.NotesPage.Shapes.Placeholders.Item(2).TextFrame.TextRange
-        $notes.Text += "`r`rהנפשות: הכניסה מתחילה אוטומטית. ברשימות, לחיצה חושפת בכל פעם רעיון נוסף; בהשוואה, לחיצה חושפת את הצד השני. לאחר חשיפת כל התוכן, הלחיצה הבאה מעבירה שקף. אין יציאות לאובייקטים ואין מעבר שקף מתוזמן."
+        $notes.Text = ($notes.Text -replace '(?s)\r?\n\r?\nהנפשות:.*$', '')
+        $notes.Text += "`r`rהנפשות: הכותרת והמסר נכנסים יחד בפייד עדין; אין התקרבות, עלייה או הופעה מילה אחר מילה. ברשימות, לחיצה חושפת בכל פעם רעיון נוסף; בהשוואה, לחיצה חושפת את הצד השני. לאחר חשיפת כל התוכן, הלחיצה הבאה מעבירה שקף. אין יציאות לאובייקטים ואין מעבר שקף מתוזמן."
         $courseAudit += [pscustomobject]@{slide=$slide.SlideIndex;layout=$plan.layout;transition=$plan.transition;effects=$sequence.Count;backgroundsStatic=$backgroundCount;clickRows=$rowIndex}
     }
     $courseDeck.SaveCopyAs($courseDestinationPath, 24)

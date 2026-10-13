@@ -16,7 +16,22 @@ for name,(info,data) in list(files.items()):
                 for child in list(container):container.remove(child)
                 ET.SubElement(container,'{'+ns['a']+'}srgbClr',{'val':colour})
         files[name]=(info,ET.tostring(tree,encoding='utf-8',xml_declaration=True))
-    if re.fullmatch(r'ppt/(slides/slide\d+|notesSlides/notesSlide\d+)\.xml',name):
+    if re.fullmatch(r'ppt/(slides/slide\d+|notesSlides/notesSlide\d+)\.xml',name) and '--paragraphs-only' in sys.argv:
+        # Preserve native transition AlternateContent prefixes and animation trees.
+        # Re-serializing those namespaces can invalidate mc:Choice Requires.
+        def set_direction(match):
+            para=match.group(0)
+            if not re.search('[\u0590-\u05ff]',para):return para
+            if re.search(r'<a:pPr\b',para):
+                def prop(m):
+                    tag=m.group(0)
+                    if re.search(r'\brtl=',tag):return re.sub(r'\brtl="[^"]*"','rtl="1"',tag)
+                    return tag.replace('<a:pPr','<a:pPr rtl="1"',1)
+                return re.sub(r'<a:pPr\b[^>]*>',prop,para,count=1)
+            return para.replace('<a:p>','<a:p><a:pPr rtl="1"/>',1)
+        data=re.sub(r'<a:p(?:\s[^>]*)?>.*?</a:p>',set_direction,data.decode('utf-8'),flags=re.S).encode('utf-8')
+        files[name]=(info,data)
+    elif re.fullmatch(r'ppt/(slides/slide\d+|notesSlides/notesSlide\d+)\.xml',name):
         tree=ET.fromstring(data)
         for para in tree.findall('.//a:p',ns):
             text=''.join(t.text or '' for t in para.findall('.//a:t',ns))

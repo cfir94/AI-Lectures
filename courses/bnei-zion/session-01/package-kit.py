@@ -5,7 +5,7 @@ import zipfile, sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 out=Path('output/bnei-zion-session-01')
-deck='בינה מלאכותית בעבודה שלכם - מפגש ראשון - מונפש.pptx'
+deck='בינה מלאכותית בעבודה שלכם - מפגש ראשון - מלוטש.pptx'
 guide=out/'מדריך למרצה - מפגש 1.md'
 lines=guide.read_text(encoding='utf-8').splitlines()
 html=[]
