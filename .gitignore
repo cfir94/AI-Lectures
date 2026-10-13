@@ -11,3 +11,6 @@ dist/videos/
 
 # Generated presentation exports
 output/pdf/
+
+# Course videos travel with the handoff archive, not the repository.
+/output/bnei-zion-session-01-focused/videos/
