@@ -1,15 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {sources,links,prompts,blocks,slides} from './materials.mjs';
+const focused=process.env.LECTURE_COURSE_VARIANT==='focused';
+const {sources,links,prompts,blocks,slides,sections}=await import(focused?'./focused-materials.mjs':'./materials.mjs');
 
 const root=process.cwd();
 const runtime=process.env.LECTURE_NODE_MODULES || path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules');
 process.env.RUNTIME_NODE_MODULES=runtime;
 const {Presentation,PresentationFile}=await import(pathToFileURL(path.join(runtime,'@oai/artifact-tool/dist/artifact_tool.mjs')));
 const skill=process.env.PRESENTATION_SKILL_DIR || path.join(process.env.USERPROFILE,'.codex/plugins/cache/openai-primary-runtime/presentations/26.1007.11041/skills/presentations');
-const tmp=path.join(root,'.cache/course-build');
-const output=path.join(root,'output/bnei-zion-session-01');
+const tmp=path.join(root,focused?'.cache/course-focused':'.cache/course-build');
+const output=path.join(root,focused?'output/bnei-zion-session-01-focused':'output/bnei-zion-session-01');
 await fs.mkdir(tmp,{recursive:true}); await fs.mkdir(output,{recursive:true});
 const deck=JSON.parse(await fs.readFile('src/content.json','utf8'));
 const marks=JSON.parse(await fs.readFile('assets/tool-marks.json','utf8'));
@@ -19,6 +20,7 @@ const art={opening:source('lecture-open').backdropPicture,model:source('lecture-
 const logo={chatgpt:marks['chatgpt-logo-black-png'].picture,gemini:source('lecture-gemini-logo').objects[0].picture,
  claude:source('lecture-claude-logo').objects[0].picture,copilot:marks['microsoft-copilot-logo-colored-svg'].picture,
  notebook:marks['notebooklm-logo-black-svg'].picture,manus:source('lecture-manus-logo').objects[0].picture};
+if(focused)logo.perplexity='data:image/svg+xml;base64,'+Buffer.from(await fs.readFile('courses/bnei-zion/session-01/assets/perplexity-logo-cropped.svg')).toString('base64');
 const colours={pearl:{bg:'#f7f8fc',fg:'#191b2b',muted:'#5d647c',accent:'#7a59bc',blue:'#4378ab'},
  cobalt:{bg:'#18243d',fg:'#f7f8fc',muted:'#b9c6d9',accent:'#ac94df',blue:'#7fb2d9'},
  steel:{bg:'#171b22',fg:'#f7f8fc',muted:'#b9c3ce',accent:'#ac94df',blue:'#7fb2d9'},
@@ -76,7 +78,7 @@ for (const [i,item] of slides.entries()) {
    text(slide,lines[1],95,320,475,160,42,c.blue,'center');break;
   }
   case 'tool': {
-   title(slide,item.title,c.fg,58,660,100,530,120,'right');
+   title(slide,item.title,c.fg,58,660,100,530,170,'right');
    text(slide,item.body,660,276,530,180,38,c.accent);
    if(logo[item.tool])image(slide,logo[item.tool],90,240,475,150,'contain',item.title);
    else text(slide,'Perplexity',80,250,510,150,64,c.blue,'left',true);
@@ -98,6 +100,24 @@ for (const [i,item] of slides.entries()) {
    text(slide,item.body,570,320,620,140,40,c.accent);
    text(slide,'cfir94@gmail.com',570,532,620,68,34,c.blue,'right');
    text(slide,'052-656-8094',570,607,620,68,34,c.blue,'right');break;
+  case 'prompt-demo':
+   title(slide,item.title,c.fg,54,400,72,790,138);
+   image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
+   text(slide,item.body,90,254,1100,292,34,c.fg);
+   text(slide,'הפרומפט המלא עם המקור מוכן להעתקה בדף התרגול',90,587,1100,52,24,c.muted);break;
+  case 'lecture-evidence': {
+   const original=source(item.lectureId);
+   title(slide,item.title,c.fg,54,90,35,1100,95);
+   text(slide,item.body,90,137,1100,45,24,c.muted);
+   image(slide,original.picture,90,196,1100,446,'contain',original.alt);break;
+  }
+  case 'lecture-video': {
+   const original=source(item.lectureId);
+   title(slide,item.title,c.fg,54,90,35,1100,95);
+   text(slide,item.body,90,137,1100,45,24,c.muted);
+   image(slide,original.poster,220,196,840,472.5,'contain',item.title);
+   text(slide,'הפעלת הסרטון',90,676,260,32,24,c.blue,'right',false,'videos/figure-03-home.mp4');break;
+  }
   case 'quote':
    title(slide,item.title,c.muted,33,90,95,1100,70);
    text(slide,item.body,110,250,1060,250,58,c.accent,'center',false);break;
@@ -127,6 +147,7 @@ const {spawnSync}=await import('node:child_process');
 const py=path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe');
 const patch=spawnSync(py,[path.join(root,'courses/bnei-zion/session-01/rtl-package.py'),candidate],{encoding:'utf8'});
 if(patch.status!==0)throw Error(patch.stderr);
+if(!process.env.LECTURE_DRAFT_ONLY){
 const {finalizePresentation}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')));
 const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,
  finalPath:path.join(output,'בינה מלאכותית בעבודה שלכם - מפגש ראשון.pptx'),
@@ -136,6 +157,12 @@ const result=await finalizePresentation({workspaceDir:root,candidatePath:candida
  explicitTotalSlideCount:slides.length,fontPolicy:{basis:'design',families:['Arial']},verifyArtifactToolImport:true,
  receiptPath:path.join(tmp,`validation-${Date.now()}.json`)});
 console.log('Finalized',result);
+}
+if(focused){
+ await fs.writeFile(path.join(tmp,'sections.json'),JSON.stringify(sections,null,2));
+ const plan=slides.map((s,i)=>({title:s.title,layout:s.layout,transition:i===0 || (s.theme||'pearl')!==(slides[i-1].theme||'pearl')?'ppEffectCut':'ppEffectFadeSmoothly',cascadeTitle:false}));
+ await fs.writeFile(path.join(tmp,'motion-plan.json'),JSON.stringify(plan,null,2));
+}
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 for(const [name,key] of [['מסמך א - מפגש הדרכה.txt','health'],['מסמך ב - עדכון מפגש.txt','update'],['מסמך ג - תדרוך צוות.txt','admin']])await fs.writeFile(path.join(output,name),'\ufeff'+sources[key]);
@@ -150,8 +177,8 @@ ${Object.entries(sources).map(([k,v])=>`<details><summary>${esc(v.split('\n')[0]
 <tr><td>1 · כתיבה</td><td>P02 לרפואה, P03 למנהלה או P04 להוראה. אחר כך P05 ו־P06.</td><td>טיוטה, שיפור ושני פרטים שבדקתם</td></tr>
 <tr><td>2 · חיפוש</td><td>P08 או P09. פותחים שני מקורות.</td><td>גוף, קישור, תאריך או ״לא נמצא״</td></tr>
 <tr><td>3 · מקורות</td><td>מעלים א וב, ואז P10 ו־P11. אם נשאר זמן P12.</td><td>פרט מעודכן, ציטוט ומידע חסר</td></tr>
-<tr><td>4 · סוכן</td><td>P13 ב־Manus או בכלי צ׳אט.</td><td>בדיקות, אחריות וטיוטת הודעה</td></tr>
-<tr><td>מסכם</td><td>P14, ובדיקת עמית.</td><td>הודעה מעודכנת עם מקור השינוי</td></tr></table>
+<tr><td>4 · סוכן</td><td>P13 למנהלה או P15 לרפואה, סיעוד והוראה; Manus או חלופה בצ׳אט.</td><td>בדיקות, אחריות וטיוטת הודעה</td></tr>
+<tr><td>הרחבה / בית</td><td>P14, ובדיקת עמית.</td><td>הודעה מעודכנת עם מקור השינוי</td></tr></table>
 <h2>הפרומפטים להעתקה</h2><p>הפרומפטים עם מקור כוללים כבר את חומר התרגול. פרומפטי שיפור ובדיקה ממשיכים באותה שיחה. ב־NotebookLM מוסיפים תחילה את המסמכים.</p>
 ${prompts.map(p=>`<section id="${p.id}"><h2>${p.id} · ${esc(p.title)}</h2><p>${esc(p.tool)}${p.purpose?' · '+esc(p.purpose):''}</p><button onclick="copyText('text-${p.id}',this)">העתקת פרומפט</button><pre id="text-${p.id}">${esc(p.text)}</pre><details><summary>מה לבדוק בתוצאה</summary><p>${esc(p.check)}</p></details></section>`).join('')}
 <h2>מטלת בית</h2><p>בחרו משימה מקצועית אחת: חפשו מקור פומבי, ארגנו את המידע והפיקו הודעה, הסבר או סיכום. אפשר להשתמש גם במסמכים הפיקטיביים מהמפגש. אין חובה למנוי ואין לעבוד על מידע רגיש.</p><pre>התפקיד שלי:
@@ -219,6 +246,10 @@ ${blocks.map(b=>`| ${b.time} | ${b.title} | ${b.slides} |`).join('\n')}
 ## אם מתעכבים
 
 שומרים על ההפסקה ועל סיום ב־03:00. מקצרים את סקירת הכלים, משאירים רק משתתף אחד בשיתוף ומדגימים Manus במקום לרוץ ב־11 חשבונות. אין לוותר על בדיקת המקורות, זיהוי חסר ומטלת הבית. התרגיל המסכם יכול להפוך להמשך עבודה בבית אם הזמן אינו מספיק.
+
+## הצגה והעתקת פרומפטים
+
+ההנפשות עדינות ופועלות ב־F5. רשימות נחשפות בלחיצה. הנוסחים שעל המסך קצרים; בדף התרגול ובהערות PowerPoint נמצאים הפרומפטים המלאים עם המקורות וכפתורי העתקה. אם התצוגה המקדימה הופכת מילים, פתחו את PowerPoint או את ה־PDF שיוצא ממנו.
 
 ## מפת המשך הקורס
 

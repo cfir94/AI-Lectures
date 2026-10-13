@@ -2,6 +2,8 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import fs from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
+const focused=process.env.LECTURE_COURSE_VARIANT==='focused';
+const expectedCount=focused?32:48;
 
 const root=process.cwd();
 const runtime=path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies');
@@ -15,12 +17,12 @@ if(rtl.status!==0)throw Error(rtl.stderr);
 const result=await finalizePresentation({
   workspaceDir:root,
   candidatePath,
-  finalPath:path.join(root,'output/bnei-zion-session-01',process.argv[3] || 'בינה מלאכותית בעבודה שלכם - מפגש ראשון - מלוטש.pptx'),
+  finalPath:path.join(root,focused?'output/bnei-zion-session-01-focused':'output/bnei-zion-session-01',process.argv[3] || (focused?'המעבר מצ׳אט לסוכן - מפגש ראשון.pptx':'בינה מלאכותית בעבודה שלכם - מפגש ראשון - מלוטש.pptx')),
   pythonExecutable:path.join(runtime,'python/python.exe'),
   integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),
   layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),
   layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit'],
-  explicitTotalSlideCount:48,
+  explicitTotalSlideCount:expectedCount,
   fontPolicy:{basis:'design',families:['Arial']},
   verifyArtifactToolImport:true,
   receiptPath:path.join(root,`.cache/course-build/motion-validation-${Date.now()}.json`),
