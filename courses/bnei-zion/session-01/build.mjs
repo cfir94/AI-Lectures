@@ -56,8 +56,8 @@ for (const [i,item] of slides.entries()) {
    text(slide,item.body,740,365,455,160,32,colours.pearl.accent);break;
   case 'logos': {
    title(slide,item.title,c.fg,60,80,65,1120,100);
-   const positions=[[720,250],[110,250],[720,425],[110,425]];
-   item.marks.forEach((key,j)=>{const [x,y]=positions[j];image(slide,logo[key],x,y,430,90,'contain',key);});
+   const positions=item.marks.length>4?[[935,255],[655,255],[375,255],[95,255],[805,445],[505,445],[205,445]]:[[720,250],[110,250],[720,425],[110,425]];
+   item.marks.forEach((key,j)=>{const [x,y]=positions[j];image(slide,logo[key],x,y,item.marks.length>4?250:430,item.marks.length>4?82:90,'contain',key);});
    text(slide,item.body,90,610,1100,60,29,c.muted,'center');break;
   }
   case 'list': {

@@ -6,7 +6,7 @@ import zipfile, sys
 sys.stdout.reconfigure(encoding='utf-8')
 focused='--focused' in sys.argv
 out=Path('output/bnei-zion-session-01-focused' if focused else 'output/bnei-zion-session-01')
-deck='המעבר מצ׳אט לסוכן - מפגש ראשון - כלים בג׳מיני.pptx' if focused else 'בינה מלאכותית בעבודה שלכם - מפגש ראשון - מלוטש.pptx'
+deck='המעבר מצ׳אט לסוכן - מפגש ראשון - כל הכלים.pptx' if focused else 'בינה מלאכותית בעבודה שלכם - מפגש ראשון - מלוטש.pptx'
 guide=out/'מדריך למרצה - מפגש 1.md'
 lines=guide.read_text(encoding='utf-8').splitlines()
 html=[]
