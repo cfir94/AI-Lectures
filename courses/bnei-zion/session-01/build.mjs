@@ -129,6 +129,17 @@ for (const [i,item] of slides.entries()) {
     text(slide,model.example,x,502,240,58,25,c.muted,'center');
    });
    text(slide,item.caption,90,610,1100,44,24,c.muted,'center');break;
+  case 'gemini-tools':
+   title(slide,item.title,c.fg,54,400,72,790,138);
+   image(slide,logo.gemini,90,96,245,64,'contain','Gemini');
+   text(slide,item.body,90,224,1100,70,33,c.muted,'center');
+   text(slide,'Canvas',690,326,500,64,44,c.accent,'right',true);
+   text(slide,'מסמך שאפשר לערוך ולשפר',690,397,500,58,28,c.fg);
+   text(slide,'״צור דף הדרכה של עמוד אחד\nמתוך מסמך א בלבד.״',690,480,500,105,28,c.fg);
+   text(slide,'יצירת תמונות',90,326,500,64,44,c.accent,'right',true);
+   text(slide,'איור לפי תיאור, סגנון וקומפוזיציה',90,397,500,58,27,c.fg);
+   text(slide,'״צור איור לצוות ביום הדרכה.\nהשאר מקום לכותרת בצד ימין.״',90,480,500,105,28,c.fg);
+   text(slide,'הפרומפטים המלאים מוכנים להעתקה בדף התרגול',90,608,1100,44,23,c.muted,'center');break;
   case 'prompt-demo':
    title(slide,item.title,c.fg,54,400,72,790,138);
    image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
