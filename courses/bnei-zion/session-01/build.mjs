@@ -8,7 +8,7 @@ const root=process.cwd();
 const runtime=process.env.LECTURE_NODE_MODULES || path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules');
 process.env.RUNTIME_NODE_MODULES=runtime;
 const {Presentation,PresentationFile}=await import(pathToFileURL(path.join(runtime,'@oai/artifact-tool/dist/artifact_tool.mjs')));
-const skill=process.env.PRESENTATION_SKILL_DIR || path.join(process.env.USERPROFILE,'.codex/plugins/cache/openai-primary-runtime/presentations/26.1007.11041/skills/presentations');
+const skill=process.env.PRESENTATION_SKILL_DIR || path.join(process.env.USERPROFILE,'.codex/plugins/cache/openai-primary-runtime/presentations/26.1011.11113/skills/presentations');
 const tmp=path.join(root,focused?'.cache/course-focused':'.cache/course-build');
 const output=path.join(root,focused?'output/bnei-zion-session-01-focused':'output/bnei-zion-session-01');
 await fs.mkdir(tmp,{recursive:true}); await fs.mkdir(output,{recursive:true});
@@ -100,6 +100,35 @@ for (const [i,item] of slides.entries()) {
    text(slide,item.body,570,320,620,140,40,c.accent);
    text(slide,'cfir94@gmail.com',570,532,620,68,34,c.blue,'right');
    text(slide,'052-656-8094',570,607,620,68,34,c.blue,'right');break;
+  case 'personalization':
+   title(slide,item.title,c.fg,54,400,72,790,138);
+   image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
+   text(slide,item.body,90,229,1100,74,38,c.accent);
+   text(slide,item.example,90,333,1100,146,32,c.fg);
+   text(slide,'בהגדרות: הוראות אישיות, או בתחילת השיחה',90,516,1100,52,28,c.muted);
+   text(slide,'תפקיד וסגנון — בלי מידע רגיש',90,586,1100,44,24,c.muted);break;
+  case 'prompt-structure':
+   title(slide,item.title,c.fg,58,90,100,1100,150);
+   text(slide,item.body,90,300,1100,110,52,c.accent,'center',true);
+   text(slide,item.caption,90,470,1100,110,30,c.muted,'center');break;
+  case 'prompt-example':
+   title(slide,item.title,c.fg,54,400,72,790,138);
+   image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
+   item.parts.forEach((part,j)=>{
+    text(slide,part.label,995,232+j*82,195,68,32,c.accent,'right',true);
+    text(slide,part.text,90,232+j*82,850,68,30,c.fg);
+   });
+   text(slide,'הפרומפט המלא כולל את מסמך א — מוכן להעתקה בדף התרגול',90,599,1100,48,24,c.muted);break;
+  case 'models':
+   title(slide,item.title,c.fg,58,400,72,790,138);
+   image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
+   text(slide,item.body,90,223,1100,70,40,c.accent,'center');
+   item.models.forEach((model,j)=>{const x=930-j*280;
+    text(slide,model.name,x,348,240,64,42,c.fg,'center',true);
+    text(slide,model.label,x,438,240,60,29,c.accent,'center');
+    text(slide,model.example,x,502,240,58,25,c.muted,'center');
+   });
+   text(slide,item.caption,90,610,1100,44,24,c.muted,'center');break;
   case 'prompt-demo':
    title(slide,item.title,c.fg,54,400,72,790,138);
    image(slide,logo[item.tool],90,96,245,64,'contain',item.tool);
@@ -160,7 +189,7 @@ console.log('Finalized',result);
 }
 if(focused){
  await fs.writeFile(path.join(tmp,'sections.json'),JSON.stringify(sections,null,2));
- const plan=slides.map((s,i)=>({title:s.title,layout:s.layout,transition:i===0 || (s.theme||'pearl')!==(slides[i-1].theme||'pearl')?'ppEffectCut':'ppEffectFadeSmoothly',cascadeTitle:false}));
+ const plan=slides.map((s,i)=>({title:s.title,layout:s.layout,visibility:s.visibility||'shown',transition:i===0 || (s.theme||'pearl')!==(slides[i-1].theme||'pearl')?'ppEffectCut':'ppEffectFadeSmoothly',cascadeTitle:false}));
  await fs.writeFile(path.join(tmp,'motion-plan.json'),JSON.stringify(plan,null,2));
 }
 

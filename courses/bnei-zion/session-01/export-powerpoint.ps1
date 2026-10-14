@@ -12,6 +12,7 @@ $courseHadPowerPoint = @(Get-Process POWERPNT -ErrorAction SilentlyContinue).Cou
 $coursePowerPointApp = New-Object -ComObject PowerPoint.Application
 try {
     $coursePresentation = $coursePowerPointApp.Presentations.Open($resolvedCourseDeck, -1, 0, 0)
+    $coursePresentation.PrintOptions.PrintHiddenSlides=0
     $coursePresentation.Export($courseNativeDirectory, 'PNG', 1600, 900)
     $coursePdfPath = Join-Path (Get-Location).Path $PdfPath
     $coursePresentation.SaveAs($coursePdfPath, 32)

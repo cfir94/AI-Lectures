@@ -3,12 +3,12 @@ import {pathToFileURL} from 'node:url';
 import fs from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 const focused=process.env.LECTURE_COURSE_VARIANT==='focused';
-const expectedCount=focused?32:48;
+const expectedCount=(await import(focused?'./focused-materials.mjs':'./materials.mjs')).slides.length;
 
 const root=process.cwd();
 const runtime=path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies');
 process.env.RUNTIME_NODE_MODULES=path.join(runtime,'node/node_modules');
-const skill=path.join(process.env.USERPROFILE,'.codex/plugins/cache/openai-primary-runtime/presentations/26.1007.11041/skills/presentations');
+const skill=path.join(process.env.USERPROFILE,'.codex/plugins/cache/openai-primary-runtime/presentations/26.1011.11113/skills/presentations');
 const {finalizePresentation}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')));
 const candidatePath=path.join(root,`.cache/course-build/rtl-motion-${Date.now()}.pptx`);
 await fs.copyFile(path.resolve(process.argv[2] || '.cache/course-build/animated-candidate.pptx'),candidatePath);
