@@ -755,3 +755,7 @@ Integrated upstream 85a41f4 first. Cascades now use opaque per-word paint and op
 ### 2026-10-14 — Complete opening tool overview
 - Course slide 6 now includes Perplexity, NotebookLM and Manus alongside the four existing chat tools. Seven original logos in two balanced rows; title and caption describe the wider tool scope.
 - Latest deck: output/bnei-zion-session-01-focused/המעבר מצ׳אט לסוכן - מפגש ראשון - כל הכלים.pptx. Native PowerPoint rendered and visually checked slide 6; 38 slides, 201 editable text boxes, zero measured vertical overflow and 166 quiet fade entrances. Updated PDF, opening page, guide and ZIP. Prior revisions and pre-existing user changes preserved.
+
+### 2026-10-14 — Original chat-to-agent comparison before Manus
+- Inserted slide 28 immediately before Manus, reusing the original Isrotel lecture-answer-finish title and comparison text. Same email goal: chatbot suggests wording; connected agent prepares a draft and waits for approval. Native editable text with the course palette and restrained fades.
+- Latest deck: output/bnei-zion-session-01-focused/המעבר מצ׳אט לסוכן - מפגש ראשון - מעבר לסוכן.pptx. 39 total slides, 37 shown, hidden 13/14. Native PowerPoint export: 208 editable text boxes, zero measured vertical overflow and 172 fades; new slide visually inspected. PDF has 37 pages. Updated kit, guide and source; old revisions preserved.

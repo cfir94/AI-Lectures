@@ -77,6 +77,16 @@ for (const [i,item] of slides.entries()) {
    text(slide,lines[0],695,320,475,160,42,c.accent,'center');
    text(slide,lines[1],95,320,475,160,42,c.blue,'center');break;
   }
+  case 'lecture-comparison': {
+   const original=source(item.lectureId);
+   title(slide,original.title,c.fg,58,90,80,1100,140);
+   original.sides.forEach((side,j)=>{
+    const x=j===0?695:95;
+    text(slide,side.heading,x,285,475,70,48,j===0?c.accent:c.blue,'center',true);
+    text(slide,side.line,x,380,475,150,35,c.fg,'center');
+   });
+   text(slide,'הסוכן זקוק לחיבור ולהרשאה — האדם מאשר את הפעולה',90,600,1100,55,26,c.muted,'center');break;
+  }
   case 'tool': {
    title(slide,item.title,c.fg,58,660,100,530,170,'right');
    text(slide,item.body,660,276,530,180,38,c.accent);
