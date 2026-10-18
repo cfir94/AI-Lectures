@@ -56,3 +56,27 @@ test('the workshop keeps its tonal and motion variety',()=>{
   assert.equal(palettes.violet,2,'violet marks the two human moments');
   assert.equal(palettes.steel,1,'steel marks the calculation that broke');
 });
+
+/* The white-mark-on-a-white-stage bug was found once on `slide.mark` and once
+   again on free image objects, which the first guard did not look at. The
+   workshop's marks are free image objects, so the rule is checked here on both
+   carriers and on both decks. */
+test('no white tool mark lands on a light slide, in either deck',()=>{
+  const light=new Set(Object.entries(C.PALETTE_STYLES)
+    .filter(([,style])=>style.tone==='light').map(([key])=>key));
+  const marks=JSON.parse(readFileSync(new URL('../assets/tool-marks.json',import.meta.url),'utf8'));
+  const named=new Map(Object.entries(marks).map(([name,mark])=>[mark.picture,name]));
+  let checked=0;
+  for(const [deck,name] of [[workshop,'workshop'],[lecture,'lecture']])
+    for(const slide of deck.slides){
+      if(!light.has(slide.palette)) continue;
+      for(const picture of [slide.mark,...(slide.objects??[]).map(o=>o.picture)]){
+        const mark=picture&&named.get(picture);
+        if(!mark) continue;
+        checked++;
+        assert.ok(!/-(white|light)-/.test(mark),
+          `${name} slide ${slide.id} is on ${slide.palette} and carries ${mark}`);
+      }
+    }
+  assert.ok(checked>0,'the guard examined no mark on a light slide');
+});
