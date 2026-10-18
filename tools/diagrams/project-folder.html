@@ -1,0 +1,64 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8">
+<style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px;display:flex;align-items:stretch;gap:34px}
+  .col{flex:1;display:flex;flex-direction:column;gap:18px}
+  .col.wide{flex:1.35}
+  .kicker{font-size:30px;color:var(--muted);letter-spacing:.02em}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);
+       padding:26px 28px;display:flex;flex-direction:column;gap:16px;flex:1}
+  .box.accent{border-color:var(--purple)}
+  .box h3{margin:0;font-size:38px;font-weight:600;color:var(--ink)}
+  .box h3 small{display:block;font-size:25px;font-weight:400;color:var(--muted);margin-top:6px}
+  .chip{display:flex;align-items:center;gap:14px;border:1.5px solid var(--line);
+        border-radius:16px;padding:14px 18px;font-size:29px;color:var(--ink);background:#fcfdff}
+  .chip .file{direction:ltr;unicode-bidi:isolate}
+  .chip .dot{width:14px;height:14px;border-radius:50%;flex:none}
+  .rule{font-size:29px;color:var(--ink);background:#f4f1fb;border-right:5px solid var(--purple);
+        border-radius:0 14px 14px 0;padding:14px 18px}
+  .rule b{color:var(--purple);font-weight:600}
+  .arrow{align-self:center;font-size:58px;color:var(--muted);line-height:1}
+  .foot{margin-top:10px;font-size:28px;color:var(--muted)}
+</style>
+<body><div class="sheet" id="shot">
+
+  <div class="col wide">
+    <div class="kicker">הפרויקט — התיקייה</div>
+    <div class="box accent">
+      <h3>תוכנית עבודה 2027<small>נשאר פתוח לאורך כל העבודה</small></h3>
+      <div class="kicker" style="font-size:26px">הוראות קבועות — חלות על כל שיחה</div>
+      <div class="rule"><b>ציין מקור</b> לכל נתון · הפרד הנחות מהחלטות</div>
+      <div class="kicker" style="font-size:26px">מקורות — החומר עצמו</div>
+      <div class="chip"><span class="dot" style="background:var(--blue)"></span>סקר תושבים <span class="file">2026.pdf</span></div>
+      <div class="chip"><span class="dot" style="background:var(--blue)"></span>תקציב מאושר <span class="file">2026.xlsx</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">←</div>
+
+  <div class="col">
+    <div class="kicker">שיחות בתוך הפרויקט</div>
+    <div class="box">
+      <div class="chip">״כתוב טיוטת תוכנית לפי הסקר״</div>
+      <div class="chip">״בנה תקציב לפי התוכנית״</div>
+      <div class="chip">״בדוק שהסכומים מסתדרים״</div>
+      <div class="foot">כל שיחה מתחילה מההוראות<br>ומהמקורות — בלי להעתיק שוב.</div>
+    </div>
+  </div>
+
+  <div class="arrow">←</div>
+
+  <div class="col">
+    <div class="kicker">תוצרים</div>
+    <div class="box">
+      <div class="chip"><span class="dot" style="background:var(--purple)"></span>תוכנית עבודה<span class="file">.docx</span></div>
+      <div class="chip"><span class="dot" style="background:var(--purple)"></span>תקציב<span class="file">.xlsx</span></div>
+      <div class="chip"><span class="dot" style="background:var(--purple)"></span>תקציר החלטות<span class="file">.md</span></div>
+      <div class="foot">חוזרים לפרויקט מחר<br>וממשיכים מאותה נקודה.</div>
+    </div>
+  </div>
+
+</div></body></html>

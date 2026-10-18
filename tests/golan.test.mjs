@@ -14,7 +14,7 @@ const lecture=C.validate(read('content.json'));
 test('the workshop is a separate document from the lecture',()=>{
   assert.notEqual(workshop.documentId,lecture.documentId);
   assert.ok(workshop.documentId.length>0);
-  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,36);
+  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,37);
 });
 
 /* The source notes run past 500 characters, and the schema stops there. The
@@ -79,4 +79,35 @@ test('no white tool mark lands on a light slide, in either deck',()=>{
       }
     }
   assert.ok(checked>0,'the guard examined no mark on a light slide');
+});
+
+/* His own introduction and closing, carried over from the lecture with the
+   photograph. They are the two slides a restructure would quietly drop. */
+test('the workshop opens and closes on his own slides',()=>{
+  const shown=workshop.slides.filter(s=>C.isShown(s));
+  for(const [slide,where] of [[shown[1],'opening'],[shown.at(-1),'closing']]){
+    const photo=(slide.objects??[]).find(o=>o.type==='image');
+    assert.ok(photo,`the ${where} slide carries no photograph`);
+    assert.ok(photo.picture.startsWith('data:image/'),`the ${where} photograph is not embedded`);
+    const text=(slide.objects??[]).filter(o=>o.type==='text').map(o=>o.text).join(' ');
+    assert.match(text,/כפיר משה יעקובי/,`the ${where} slide does not carry his name`);
+  }
+});
+
+/* A diagram is rendered from tools/diagrams/*.html into assets/diagrams.json.
+   The slide holds a copy, so the two can drift: a re-rendered diagram that was
+   never re-embedded leaves the deck showing the old picture, which looks
+   exactly like the new one until someone reads it. */
+test('every diagram on a slide is the one its source produced',()=>{
+  const made=JSON.parse(readFileSync(new URL('../assets/diagrams.json',import.meta.url),'utf8'));
+  const known=new Map(Object.entries(made).map(([name,d])=>[d.picture,name]));
+  let found=0;
+  for(const slide of workshop.slides){
+    if(slide.type!=='image'||!slide.picture) continue;
+    found++;
+    assert.ok(known.has(slide.picture),
+      `slide ${slide.id} carries a picture that no diagram source produced`);
+    assert.ok(slide.alt.trim().length>0,`slide ${slide.id} has no alt text`);
+  }
+  assert.equal(found,Object.keys(made).length,'a rendered diagram reaches no slide');
 });
