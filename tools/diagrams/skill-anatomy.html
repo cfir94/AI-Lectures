@@ -1,0 +1,67 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8">
+<style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .bar{display:flex;align-items:center;gap:18px;border:2px solid var(--purple);
+       border-radius:22px;padding:18px 26px;margin-bottom:26px;background:#f7f4fd}
+  .bar .name{font-size:31px;font-weight:600;color:var(--ink);font-family:ui-monospace,Consolas,monospace;direction:ltr}
+  .bar .what{font-size:25px;color:var(--muted)}
+  .cols{display:flex;gap:26px;align-items:stretch}
+  .box{flex:1;border:2px solid var(--line);border-radius:26px;background:var(--card);
+       padding:24px 26px;display:flex;flex-direction:column;gap:14px}
+  .box h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  .box h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .line{font-size:28px;color:var(--ink);display:flex;gap:12px;align-items:flex-start}
+  .line::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--blue);margin-top:12px;flex:none}
+  .tbl{border:1.5px solid var(--line);border-radius:14px;overflow:hidden;font-size:22px}
+  .tbl div{display:flex}
+  .tbl span{flex:1;padding:10px 14px;border-left:1.5px solid var(--line);color:var(--ink)}
+  .tbl span:last-child{border-left:0}
+  .tbl .head span{background:#f1f4f9;color:var(--muted)}
+  .check{font-size:28px;color:var(--ink);display:flex;gap:12px;align-items:flex-start}
+  .check::before{content:"✓";color:var(--purple);font-weight:700;margin-top:2px}
+  .foot{margin-top:26px;font-size:30px;color:var(--muted);text-align:center}
+  .foot b{color:var(--ink);font-weight:600}
+</style>
+<body><div class="sheet" id="shot">
+
+  <div class="bar">
+    <span class="name">community-workplan-budget</span>
+    <span class="what">— מיומנות אחת לתכנון קהילה ותקציב</span>
+  </div>
+
+  <div class="cols">
+    <div class="box">
+      <h3>SKILL.md<small>ההוראות — איך עושים את זה, כל פעם</small></h3>
+      <div class="line">התחל מהסקר, לא מהתקציב של אשתקד</div>
+      <div class="line">כל סעיף מקבל יעד מדיד ואחראי</div>
+      <div class="line">סכום לכל פעילות — ומקור למספר</div>
+    </div>
+
+    <div class="box">
+      <h3>תבניות<small>שתי טבלאות מוכנות</small></h3>
+      <div class="tbl">
+        <div class="head"><span>פעילות</span><span>יעד</span><span>אחראי</span></div>
+        <div><span>חוגי נוער</span><span>80 משתתפים</span><span>רכז קהילה</span></div>
+      </div>
+      <div class="tbl">
+        <div class="head"><span>סעיף</span><span>עלות</span><span>מקור</span></div>
+        <div><span>הפעלות קיץ</span><span>24,000 ₪</span><span>סקר 2026</span></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>בדיקות<small>מה חייב לעבור לפני הגשה</small></h3>
+      <div class="check">לכל מספר יש מקור</div>
+      <div class="check">הסכום בתקציב שווה לסכום הפעילויות</div>
+      <div class="check">אין סעיף בלי אחראי</div>
+      <div class="check">הנחות מופרדות מהחלטות</div>
+    </div>
+  </div>
+
+  <div class="foot">זה <b>לא</b> מודל חדש, לא חיבור לשירות ולא תוספת מכסה — זו דרך העבודה שלכם, ארוזה.</div>
+
+</div></body></html>
