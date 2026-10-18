@@ -14,28 +14,36 @@
      font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center}
   .step .box{flex:1;display:flex;flex-direction:column;gap:12px}
   .step p{margin:0;font-size:27px;color:var(--ink);line-height:1.45}
-  .say{font-size:26px;color:var(--ink);background:#f7f4fd;border-right:5px solid var(--purple);
+  .say{font-size:25px;color:var(--ink);background:#f7f4fd;border-right:5px solid var(--purple);
        border-radius:0 14px 14px 0;padding:14px 16px}
   .arrow{align-self:center;font-size:50px;color:var(--muted)}
-  .warn{margin-top:28px;border:2px solid var(--line);border-radius:20px;padding:18px 24px;
-        font-size:28px;color:var(--ink);text-align:center}
-  .warn b{color:var(--purple)}
+  .cols{margin-top:26px;border:2px solid var(--line);border-radius:18px;overflow:hidden;font-size:24px}
+  .cols div{display:flex}
+  .cols span{flex:1;padding:12px 10px;border-left:1.5px solid var(--line);color:var(--ink);text-align:center}
+  .cols span:last-child{border-left:0}
+  .cols .h span{background:#f1f4f9;color:var(--muted);font-weight:600}
+  .lab{font-size:26px;color:var(--muted);margin:22px 0 10px;text-align:center}
 </style><body><div class="sheet" id="shot">
   <div class="steps">
     <div class="step"><span class="n">1</span><div class="box">
-      <h3>מצרפים את הקובץ<small>הקובץ האמיתי, לא העתק בטבלה</small></h3>
-      <p>גוררים את <span class="ltr">.xlsx</span> לתוך השיחה ומבקשים מיפוי לפני כל שינוי.</p>
-      <div class="say">״מפה לי את החוברת: אילו גיליונות יש, ומה יש בכל עמודה.״</div></div></div>
+      <h3>בקשו מיפוי<small>לפני שנוגעים במשהו</small></h3>
+      <p>שהוא יגיד לכם מה הוא רואה — ותשוו לקובץ.</p>
+      <div class="say">״מה יש בכל עמודה בגיליון, ואילו תאים הם נוסחה ולא מספר?״</div></div></div>
     <div class="arrow">←</div>
     <div class="step"><span class="n">2</span><div class="box">
-      <h3>מבקשים בטווח מדויק<small>גיליון ותאים, לא ״תעדכן את התקציב״</small></h3>
-      <p>אומרים מה לשנות <b>ומה לשמור</b> — אחרת הוא ישכתב נוסחאות.</p>
-      <div class="say">״שנה רק <span class="ltr">תקציב!E9:E11</span>. שמור את כל הנוסחאות והעיצוב.״</div></div></div>
+      <h3>בקשו בטווח מדויק<small>ואמרו מה לשמור</small></h3>
+      <p>גיליון, עמודה ושורות — לא ״תעדכן את התקציב״.</p>
+      <div class="say">״בעמודה <span class="ltr">F</span> בלבד, עדכן את שורות ההכנסות. אל תיגע בעמודות <span class="ltr">G</span> ו־<span class="ltr">H</span> — הן נוסחאות.״</div></div></div>
     <div class="arrow">←</div>
     <div class="step"><span class="n">3</span><div class="box">
-      <h3>בודקים את מה שחזר<small>פותחים ב־Excel, לא סומכים על המסך</small></h3>
-      <p>מבקשים קובץ להורדה ובודקים שהסכומים מסתדרים.</p>
-      <div class="say">״החזר לי <span class="ltr">xlsx</span> להורדה, והסבר כל תא ששינית.״</div></div></div>
+      <h3>בדקו מה שחזר<small>בקובץ, לא על המסך</small></h3>
+      <p>מבקשים רשימת תאים ששונו ופותחים את הקובץ.</p>
+      <div class="say">״החזר <span class="ltr">xlsx</span> להורדה ורשימה של כל תא ששינית, עם הערך לפני ואחרי.״</div></div></div>
   </div>
-  <div class="warn">נוסחה שאפשר לבדוק עדיפה על מספר מודפס: <b><span class="ltr">E9 = C9 * D9</span></b> ו־<b><span class="ltr">E12 = SUM(E9:E11)</span></b> — אם משנים כמות, הסכום מתעדכן לבד.</div>
+  <div class="lab">זה המבנה של קובץ בקרת התקציב שתעבדו עליו</div>
+  <div class="cols">
+    <div class="h"><span>A — שם חשבון</span><span>E — תוכנית 2026</span><span>F — ניצול 1‑6/26</span><span>G — יתרה</span><span>H — אחוז ניצול</span></div>
+    <div><span>מה הסעיף</span><span>מה אושר</span><span>מה נוצל בפועל</span><span><span class="ltr">= E − F</span></span><span><span class="ltr">= F / E</span></span></div>
+    <div class="h"><span>נתון שמוקלד</span><span>נתון שמוקלד</span><span>נתון שמוקלד</span><span>נוסחה — לא לגעת</span><span>נוסחה — לא לגעת</span></div>
+  </div>
 </div></body></html>

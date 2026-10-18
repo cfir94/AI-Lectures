@@ -14,7 +14,7 @@ const lecture=C.validate(read('content.json'));
 test('the workshop is a separate document from the lecture',()=>{
   assert.notEqual(workshop.documentId,lecture.documentId);
   assert.ok(workshop.documentId.length>0);
-  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,39);
+  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,40);
 });
 
 /* The source notes run past 500 characters, and the schema stops there. The
