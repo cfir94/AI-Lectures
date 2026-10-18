@@ -1460,6 +1460,12 @@
        to survive the very re-render that replays it. */
     if (sameSlide && !sameScene && !motionPreview)
       current.classList.remove(`motion-${slide.motion}`);
+    /* A beat is not an arrival. The scene's own motion class goes above, but
+       the free objects were being rebuilt with their entrance classes intact,
+       so a mark standing above the words replayed its fade on every beat —
+       the presenter reads that as the logo jumping. The slide did not arrive;
+       only the beat advanced. */
+    if (sameSlide && !sameScene) current.classList.add("beat-only");
     if (sameScene) current.classList.add("no-motion");
     renderedSceneKey = sceneKey;
     const embed = current.querySelector("video.video-embed");

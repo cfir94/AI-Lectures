@@ -1,0 +1,41 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .steps{display:flex;gap:22px;align-items:stretch}
+  .step{flex:1;display:flex;flex-direction:column;gap:14px}
+  .n{width:52px;height:52px;border-radius:50%;background:var(--purple);color:#fff;
+     font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step .box{flex:1;display:flex;flex-direction:column;gap:12px}
+  .step p{margin:0;font-size:27px;color:var(--ink);line-height:1.45}
+  .say{font-size:26px;color:var(--ink);background:#f7f4fd;border-right:5px solid var(--purple);
+       border-radius:0 14px 14px 0;padding:14px 16px}
+  .arrow{align-self:center;font-size:50px;color:var(--muted)}
+  .warn{margin-top:28px;border:2px solid var(--line);border-radius:20px;padding:18px 24px;
+        font-size:28px;color:var(--ink);text-align:center}
+  .warn b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="steps">
+    <div class="step"><span class="n">1</span><div class="box">
+      <h3>מצרפים את הקובץ<small>הקובץ האמיתי, לא העתק בטבלה</small></h3>
+      <p>גוררים את <span class="ltr">.xlsx</span> לתוך השיחה ומבקשים מיפוי לפני כל שינוי.</p>
+      <div class="say">״מפה לי את החוברת: אילו גיליונות יש, ומה יש בכל עמודה.״</div></div></div>
+    <div class="arrow">←</div>
+    <div class="step"><span class="n">2</span><div class="box">
+      <h3>מבקשים בטווח מדויק<small>גיליון ותאים, לא ״תעדכן את התקציב״</small></h3>
+      <p>אומרים מה לשנות <b>ומה לשמור</b> — אחרת הוא ישכתב נוסחאות.</p>
+      <div class="say">״שנה רק <span class="ltr">תקציב!E9:E11</span>. שמור את כל הנוסחאות והעיצוב.״</div></div></div>
+    <div class="arrow">←</div>
+    <div class="step"><span class="n">3</span><div class="box">
+      <h3>בודקים את מה שחזר<small>פותחים ב־Excel, לא סומכים על המסך</small></h3>
+      <p>מבקשים קובץ להורדה ובודקים שהסכומים מסתדרים.</p>
+      <div class="say">״החזר לי <span class="ltr">xlsx</span> להורדה, והסבר כל תא ששינית.״</div></div></div>
+  </div>
+  <div class="warn">נוסחה שאפשר לבדוק עדיפה על מספר מודפס: <b><span class="ltr">E9 = C9 * D9</span></b> ו־<b><span class="ltr">E12 = SUM(E9:E11)</span></b> — אם משנים כמות, הסכום מתעדכן לבד.</div>
+</div></body></html>

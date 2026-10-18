@@ -1,0 +1,46 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:28px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:16px;text-align:center}
+  .logo{height:86px;display:flex;align-items:center;justify-content:center}
+  .logo img{max-height:86px;max-width:100%}
+  .role{font-size:26px;color:#fff;background:var(--blue);border-radius:999px;
+        padding:8px 20px;align-self:center;font-weight:600}
+  .role.work{background:var(--purple)}
+  .col p{margin:0;font-size:28px;color:var(--ink);line-height:1.45}
+  .col .eg{font-size:25px;color:var(--muted)}
+  .flow{margin-top:30px;display:flex;align-items:center;justify-content:center;gap:18px;
+        font-size:29px;color:var(--ink);border:2px solid var(--line);border-radius:20px;padding:18px 26px}
+  .flow b{color:var(--purple);font-weight:600}
+  .flow i{font-style:normal;color:var(--muted);font-size:34px}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col box">
+      <div class="logo"><img src="{{mark:notebooklm-logo-black-svg}}" alt=""></div>
+      <span class="role">בסיס הידע</span>
+      <p>כל החומר של היום נכנס לכאן — מסמכים, תקציב, סקר, פרוטוקולים.</p>
+      <p class="eg">שואלים אותו שאלות ומקבלים תשובה <b>עם הפניה למקור</b>.</p>
+    </div>
+    <div class="col box">
+      <div class="logo"><img src="{{mark:chatgpt-logo-black-svg}}" alt=""></div>
+      <span class="role work">כלי עבודה</span>
+      <p>כותבים, מנסחים ובונים את התוצרים עצמם.</p>
+      <p class="eg">פרויקט, הוראות קבועות, עבודה על קובץ אקסל.</p>
+    </div>
+    <div class="col box">
+      <div class="logo"><img src="{{mark:claude-ai-logo-colored-svg}}" alt=""></div>
+      <span class="role work">כלי עבודה</span>
+      <p>אותו תפקיד — נעבוד בשניהם כדי שתכירו את שניהם.</p>
+      <p class="eg">פרויקט, מיומנות, קובץ אקסל שחוזר מתוקן.</p>
+    </div>
+  </div>
+  <div class="flow"><span>החומר יושב ב־<b>NotebookLM</b></span><i>←</i><span>העבודה נעשית ב־<b>ChatGPT</b> או ב־<b>Claude</b></span><i>←</i><span>התוצר חוזר אליכם כקובץ</span></div>
+</div></body></html>

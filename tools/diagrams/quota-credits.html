@@ -1,0 +1,53 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .bar{height:74px;border-radius:999px;background:#eef1f6;overflow:hidden;display:flex;border:2px solid var(--line)}
+  .bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:600}
+  .useful{background:var(--purple);flex:42}
+  .retry{background:#9b7fd0;flex:18}
+  .waste{background:#9aa3b2;flex:24}
+  .left{background:transparent;color:var(--muted)!important;flex:16}
+  .key{display:flex;gap:30px;margin-top:22px;flex-wrap:wrap}
+  .key span{display:flex;align-items:center;gap:12px;font-size:27px;color:var(--ink)}
+  .key i{width:22px;height:22px;border-radius:7px;display:inline-block}
+  .cols{display:flex;gap:28px;margin-top:34px}
+  .cols .box{flex:1}
+  .item{font-size:28px;color:var(--ink);margin-top:14px;display:flex;gap:12px}
+  .item::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue);margin-top:13px;flex:none}
+  .no .item::before{background:#9aa3b2}
+  .top{font-size:30px;color:var(--muted);margin-bottom:16px}
+</style><body><div class="sheet" id="shot">
+  <div class="top">תקציב השימוש שלכם לחודש — נמשך מאותו מאגר, לא משנה איזה כלי</div>
+  <div class="bar">
+    <div class="useful">עבודה אמיתית</div>
+    <div class="retry">ניסיונות חוזרים</div>
+    <div class="waste">מבוזבז</div>
+    <div class="left">נשאר</div>
+  </div>
+  <div class="key">
+    <span><i style="background:var(--purple)"></i>בקשה ברורה שמחזירה תוצר</span>
+    <span><i style="background:#9b7fd0"></i>ניסוח מחדש כי הבקשה הייתה כללית</span>
+    <span><i style="background:#9aa3b2"></i>קובץ ענק שלא צריך, שיחה שלא נסגרה</span>
+  </div>
+  <div class="cols">
+    <div class="box">
+      <h3>מה חוסך<small>אותה תוצאה, פחות תקציב</small></h3>
+      <div class="item">בקשה אחת מדויקת במקום חמש כלליות</div>
+      <div class="item">לצרף את הטווח הרלוונטי, לא את כל החוברת</div>
+      <div class="item">הוראות פרויקט — לא לחזור על ההקשר כל פעם</div>
+    </div>
+    <div class="box no">
+      <h3>מה שורף<small>בלי להחזיר כלום</small></h3>
+      <div class="item">״תעשה לי משהו עם הקובץ״</div>
+      <div class="item">העלאת כל המסמכים לכל שיחה</div>
+      <div class="item">מודל חזק למשימה פשוטה</div>
+    </div>
+  </div>
+</div></body></html>

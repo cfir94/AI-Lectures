@@ -14,7 +14,7 @@ const lecture=C.validate(read('content.json'));
 test('the workshop is a separate document from the lecture',()=>{
   assert.notEqual(workshop.documentId,lecture.documentId);
   assert.ok(workshop.documentId.length>0);
-  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,37);
+  assert.equal(workshop.slides.filter(s=>C.isShown(s)).length,39);
 });
 
 /* The source notes run past 500 characters, and the schema stops there. The
@@ -47,10 +47,12 @@ test('no illustration is left with nothing to draw',()=>{
 /* The tonal arc is blocks, not sprinkling, and no single transition may become
    the default for the whole deck. */
 test('the workshop keeps its tonal and motion variety',()=>{
-  const tally=(key)=>workshop.slides.reduce((t,s)=>({...t,[s[key]]:(t[s[key]]??0)+1}),{});
+  /* The arc is what the room sees, so a hidden slide is not in it. */
+  const stage=workshop.slides.filter(s=>C.isShown(s));
+  const tally=(key)=>stage.reduce((t,s)=>({...t,[s[key]]:(t[s[key]]??0)+1}),{});
   const transitions=tally('transition');
   for(const [name,n] of Object.entries(transitions))
-    assert.ok(n<=workshop.slides.length/3,`${name} is on ${n} slides`);
+    assert.ok(n<=stage.length/3,`${name} is on ${n} slides`);
   assert.equal(Object.keys(transitions).length,6);
   const palettes=tally('palette');
   assert.equal(palettes.violet,2,'violet marks the two human moments');
