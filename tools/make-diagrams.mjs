@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "./browser-runtime.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+
 const [out, scaleArg] = process.argv.slice(2);
 if (!out) {
   console.error("usage: node tools/make-diagrams.mjs <out.json> [scale]");
@@ -18,6 +19,20 @@ if (!out) {
 }
 const scale = Number(scaleArg) || 1;
 const source = path.join(here, "diagrams");
+
+/* A diagram may show a real logo. `{{mark:name}}` is replaced by that mark's
+   own data URI from the manifest the logo rasterizer wrote, so a diagram never
+   carries a second, redrawn copy of somebody's trademark. */
+const marks = JSON.parse(
+  await readFile(path.join(here, "..", "assets", "tool-marks.json"), "utf8"),
+);
+const withMarks = (html) =>
+  html.replace(/\{\{mark:([a-z0-9-]+)\}\}/g, (_, name) => {
+    if (!marks[name]) throw new Error(`no mark named ${name}`);
+    return marks[name].picture;
+  });
+
+
 const browser = await chromium.launch();
 const manifest = {};
 for (const file of (await readdir(source)).filter((f) => f.endsWith(".html"))) {
@@ -27,7 +42,7 @@ for (const file of (await readdir(source)).filter((f) => f.endsWith(".html"))) {
     deviceScaleFactor: scale,
     viewport: { width: 2560, height: 1600 },
   });
-  await page.setContent(await readFile(path.join(source, file), "utf8"));
+  await page.setContent(withMarks(await readFile(path.join(source, file), "utf8")));
   await page.waitForTimeout(150);
   const shot = page.locator("#shot");
   const box = await shot.boundingBox();

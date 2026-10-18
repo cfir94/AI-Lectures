@@ -1265,9 +1265,16 @@ h1 {
   -webkit-text-fill-color: transparent;
   animation: thought-in 0.7s cubic-bezier(0.22, 0.7, 0.3, 1) both;
 }
+/* On a reveal the words are the slide and the caption is the only thing
+   explaining the one being emphasised, so it carries more than a footnote's
+   weight: at the base size the line under four model names read as a caption
+   nobody in the room could follow. */
 .reveal-scene .scene-caption {
   margin-top: 3.2cqw;
   min-height: 3.2em;
+  font-size: clamp(1.3rem, 2.7cqw, 2.5rem);
+  color: var(--text);
+  max-width: 34em;
 }
 /* ---- Composition ----------------------------------------------------------
    The scene is a centred column by default. These blocks move it, and nothing
@@ -1651,6 +1658,11 @@ h1 {
 }
 .complete-scene .atmosphere {
   --scene-atmosphere: 1;
+}
+/* A beat advanced inside a slide that is already on the stage: the scene's
+   beat animates, and everything the slide arrived with stays where it is. */
+.beat-only:not(.leaving) .free-object {
+  animation: none;
 }
 .no-motion .scene *,
 .no-motion .light-arc,

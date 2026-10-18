@@ -1,0 +1,40 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:30px;align-items:stretch}
+  .col{flex:1}
+  .ok{border-color:var(--blue)}
+  .item{display:flex;gap:14px;align-items:flex-start;font-size:29px;color:var(--ink);margin-top:16px}
+  .item i{font-style:normal;font-weight:700;flex:none;font-size:30px;line-height:1.25}
+  .ok .item i{color:var(--blue)}
+  .no .item i{color:var(--muted)}
+  .no .item span{color:var(--muted)}
+  .foot{margin-top:28px;font-size:30px;color:var(--ink);text-align:center;
+        border:2px solid var(--purple);border-radius:20px;padding:18px 24px;background:#f7f4fd}
+  .foot b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col box ok">
+      <h3>מותר להעלות<small>חומר שכבר מותר לשיתוף</small></h3>
+      <div class="item"><i>✓</i><span>מסמכי מדיניות, נהלים ופרוטוקולים פומביים</span></div>
+      <div class="item"><i>✓</i><span>תקציב מאושר ותוכניות עבודה</span></div>
+      <div class="item"><i>✓</i><span>נתוני סקר <b>מצטברים</b> — בלי שמות</span></div>
+      <div class="item"><i>✓</i><span>חומר שכתבתם בעצמכם</span></div>
+    </div>
+    <div class="col box no">
+      <h3>לא מעלים<small>גם לא ״רק כדי לבדוק״</small></h3>
+      <div class="item"><i>✕</i><span>פרטים מזהים של תושבים — שם, ת״ז, טלפון, כתובת</span></div>
+      <div class="item"><i>✕</i><span>מידע רפואי, סוציאלי או כלכלי אישי</span></div>
+      <div class="item"><i>✕</i><span>סיסמאות, מפתחות גישה וקבצי מערכת</span></div>
+      <div class="item"><i>✕</i><span>חוזים וחומר משפטי שלא אושר לשיתוף</span></div>
+    </div>
+  </div>
+  <div class="foot">פרויקט <b>אינו כספת</b>. מנוי בתשלום או מיומנות לא משנים הרשאות ולא את מדיניות הארגון.</div>
+</div></body></html>

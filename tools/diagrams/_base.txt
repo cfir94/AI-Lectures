@@ -1,0 +1,9 @@
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
