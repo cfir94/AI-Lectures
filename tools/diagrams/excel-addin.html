@@ -1,0 +1,88 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:28px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:14px}
+  .tag{align-self:flex-start;font-size:24px;font-weight:600;color:#fff;background:var(--blue);
+       border-radius:999px;padding:7px 18px}
+  .tag.b{background:var(--purple)}
+  .win{border:2px solid var(--line);border-radius:18px;overflow:hidden;background:#fcfdff}
+  .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f1f4f9;
+       border-bottom:1.5px solid var(--line);font-size:23px;color:var(--muted)}
+  .bar i{width:11px;height:11px;border-radius:50%;background:#cfd6e2;display:inline-block}
+  .body{display:flex;min-height:190px}
+  .grid{flex:1.6;padding:0}
+  .grid div{display:flex}
+  .grid span{flex:1;padding:9px 12px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);
+             font-size:21px;color:var(--ink)}
+  .grid span:last-child{border-left:0}
+  .grid .h span{background:#f7f9fc;color:var(--muted)}
+  .pane{flex:1;border-right:2px solid var(--purple);background:#f7f4fd;padding:14px;
+        display:flex;flex-direction:column;gap:10px}
+  .pane b{font-size:23px;color:var(--purple)}
+  .pane p{margin:0;font-size:21px;color:var(--ink);line-height:1.4}
+  .chat{padding:16px;display:flex;flex-direction:column;gap:10px;justify-content:center;flex:1}
+  .bub{font-size:22px;color:var(--ink);background:#fff;border:1.5px solid var(--line);
+       border-radius:14px;padding:10px 14px}
+  .bub.me{background:#f7f4fd;border-color:var(--purple)}
+  .pts{display:flex;flex-direction:column;gap:10px}
+  .pt{font-size:26px;color:var(--ink);display:flex;gap:11px}
+  .pt::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--blue);margin-top:12px;flex:none}
+  .col.b .pt::before{background:var(--purple)}
+  .warn{margin-top:26px;border:2px solid var(--purple);border-radius:20px;background:#f7f4fd;
+        padding:18px 24px;font-size:28px;color:var(--ink);text-align:center}
+  .warn b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+
+    <div class="col">
+      <span class="tag">מה שעשינו עד עכשיו — קובץ בצ׳אט</span>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>שיחה</span></div>
+        <div class="body"><div class="chat">
+          <div class="bub me">מצורף תוכנית עבודה<span class="ltr">.xlsx</span> — מה חרג?</div>
+          <div class="bub">מצאתי שלוש חריגות. הנה קובץ מתוקן להורדה.</div>
+        </div></div>
+      </div>
+      <div class="pts">
+        <div class="pt">הוא עובד על <b>עותק</b> — הקובץ שלכם לא משתנה</div>
+        <div class="pt">מחזיר קובץ חדש שצריך להוריד ולפתוח</div>
+        <div class="pt">עובד בכל חשבון, בלי התקנה</div>
+      </div>
+    </div>
+
+    <div class="col b">
+      <span class="tag b">תוסף בתוך Excel</span>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>תוכנית עבודה <span class="ltr">2026.xlsx</span> — Excel</span></div>
+        <div class="body">
+          <div class="grid">
+            <div class="h"><span>שם חשבון</span><span>תוכנית</span><span>ניצול</span></div>
+            <div><span>אחזקת נוי</span><span>180,000</span><span>86,576</span></div>
+            <div><span>מים לגינון</span><span>100,000</span><span>5,662</span></div>
+            <div><span>תאורת רחוב</span><span>70,000</span><span>47,676</span></div>
+          </div>
+          <div class="pane">
+            <b>העוזר</b>
+            <p>״סמן כל שורה שהניצול בה מתחת ל־20%.״</p>
+            <p>כותב ישירות לתאים, ליד הטבלה שלכם.</p>
+          </div>
+        </div>
+      </div>
+      <div class="pts">
+        <div class="pt">יושב בחלונית <b>בתוך Excel</b> ורואה את הגיליון הפתוח</div>
+        <div class="pt">כותב לתאים עצמם ושומר על הנוסחאות</div>
+        <div class="pt">תלוי בהתקנה ובהרשאות — בודקים בחשבון לפני הסדנה</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="warn">בשני המסלולים אותו כלל: עובדים על <b>עותק</b>, אומרים גיליון וטווח מדויקים, ובודקים את התוצאה בקובץ עצמו.</div>
+</div></body></html>
