@@ -1,0 +1,49 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:26px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:15px;text-align:center;
+       border:2px solid var(--line);border-radius:26px;background:#fff;padding:22px 22px}
+  .logo{height:78px;display:flex;align-items:center;justify-content:center;gap:22px}
+  .logo img{max-height:74px;max-width:100%}
+  .role{font-size:25px;color:#fff;border-radius:999px;padding:8px 20px;align-self:center;font-weight:600}
+  .r1{background:var(--blue)} .r2{background:#5a66b7} .r3{background:var(--purple)}
+  .col p{margin:0;font-size:27px;color:var(--ink);line-height:1.45}
+  .eg{font-size:24px;color:var(--muted)}
+  .flow{margin-top:28px;display:flex;align-items:center;justify-content:center;gap:16px;
+        font-size:28px;color:var(--ink);border:2px solid var(--line);border-radius:20px;padding:18px 24px}
+  .flow b{color:var(--purple);font-weight:600}
+  .flow i{font-style:normal;color:var(--muted);font-size:32px}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col">
+      <div class="logo"><img src="{{mark:perplexity-logo-black-svg}}" alt=""></div>
+      <span class="role r1">למצוא</span>
+      <p>מה כתוב היום בעולם — עם קישור שאפשר לפתוח.</p>
+      <p class="eg">הנחיה מקצועית עדכנית, חוזר, סקירת ספרות.</p>
+    </div>
+    <div class="col">
+      <div class="logo"><img src="{{mark:notebooklm-logo-black-svg}}" alt=""></div>
+      <span class="role r2">להבין את מה שיש</span>
+      <p>רק המסמכים שהעליתם — ותשובה עם ציטוט מתוכם.</p>
+      <p class="eg">נוהל מול חוזר, סתירות, מה חסר.</p>
+    </div>
+    <div class="col">
+      <div class="logo">
+        <img src="{{mark:chatgpt-logo-black-svg}}" alt="">
+        <img src="{{mark:claude-ai-logo-colored-svg}}" alt="">
+      </div>
+      <span class="role r3">לייצר</span>
+      <p>שם נמצאת תיקיית הפרויקט ושם נכתבים התוצרים.</p>
+      <p class="eg">סדר יום, דף הסבר למטופל, מכתב, סיכום.</p>
+    </div>
+  </div>
+  <div class="flow"><span>מוצאים מקור</span><i>←</i><span>מעלים ל־<b>מחברת</b> ובודקים מה הוא באמת אומר</span><i>←</i><span>כותבים את התוצר ב־<b>תיקיית הפרויקט</b></span></div>
+</div></body></html>

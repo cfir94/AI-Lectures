@@ -1,0 +1,59 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:28px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:14px}
+  .tag{align-self:flex-start;font-size:23px;font-weight:600;color:#fff;background:#9aa3b2;
+       border-radius:999px;padding:7px 18px}
+  .tag.good{background:var(--purple)}
+  .win{border:2px solid var(--line);border-radius:18px;background:#fcfdff;padding:18px 20px;flex:1}
+  .q{font-size:25px;color:var(--muted);margin-bottom:12px}
+  .a{font-size:26px;color:var(--ink);line-height:1.5}
+  .cite{margin-top:14px;font-size:23px;padding:10px 14px;border-radius:12px}
+  .fake{background:#f2f4f7;color:var(--muted);border:1.5px dashed #b9c0cc}
+  .real{background:#f7f4fd;color:var(--ink);border:1.5px solid var(--purple)}
+  .real a{color:var(--purple);text-decoration:none}
+  .pts{display:flex;flex-direction:column;gap:9px}
+  .pt{font-size:25px;color:var(--ink);display:flex;gap:11px}
+  .pt::before{content:"";width:9px;height:9px;border-radius:50%;background:#9aa3b2;margin-top:11px;flex:none}
+  .col.g .pt::before{background:var(--purple)}
+  .foot{margin-top:24px;text-align:center;font-size:27px;color:var(--ink)}
+  .foot b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col">
+      <span class="tag">צ׳אט רגיל</span>
+      <div class="win">
+        <div class="q">״מה ההנחיה העדכנית בנושא X?״</div>
+        <div class="a">תשובה שנשמעת סמכותית, בניסוח מקצועי, עם מספרים.</div>
+        <div class="cite fake">לפי חוזר מס׳ 14/2023, סעיף ד׳ — <b>מקור שאי אפשר לפתוח</b></div>
+      </div>
+      <div class="pts">
+        <div class="pt">עונה מתוך מה שלמד, לא ממה שכתוב היום</div>
+        <div class="pt">יכול להמציא מספר חוזר, שם מחקר או סעיף</div>
+        <div class="pt">אין מה ללחוץ עליו כדי לבדוק</div>
+      </div>
+    </div>
+    <div class="col g">
+      <span class="tag good">כלי חיפוש</span>
+      <div class="win">
+        <div class="q">״מה ההנחיה העדכנית בנושא X?״</div>
+        <div class="a">תשובה קצרה, ולצידה הקישורים שממנה היא נבנתה.</div>
+        <div class="cite real">3 מקורות · <a>המקור הרשמי</a> · <a>איגוד מקצועי</a> · <a>סקירה</a></div>
+      </div>
+      <div class="pts">
+        <div class="pt">מחפש עכשיו ומראה ממה בנה את התשובה</div>
+        <div class="pt">אפשר <b>לפתוח כל מקור</b> ולראות מה באמת כתוב</div>
+        <div class="pt">גם כאן — הסיכום הוא שלו, ההחלטה שלכם</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">השאלה היא לא ״מי חכם יותר״ אלא <b>האם אפשר לבדוק</b>. בעבודה קלינית או מנהלית — זה ההבדל היחיד שחשוב.</div>
+</div></body></html>

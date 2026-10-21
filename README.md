@@ -350,13 +350,21 @@ npm start
 
 ## פרסום ב־GitHub Pages
 
-`.github/workflows/pages.yml` מריץ בדיקות, בונה את `dist/index.html` ואת `dist/golan.html` ומפרסם אותם בכל דחיפה ל־`main`.
+`.github/workflows/pages.yml` מריץ בדיקות, בונה את `dist/index.html`, `dist/golan.html` ו־`dist/bnei-zion.html` ומפרסם אותם בכל דחיפה ל־`main`.
 
 גם מצגת הסדנה מתפרסמת באותו אופן, בכתובת `https://cfir94.github.io/AI-Lectures/golan.html`.
 
 פעם אחת בלבד צריך להדליק את Pages במאגר: **Settings → Pages → Source: GitHub Actions**. לאחר מכן כל דחיפה ל־`main` מעדכנת את האתר.
 
 אין לשמור מפתחות או אסימוני גישה בפרויקט.
+
+## קורס AI — מרכז רפואי בני ציון, מפגש שני
+
+מצגת **נפרדת** שלישית: `dist/bnei-zion.html`, 29 שקפים — תיקיות פרויקט, חיפוש עם מקורות ומחברת מקורות, לקהל רפואי ומנהלי.
+
+חמישה שקפי **הדגמה** נושאים פרומפט מוכן: הפרומפט עצמו אינו מוקרן, ובתחתית השקף יש **העתקת הפרומפט** וכפתור שפותח את הכלי. אחרי העתקה מדביקים בכלי עצמו.
+
+גם היא מתפרסמת אוטומטית, בכתובת `https://cfir94.github.io/AI-Lectures/bnei-zion.html`.
 
 ## סדנת מועצה אזורית גולן
 
