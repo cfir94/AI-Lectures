@@ -1,0 +1,42 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:30px;align-items:stretch}
+  .col{flex:1}
+  .ok{border-color:var(--blue)}
+  .item{display:flex;gap:14px;align-items:flex-start;font-size:28px;color:var(--ink);margin-top:15px}
+  .item i{font-style:normal;font-weight:700;flex:none;font-size:29px;line-height:1.3}
+  .ok .item i{color:var(--blue)}
+  .no .item i{color:var(--muted)}
+  .no .item span{color:var(--muted)}
+  .foot{margin-top:26px;border:2px solid var(--purple);border-radius:20px;padding:18px 24px;
+        background:#f7f4fd;font-size:28px;color:var(--ink);text-align:center}
+  .foot b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col box ok">
+      <h3>מותר<small>חומר שאינו מזהה אף אחד</small></h3>
+      <div class="item"><i>✓</i><span>נהלים, חוזרים והנחיות מקצועיות</span></div>
+      <div class="item"><i>✓</i><span>ספרות מקצועית ומאמרים</span></div>
+      <div class="item"><i>✓</i><span>נתונים <b>מצטברים</b> — ״42 פניות ברבעון״</span></div>
+      <div class="item"><i>✓</i><span>מקרה שהומצא לצורך התרגול</span></div>
+      <div class="item"><i>✓</i><span>טקסט שכתבתם בעצמכם</span></div>
+    </div>
+    <div class="col box no">
+      <h3>אסור<small>גם לא ״רק כדי לנסח מכתב״</small></h3>
+      <div class="item"><i>✕</i><span>שם, ת״ז, מספר מקרה, תאריך לידה</span></div>
+      <div class="item"><i>✕</i><span>צילום מסך מהתיק הרפואי</span></div>
+      <div class="item"><i>✕</i><span>סיכום מחלה, מכתב שחרור, תשובת מעבדה</span></div>
+      <div class="item"><i>✕</i><span>תצלום, הדמיה או קובץ מהארכיון</span></div>
+      <div class="item"><i>✕</i><span>פרט שמאפשר לזהות גם בלי שם</span></div>
+    </div>
+  </div>
+  <div class="foot">הכלל הפשוט: אם אפשר להבין <b>על מי מדובר</b> — זה לא נכנס. מנסחים על מקרה כללי, ומחזירים את הפרטים בתיק עצמו.</div>
+</div></body></html>
