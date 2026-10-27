@@ -1,0 +1,33 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .sheet{display:flex;align-items:center;gap:48px}
+  .wheel{width:470px;height:470px;border-radius:50%;flex:none;position:relative;
+    background:conic-gradient(var(--blue) 0 8.3%,#5a66b7 8.3% 44.4%,
+      var(--line) 44.4% 52.7%,var(--purple) 52.7% 91.6%,#a98fd6 91.6% 100%)}
+  .hole{position:absolute;inset:27%;border-radius:50%;background:#fafbfd;
+    display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .hole b{font-size:66px;color:var(--ink);font-weight:600;line-height:1}
+  .hole span{font-size:26px;color:var(--muted);margin-top:7px}
+  .legend{flex:1;display:flex;flex-direction:column;gap:18px}
+  .row{display:flex;align-items:center;gap:16px}
+  .sw{width:24px;height:24px;border-radius:7px;flex:none}
+  .row b{font-size:31px;color:var(--ink);font-weight:600;min-width:132px}
+  .row span{font-size:27px;color:var(--muted)}
+</style><body><div class="sheet" id="shot">
+  <div class="wheel"><div class="hole"><b>3</b><span>שעות</span></div></div>
+  <div class="legend">
+    <div class="row"><span class="sw" style="background:var(--blue)"></span><b>15 דקות</b><span>פתיחה — ואיפה הגבול</span></div>
+    <div class="row"><span class="sw" style="background:#5a66b7"></span><b>65 דקות</b><span>תמונה, וידאו וקול — כולל תרגול</span></div>
+    <div class="row"><span class="sw" style="background:var(--line)"></span><b>15 דקות</b><span>הפסקה</span></div>
+    <div class="row"><span class="sw" style="background:var(--purple)"></span><b>70 דקות</b><span>תכנון תוצר חזותי שלם — כולל תרגול</span></div>
+    <div class="row"><span class="sw" style="background:#a98fd6"></span><b>15 דקות</b><span>סיכום ומטלה למפגש הבא</span></div>
+  </div>
+</div></body></html>

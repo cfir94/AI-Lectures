@@ -350,13 +350,19 @@ npm start
 
 ## פרסום ב־GitHub Pages
 
-`.github/workflows/pages.yml` מריץ בדיקות, בונה את `dist/index.html`, `dist/golan.html` ו־`dist/bnei-zion.html` ומפרסם אותם בכל דחיפה ל־`main`.
+`.github/workflows/pages.yml` מריץ בדיקות, בונה את ארבע המצגות שב־`dist` ומפרסם אותן בכל דחיפה ל־`main`.
 
 גם מצגת הסדנה מתפרסמת באותו אופן, בכתובת `https://cfir94.github.io/AI-Lectures/golan.html`.
 
 פעם אחת בלבד צריך להדליק את Pages במאגר: **Settings → Pages → Source: GitHub Actions**. לאחר מכן כל דחיפה ל־`main` מעדכנת את האתר.
 
 אין לשמור מפתחות או אסימוני גישה בפרויקט.
+
+## קורס AI — בני ציון, מפגש שלישי
+
+`dist/bnei-zion-3.html`, 30 שקפים — מדיה ויזואלית: תמונה, וידאו, קול, ואז תכנון תוצר חזותי שלם. שמונה שקפי הדגמה נושאים פרומפט מוכן להעתקה.
+
+מתפרסמת אוטומטית בכתובת `https://cfir94.github.io/AI-Lectures/bnei-zion-3.html`.
 
 ## קורס AI — מרכז רפואי בני ציון, מפגש שני
 

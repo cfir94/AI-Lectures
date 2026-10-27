@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs && node scripts/build.mjs src/golan.json dist/golan.html && node scripts/build.mjs src/bnei-zion.json dist/bnei-zion.html",
+    "build": "node scripts/build.mjs && node scripts/build.mjs src/golan.json dist/golan.html && node scripts/build.mjs src/bnei-zion.json dist/bnei-zion.html && node scripts/build.mjs src/bnei-zion-3.json dist/bnei-zion-3.html",
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs"
   },

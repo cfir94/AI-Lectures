@@ -1,0 +1,55 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:18px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:12px;text-align:center;
+       border:2px solid var(--line);border-radius:22px;background:#fff;padding:20px 16px;min-width:0}
+  .logo{height:62px;display:flex;align-items:center;justify-content:center;gap:14px}
+  .logo img{max-height:56px;max-width:100%}
+  .name{font-size:30px;font-weight:600;color:var(--ink);letter-spacing:-0.01em}
+  .role{font-size:23px;color:#fff;border-radius:999px;padding:6px 16px;align-self:center;font-weight:600}
+  .r1{background:var(--blue)} .r2{background:#5a66b7} .r3{background:var(--purple)}
+  .col p{margin:0;font-size:24px;color:var(--ink);line-height:1.4}
+  .eg{font-size:22px;color:var(--muted)}
+  .flow{margin-top:26px;display:flex;align-items:center;justify-content:center;gap:14px;
+        font-size:27px;color:var(--ink);border:2px solid var(--line);border-radius:20px;padding:17px 22px}
+  .flow b{color:var(--purple);font-weight:600}
+  .flow i{font-style:normal;color:var(--muted);font-size:30px}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col">
+      <div class="logo">
+        <img src="{{mark:google-gemini-wordmark-black-svg}}" alt="">
+      </div>
+      <span class="role r1">לתכנן ולכתוב</span>
+      <p>המבנה, התסריט והניסוח — לפני שנוגעים במדיה.</p>
+      <p class="eg">גם ChatGPT. אותו תפקיד.</p>
+    </div>
+    <div class="col">
+      <div class="logo"><span class="name">Ideogram</span></div>
+      <span class="role r2">תמונה</span>
+      <p>פוסטר, איור תהליך, רקע למצגת.</p>
+      <p class="eg">חזק בטקסט באנגלית. בעברית — נבקש בלי טקסט.</p>
+    </div>
+    <div class="col">
+      <div class="logo"><span class="name">Flow</span></div>
+      <span class="role r2">וידאו</span>
+      <p>קטע קצר מתוך תיאור של סצנה.</p>
+      <p class="eg">שניות בודדות לכל סצנה, לא סרט.</p>
+    </div>
+    <div class="col">
+      <div class="logo"><img src="{{mark:notebooklm-logo-black-svg}}" alt=""></div>
+      <span class="role r3">קול ומקורות</span>
+      <p>הקראה של חומר קיים — ורק ממנו.</p>
+      <p class="eg">סקירה שמיעתית מדף ההסבר שלכם.</p>
+    </div>
+  </div>
+  <div class="flow"><span>מתכננים במילים</span><i>←</i><span>מייצרים מדיה לפי התכנון</span><i>←</i><span><b>איש מקצוע</b> עובר על התוצר</span></div>
+</div></body></html>
