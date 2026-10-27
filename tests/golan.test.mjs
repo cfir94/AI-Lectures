@@ -7,6 +7,7 @@ const read=(name)=>JSON.parse(readFileSync(new URL('../src/'+name,import.meta.ur
 const workshop=C.validate(read('golan.json'));
 const lecture=C.validate(read('content.json'));
 const session=C.validate(read('bnei-zion.json'));
+const visual=C.validate(read('bnei-zion-3.json'));
 
 /* Two talks now share one stage. The browser keeps a presenter's own copy under
    the document's id, so the moment the two ids match, opening one deck hands
@@ -70,7 +71,7 @@ test('no white tool mark lands on a light slide, in either deck',()=>{
   const marks=JSON.parse(readFileSync(new URL('../assets/tool-marks.json',import.meta.url),'utf8'));
   const named=new Map(Object.entries(marks).map(([name,mark])=>[mark.picture,name]));
   let checked=0;
-  for(const [deck,name] of [[workshop,'workshop'],[lecture,'lecture'],[session,'session']])
+  for(const [deck,name] of [[workshop,'workshop'],[lecture,'lecture'],[session,'session'],[visual,'visual']])
     for(const slide of deck.slides){
       if(!light.has(slide.palette)) continue;
       for(const picture of [slide.mark,...(slide.objects??[]).map(o=>o.picture)]){
@@ -116,7 +117,7 @@ test('every diagram on a slide is the one its source produced',()=>{
   /* Three decks now draw from one manifest, so "used" is a question about all
      of them: a diagram rendered and then wired into nothing is work that was
      silently lost, but it is no longer this deck's job to consume them all. */
-  const used=new Set([workshop,lecture,session]
+  const used=new Set([workshop,lecture,session,visual]
     .flatMap(deck=>deck.slides.map(s=>s.picture).filter(Boolean)));
   for(const [name,diagram] of Object.entries(made))
     assert.ok(used.has(diagram.picture),`the ${name} diagram reaches no slide in any deck`);
