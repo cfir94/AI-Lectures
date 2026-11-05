@@ -1,0 +1,41 @@
+<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><style>
+  :root{ --purple:#7a59bc; --blue:#4378ab; --ink:#161922; --muted:#5b6475;
+         --line:#d7dce6; --card:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:transparent}
+  .sheet{width:1640px;padding:40px 48px}
+  .box{border:2px solid var(--line);border-radius:26px;background:var(--card);padding:24px 26px}
+  h3{margin:0;font-size:36px;font-weight:600;color:var(--ink)}
+  h3 small{display:block;font-size:24px;font-weight:400;color:var(--muted);margin-top:6px}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  .cols{display:flex;gap:28px;align-items:stretch}
+  .col{flex:1;display:flex;flex-direction:column;gap:14px;border:2px solid var(--line);
+       border-radius:22px;background:#fff;padding:24px 26px;min-width:0}
+  .col.now{border-color:var(--purple);background:#f7f4fd}
+  .tag{align-self:flex-start;font-size:23px;font-weight:600;color:#fff;background:#9aa3b2;
+       border-radius:999px;padding:6px 18px}
+  .col.now .tag{background:var(--purple)}
+  .col h3{margin:0;font-size:32px}
+  .col p{margin:0;font-size:26px;color:var(--ink);line-height:1.45}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+  .chips span{font-size:22px;border:1.5px solid var(--line);border-radius:999px;
+              padding:6px 14px;color:var(--muted);background:#fff}
+  .foot{margin-top:26px;border:2px solid var(--purple);border-radius:20px;background:#f7f4fd;
+        padding:20px 26px;font-size:30px;color:var(--ink);text-align:center}
+  .foot b{color:var(--purple)}
+</style><body><div class="sheet" id="shot">
+  <div class="cols">
+    <div class="col">
+      <span class="tag">בעבר</span>
+      <h3>שואלים שאלה</h3>
+      <p>ומקבלים תשובה. מה שעושים איתה — זה עליכם.</p>
+    </div>
+    <div class="col now">
+      <span class="tag">היום</span>
+      <h3>מוסרים משימה</h3>
+      <p>ומקבלים תוצר מוגמר.</p>
+      <div class="chips"><span>מסמך</span><span>טבלה</span><span>מצגת</span><span>דשבורד</span></div>
+    </div>
+  </div>
+  <div class="foot">השאלה כבר לא ״מה לשאול״, אלא <b>״מה להעביר אליו״</b>.</div>
+</div></body></html>

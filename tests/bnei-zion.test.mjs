@@ -6,6 +6,7 @@ const C=globalThis.LectureCore;
 const read=(name)=>JSON.parse(readFileSync(new URL('../src/'+name,import.meta.url),'utf8'));
 const session=C.validate(read('bnei-zion.json'));
 const visual=C.validate(read('bnei-zion-3.json'));
+const merom=C.validate(read('merom-golan.json'));
 const workshop=C.validate(read('golan.json'));
 const lecture=C.validate(read('content.json'));
 const shown=session.slides.filter(s=>C.isShown(s));
@@ -14,11 +15,13 @@ const shown=session.slides.filter(s=>C.isShown(s));
    under its document's id: two ids that match hand one deck the other's
    slides, in front of a room. */
 test('every deck is its own document',()=>{
-  const ids=[session.documentId,visual.documentId,workshop.documentId,lecture.documentId];
-  assert.equal(new Set(ids).size,4,'two decks share a documentId');
+  const ids=[session.documentId,visual.documentId,merom.documentId,
+    workshop.documentId,lecture.documentId];
+  assert.equal(new Set(ids).size,5,'two decks share a documentId');
   for(const id of ids) assert.ok(id.length>0);
   assert.equal(shown.length,29);
   assert.equal(visual.slides.filter(s=>C.isShown(s)).length,30);
+  assert.equal(merom.slides.filter(s=>C.isShown(s)).length,30);
 });
 
 /* The prompts are the thing the room was promised: a demo slide keeps its
@@ -27,7 +30,8 @@ test('every deck is its own document',()=>{
 test('every ready-made prompt is actually there',()=>{
   const marks=JSON.parse(readFileSync(new URL('../assets/tool-marks.json',import.meta.url),'utf8'));
   const known=new Set(Object.values(marks).map(m=>m.picture));
-  const demos=[...shown,...visual.slides.filter(s=>C.isShown(s))].filter(s=>s.type==='demo');
+  const demos=[...shown,...visual.slides,...merom.slides]
+    .filter(s=>C.isShown(s)&&s.type==='demo');
   assert.ok(demos.length>=4,`only ${demos.length} prompt slides`);
   for(const s of demos){
     assert.ok(s.prompt.trim().length>120,`${s.id} carries no real prompt`);
@@ -41,7 +45,7 @@ test('every ready-made prompt is actually there',()=>{
 
 /* A note is what the presenter reads while the room reads the slide. */
 test('every slide carries a presenter note',()=>{
-  for(const s of [...session.slides,...visual.slides]){
+  for(const s of [...session.slides,...visual.slides,...merom.slides]){
     assert.ok(s.note.trim().length>0,`${s.id} has no note`);
     assert.ok(s.note.length<=500,`${s.id} note is over the limit`);
     assert.ok(/[.?!]$/.test(s.note.trim()),`${s.id} note ends mid-sentence`);
@@ -50,7 +54,8 @@ test('every slide carries a presenter note',()=>{
 
 /* The arc moves in acts, and no transition may become the default. */
 test('each session keeps its tonal and motion variety',()=>{
-  for(const [deck,name] of [[session,'session two'],[visual,'session three']]){
+  for(const [deck,name] of [[session,'session two'],[visual,'session three'],
+    [merom,'the Claude workshop']]){
     const stage=deck.slides.filter(s=>C.isShown(s));
     const tally=(key)=>stage.reduce((t,s)=>({...t,[s[key]]:(t[s[key]]??0)+1}),{});
     const transitions=tally('transition');
@@ -59,7 +64,9 @@ test('each session keeps its tonal and motion variety',()=>{
       assert.ok(n<=stage.length/3,`${name}: ${t} is on ${n} of ${stage.length} slides`);
     const palettes=tally('palette');
     assert.equal(palettes.violet,2,`${name}: violet marks the two human moments`);
-    assert.equal(palettes.steel,1,`${name}: steel marks the one thing that broke`);
+    /* `steel` is the colour draining out, so a deck earns one only when it has
+       a moment that breaks. The Claude workshop has none and carries none. */
+    assert.ok((palettes.steel??0)<=1,`${name}: steel is on ${palettes.steel} slides`);
   }
 });
 
@@ -70,11 +77,11 @@ test('every diagram on a slide is the one its source produced',()=>{
   const made=JSON.parse(readFileSync(new URL('../assets/diagrams.json',import.meta.url),'utf8'));
   const known=new Map(Object.entries(made).map(([name,d])=>[d.picture,name]));
   let found=0;
-  for(const s of [...session.slides,...visual.slides]){
+  for(const s of [...session.slides,...visual.slides,...merom.slides]){
     if(s.type!=='image'||!s.picture) continue;
     found++;
     assert.ok(known.has(s.picture),`slide ${s.id} carries a picture no diagram source produced`);
     assert.ok(s.alt.trim().length>0,`slide ${s.id} has no alt text`);
   }
-  assert.ok(found>=12,`only ${found} diagram slides`);
+  assert.ok(found>=20,`only ${found} diagram slides`);
 });
